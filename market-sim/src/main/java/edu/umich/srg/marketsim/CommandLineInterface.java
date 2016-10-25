@@ -1,6 +1,5 @@
 package edu.umich.srg.marketsim;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
@@ -8,7 +7,11 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.gson.JsonObject;
 
+import com.github.rvesse.airline.SingleCommand;
+import com.github.rvesse.airline.annotations.Command;
+
 import edu.umich.srg.distributions.Uniform;
+import edu.umich.srg.egtaonline.CommandLineOptions;
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
 import edu.umich.srg.egtaonline.Runner;
@@ -39,14 +42,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class CommandLineInterface {
+@Command(name = "market-sim", description = "Run the market simulator")
+public class CommandLineInterface extends CommandLineOptions {
 
-  private static final String keyPrefix = "edu.umich.srg.marketsim.Keys$";
-  private static final CaseFormat keyCaseFormat = CaseFormat.LOWER_CAMEL;
+  private static final Package keyPackage = CommandLineInterface.class.getPackage();
   private static final Splitter specSplitter = Splitter.on('_').omitEmptyStrings();
 
+  /** The entry point for market-sim. */
   public static void main(String[] args) throws IOException {
-    Runner.run(CommandLineInterface::simulate, args, keyPrefix, keyCaseFormat);
+    SingleCommand<CommandLineInterface> parser =
+        SingleCommand.singleCommand(CommandLineInterface.class);
+    CommandLineInterface options = parser.parse(args);
+    Runner.run(CommandLineInterface::simulate, options, keyPackage);
   }
 
   /**
@@ -190,8 +197,7 @@ public class CommandLineInterface {
     if (index < 0) {
       return Spec.empty();
     } else {
-      return Spec.fromPairs(keyPrefix, keyCaseFormat,
-          specSplitter.split(strategy.substring(index + 1)));
+      return Spec.fromPairs(keyPackage, specSplitter.split(strategy.substring(index + 1)));
     }
   }
 

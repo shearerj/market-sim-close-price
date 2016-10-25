@@ -2,7 +2,6 @@ package edu.umich.srg.egtaonline;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
@@ -12,10 +11,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonStreamParser;
 
-import com.github.rvesse.airline.SingleCommand;
-
 import edu.umich.srg.egtaonline.Observation.Player;
 import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
+import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.util.SummStats;
 
 import java.io.BufferedReader;
@@ -23,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -68,11 +67,10 @@ public class Runner {
 
   /** Run an egta script with readers and writers. */
   public static void run(BiFunction<SimSpec, Integer, Observation> sim, Reader specs, Writer writer,
-      int numObs, int simsPerObs, int jobs, boolean noFeatures, String classPrefix,
-      CaseFormat keyCaseFormat) {
+      int numObs, int simsPerObs, int jobs, boolean noFeatures, Package keyPackage) {
 
     boolean outputFeatures = simsPerObs == 1 && !noFeatures;
-    SpecReader input = new SpecReader(specs, classPrefix, keyCaseFormat);
+    SpecReader input = new SpecReader(specs, keyPackage);
     Consumer<Entry<JsonObject, Observation>> output =
         createObsWriter(writer, simsPerObs, outputFeatures);
 
@@ -87,18 +85,17 @@ public class Runner {
   }
 
   /** Run an egta script with command line arguments. */
-  public static void run(BiFunction<SimSpec, Integer, Observation> sim, String[] args,
-      String classPrefix, CaseFormat keyCaseFormat) throws IOException {
-    SingleCommand<CommandLineOptions> parser =
-        SingleCommand.singleCommand(CommandLineOptions.class);
-    CommandLineOptions options = parser.parse(args);
-
-    if (options.help.help) {
-      options.help.showHelp();
+  public static void run(BiFunction<SimSpec, Integer, Observation> sim, CommandLineOptions args,
+      Package keyPackage) throws IOException {
+    if (args.help.help) {
+      args.help.showHelp();
+    } else if (args.printKeys) {
+      try (PrintWriter out = new PrintWriter(System.out)) {
+        Spec.printKeys(keyPackage, out);
+      }
     } else {
-      try (Reader in = openin(options.simSpec); Writer out = openout(options.observations)) {
-        run(sim, in, out, options.numObs, options.simsPerObs, options.jobs, options.noFeatures,
-            classPrefix, keyCaseFormat);
+      try (Reader in = openin(args.simSpec); Writer out = openout(args.observations)) {
+        run(sim, in, out, args.numObs, args.simsPerObs, args.jobs, args.noFeatures, keyPackage);
       }
     }
   }
@@ -192,13 +189,11 @@ public class Runner {
   // Run result, necessary for synchronization
   private static final class SpecReader implements Iterator<Entry<JsonObject, SimSpec>> {
     private final JsonStreamParser parser;
-    private final String classPrefix;
-    private final CaseFormat keyCaseFormat;
+    private final Package keyPackage;
 
-    private SpecReader(Reader reader, String classPrefix, CaseFormat keyCaseFormat) {
+    private SpecReader(Reader reader, Package keyPackage) {
       this.parser = new JsonStreamParser(reader);
-      this.classPrefix = classPrefix;
-      this.keyCaseFormat = keyCaseFormat;
+      this.keyPackage = keyPackage;
     }
 
     @Override
@@ -209,8 +204,7 @@ public class Runner {
     @Override
     public Entry<JsonObject, SimSpec> next() {
       JsonObject raw = parser.next().getAsJsonObject();
-      return new AbstractMap.SimpleImmutableEntry<>(raw,
-          SimSpec.read(raw, classPrefix, keyCaseFormat));
+      return new AbstractMap.SimpleImmutableEntry<>(raw, SimSpec.read(raw, keyPackage));
     }
   }
 

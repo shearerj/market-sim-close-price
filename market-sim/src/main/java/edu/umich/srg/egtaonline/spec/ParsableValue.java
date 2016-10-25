@@ -2,7 +2,6 @@ package edu.umich.srg.egtaonline.spec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Converter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
@@ -126,8 +125,8 @@ public abstract class ParsableValue<T> extends Value<T> {
   }
 
   public static class SpecValue extends ParsableValue<Spec> {
-    protected SpecValue(String keyClassPrefix, CaseFormat keyCaseFormat) {
-      super(new SpecConverter(keyClassPrefix, keyCaseFormat));
+    protected SpecValue(Package keyPackage) {
+      super(new SpecConverter(keyPackage));
     }
   }
 
@@ -189,12 +188,10 @@ public abstract class ParsableValue<T> extends Value<T> {
     private static final Splitter splitter = Splitter.on('_');
     private static final MapJoiner joiner = Joiner.on('_').withKeyValueSeparator("_");
 
-    private final String keyClassPrefix;
-    private final CaseFormat keyCaseFormat;
+    private final Package keyPackage;
 
-    private SpecConverter(String keyClassPrefix, CaseFormat keyCaseFormat) {
-      this.keyClassPrefix = keyClassPrefix;
-      this.keyCaseFormat = keyCaseFormat;
+    private SpecConverter(Package keyPackage) {
+      this.keyPackage = keyPackage;
     }
 
     @Override
@@ -210,16 +207,14 @@ public abstract class ParsableValue<T> extends Value<T> {
         @Override
         public Entry<String, String> next() {
           Entry<Class<? extends Value<?>>, Value<?>> entry = specIter.next();
-          return Maps.immutableEntry(
-              CaseFormat.UPPER_CAMEL.to(keyCaseFormat, entry.getKey().getSimpleName()),
-              entry.getValue().toString());
+          return Maps.immutableEntry(entry.getKey().getSimpleName(), entry.getValue().toString());
         }
       });
     }
 
     @Override
     protected Spec doForward(String string) {
-      return Spec.fromPairs(keyClassPrefix, keyCaseFormat, splitter.split(keyClassPrefix));
+      return Spec.fromPairs(keyPackage, splitter.split(string));
     }
   }
 

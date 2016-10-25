@@ -27,6 +27,10 @@ public class CommandLineOptions {
           + " (default: 0)")
   public int jobs = 0;
 
+  @Option(name = {"-k", "--print-keys"}, title = "keys",
+      description = "Print the valid simulation keys.")
+  public boolean printKeys = false;
+
   @Option(name = {"-p", "--sims-per-obs"}, title = "simulations-per-observation",
       description = "Number of simulations to use for one observation. Greater than one implies "
           + "\"no-features\". (default: 1)")

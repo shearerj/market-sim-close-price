@@ -1,6 +1,5 @@
 package edu.umich.srg.egtaonline;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Multiset;
@@ -23,7 +22,7 @@ public class SimSpec {
   }
 
   /** Read a SimSpec object from a reader. */
-  public static SimSpec read(JsonObject obj, String classPrefix, CaseFormat keyCaseFormat) {
+  public static SimSpec read(JsonObject obj, Package keyPackage) {
     ImmutableMultiset.Builder<RoleStrat> assignment = ImmutableMultiset.builder();
     for (Entry<String, JsonElement> role : obj.get("assignment").getAsJsonObject().entrySet()) {
       for (Entry<String, JsonElement> strategy : role.getValue().getAsJsonObject().entrySet()) {
@@ -32,7 +31,7 @@ public class SimSpec {
       }
     }
 
-    Spec.Builder configuration = Spec.builder(classPrefix, keyCaseFormat);
+    Spec.ParsingBuilder configuration = Spec.builder(keyPackage);
     for (Entry<String, JsonElement> e : obj.get("configuration").getAsJsonObject().entrySet()) {
       configuration.put(e.getKey(), e.getValue().getAsString());
     }

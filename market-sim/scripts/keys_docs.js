@@ -14,7 +14,8 @@ Key | Type | Description
 `);
 
 var keyReg = /(\w+)\.html$/;
-var typeReg = /(\w+)Value$/;
+var helpReg = /@ValueHelp\(value="[^"]+/;
+var typeReg = /edu\.umich\.srg\.egtaonline\.spec\.ParsableValue<.*/;
 
 var numKeys = process.argv.length - 2;
 var keys = [];
@@ -33,10 +34,9 @@ process.argv.slice(2).forEach(filename => {
     var key = filename.match(keyReg)[1];
     fs.readFile(filename, "utf8", (err, html) => {
         jsdom.env(html, (err, window) => {
-            var desc = window.document.querySelector(".description");
-            var helpTextElement = desc.querySelector("div");
-            var helpText = helpTextElement ? helpTextElement.textContent : "[No Info Provided]";
-            var type = desc.querySelector("pre a").textContent.match(typeReg)[1];
+            var help = window.document.querySelector(".description pre").textContent.match(helpReg);
+            var helpText = help ? help[0].slice(18) : "[No Info Provided]";
+            var type = window.document.querySelector('.inheritance').textContent.match(typeReg)[0].slice(44, -1);
             keys.push([key, type, helpText]);
             print();
         });

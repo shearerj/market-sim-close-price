@@ -79,6 +79,10 @@ public abstract class Asserts {
     }
   }
 
+  public static void assertFalse(boolean assertion, String formatString, Object... objects) {
+    assertTrue(!assertion, formatString, objects);
+  }
+
   public static void assertCompletesIn(Runnable task, long timeout, TimeUnit unit)
       throws ExecutionException, InterruptedException {
     ExecutorService executor = Executors.newSingleThreadExecutor();

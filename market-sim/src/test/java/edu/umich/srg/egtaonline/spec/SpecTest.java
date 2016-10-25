@@ -2,7 +2,6 @@ package edu.umich.srg.egtaonline.spec;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
 
@@ -97,18 +96,8 @@ public class SpecTest {
 
   @Test
   public void parseBuilderTest() {
-    Spec props = Spec.builder("edu.umich.srg.egtaonline.spec.SpecTest$").put("LongKey", "5")
-        .put("EnumKey", "C").build();
-
-    assertEquals(5l, (long) props.get(LongKey.class));
-    assertEquals(Enumerated.C, props.get(EnumKey.class));
-  }
-
-  @Test
-  public void parseBuilderCaseFormatTest() {
     Spec props =
-        Spec.builder("edu.umich.srg.egtaonline.spec.SpecTest$", CaseFormat.LOWER_UNDERSCORE)
-            .put("long_key", "5").put("enum_key", "C").build();
+        Spec.builder(SpecTest.class.getPackage()).put("LongKey", "5").put("EnumKey", "C").build();
 
     assertEquals(5l, (long) props.get(LongKey.class));
     assertEquals(Enumerated.C, props.get(EnumKey.class));
@@ -116,8 +105,15 @@ public class SpecTest {
 
   @Test
   public void parseTestPairs() {
-    Spec props = Spec.fromPairs("edu.umich.srg.egtaonline.spec.SpecTest$LongKey", "5",
-        "edu.umich.srg.egtaonline.spec.SpecTest$EnumKey", "C");
+    Spec props = Spec.fromPairs(SpecTest.class.getPackage(), "LongKey", "5", "EnumKey", "C");
+
+    assertEquals(5l, (long) props.get(LongKey.class));
+    assertEquals(Enumerated.C, props.get(EnumKey.class));
+  }
+
+  @Test
+  public void parseTestPairsCase() {
+    Spec props = Spec.fromPairs(SpecTest.class.getPackage(), "Longkey", "5", "enumkey", "C");
 
     assertEquals(5l, (long) props.get(LongKey.class));
     assertEquals(Enumerated.C, props.get(EnumKey.class));
@@ -160,17 +156,17 @@ public class SpecTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void invalidClassTest() {
-    Spec.builder().put("edu.umich.srg.egtaonline.spec.SpecTest$NotAValue", "5").build();
+    Spec.fromPairs(SpecTest.class.getPackage(), "NotAValue", "5");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void hiddenClassTest() {
-    Spec.builder().put("edu.umich.srg.egtaonline.spec.SpecTest$Wrapper$HiddenKey", "5").build();
+    Spec.fromPairs(SpecTest.class.getPackage(), "NotAValue", "5");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void nonexistentClassTest() {
-    Spec.builder().put("edu.umich.srg.egtaonline.spec.SpecTest$Blah", "5").build();
+    Spec.fromPairs(SpecTest.class.getPackage(), "Blah", "5");
   }
 
 }

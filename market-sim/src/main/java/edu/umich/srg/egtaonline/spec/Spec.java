@@ -2,25 +2,63 @@ package edu.umich.srg.egtaonline.spec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MutableClassToInstanceMap;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
+import com.google.common.reflect.TypeToken;
 
+import edu.umich.srg.util.IndentWriter;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.lang.reflect.ParameterizedType;
+import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Spec {
 
   private static final MapJoiner toString = Joiner.on(", ").withKeyValueSeparator("=");
+  private static final ConcurrentHashMap<Package, //
+      Collection<Entry<String, Class<ParsableValue<?>>>>> classCache = new ConcurrentHashMap<>();
+
   private final ImmutableClassToInstanceMap<Value<?>> map;
+
+  @SuppressWarnings("unchecked")
+  private static Collection<Entry<String, Class<ParsableValue<?>>>> getKeyClasses(
+      Package keyPackage) {
+    return classCache.computeIfAbsent(keyPackage, pkg -> {
+      try {
+        return ClassPath.from(Thread.currentThread().getContextClassLoader()).getAllClasses()
+            .stream() //
+            .filter(cls -> cls.getPackageName().startsWith(keyPackage.getName())) //
+            .map(ClassInfo::load) //
+            .filter(ParsableValue.class::isAssignableFrom) //
+            .filter(cls -> cls.getAnnotation(IgnoreValue.class) == null)
+            .map(cls -> new AbstractMap.SimpleImmutableEntry<>( //
+                cls.getSimpleName().isEmpty() ? cls.getName() : cls.getSimpleName(),
+                (Class<ParsableValue<?>>) cls))
+            .collect(Collectors.toList());
+      } catch (IOException e) {
+        return Collections.emptyList();
+      }
+    });
+  }
 
   protected Spec(ImmutableClassToInstanceMap<Value<?>> map) {
     this.map = map;
@@ -58,33 +96,20 @@ public class Spec {
         .put(key5, value5).build();
   }
 
-  public static Spec fromPairs(String key1, String value1, String... keyValuePairs) {
-    return fromPairs(Iterables.concat(Collections.singleton(key1), Collections.singleton(value1),
-        Arrays.asList(keyValuePairs)));
-  }
-
-  public static Spec fromPairs(Iterable<String> keyValuePairs) {
-    return fromPairs(keyValuePairs.iterator());
+  public static Spec fromPairs(Package keyPackage, String key1, String value1,
+      String... keyValuePairs) {
+    return fromPairs(keyPackage, Iterables.concat(Collections.singleton(key1),
+        Collections.singleton(value1), Arrays.asList(keyValuePairs)));
   }
 
   /** Build a spec from string pairs. */
-  public static Spec fromPairs(Iterator<String> keyValuePairs) {
-    Builder builder = builder();
-    while (keyValuePairs.hasNext()) {
-      builder.put(keyValuePairs.next(), keyValuePairs.next());
-    }
-    return builder.build();
-  }
-
-  public static Spec fromPairs(String keyClassPrefix, CaseFormat keyCaseFormat,
-      Iterable<String> keyValuePairs) {
-    return fromPairs(keyClassPrefix, keyCaseFormat, keyValuePairs.iterator());
+  public static Spec fromPairs(Package keyPackage, Iterable<String> keyValuePairs) {
+    return fromPairs(keyPackage, keyValuePairs.iterator());
   }
 
   /** Build a spec from string pairs with specified prefix and case format. */
-  public static Spec fromPairs(String keyClassPrefix, CaseFormat keyCaseFormat,
-      Iterator<String> keyValuePairs) {
-    Builder builder = builder(keyClassPrefix, keyCaseFormat);
+  public static Spec fromPairs(Package keyPackage, Iterator<String> keyValuePairs) {
+    ParsingBuilder builder = builder(keyPackage);
     while (keyValuePairs.hasNext()) {
       builder.put(keyValuePairs.next(), keyValuePairs.next());
     }
@@ -144,31 +169,19 @@ public class Spec {
   }
 
   public static Builder builder() {
-    return new Builder("", CaseFormat.UPPER_CAMEL);
+    return new Builder();
   }
 
-  public static Builder builder(String classPrefix) {
-    return new Builder(classPrefix, CaseFormat.UPPER_CAMEL);
-  }
-
-  public static Builder builder(CaseFormat caseFormat) {
-    return new Builder("", caseFormat);
-  }
-
-  public static Builder builder(String classPrefix, CaseFormat caseFormat) {
-    return new Builder(classPrefix, caseFormat);
+  public static ParsingBuilder builder(Package keyPackage) {
+    return new ParsingBuilder(keyPackage);
   }
 
   public static class Builder {
     // This is used instead of a builder, so we can overwrite keys
-    private final MutableClassToInstanceMap<Value<?>> builder;
-    private final String classPrefix;
-    private final CaseFormat caseFormat;
+    final MutableClassToInstanceMap<Value<?>> builder;
 
-    private Builder(String classPrefix, CaseFormat caseFormat) {
+    private Builder() {
       this.builder = MutableClassToInstanceMap.create();
-      this.classPrefix = classPrefix;
-      this.caseFormat = caseFormat;
     }
 
     /** Put a value in the builder. */
@@ -177,22 +190,6 @@ public class Spec {
       Value<T> instance = getInstance(key);
       instance.set(value);
       builder.putInstance((Class<Value<T>>) key, instance);
-      return this;
-    }
-
-    /** Put a value interpreted from a string in the builder. */
-    @SuppressWarnings("unchecked")
-    public <T> Builder put(String className, String value) {
-      className = classPrefix + caseFormat.to(CaseFormat.UPPER_CAMEL, className);
-      Class<ParsableValue<?>> key;
-      try {
-        key = (Class<ParsableValue<?>>) Class.forName(className);
-      } catch (ClassNotFoundException e) {
-        throw new IllegalArgumentException(className + " doesn't exist");
-      }
-      ParsableValue<?> instance = getInstance(key);
-      instance.parse(value);
-      builder.putInstance(key, instance);
       return this;
     }
 
@@ -209,8 +206,38 @@ public class Spec {
     }
 
     public Spec build() {
-      // Generics allow ant compilation
       return new Spec(ImmutableClassToInstanceMap.<Value<?>, Value<?>>copyOf(builder));
+    }
+
+  }
+
+  public static class ParsingBuilder extends Builder {
+    // This is used instead of a builder, so we can overwrite keys
+    private final Map<String, Class<ParsableValue<?>>> keys;
+
+    private ParsingBuilder(Package keyPackage) {
+      this.keys = getKeyClasses(keyPackage).stream()
+          .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Entry::getValue));
+    }
+
+    public <T> ParsingBuilder put(Class<? extends Value<T>> key, T value) {
+      return (ParsingBuilder) super.put(key, value);
+    }
+
+    /** Put a value interpreted from a string in the builder. */
+    public <T> ParsingBuilder put(String className, String value) {
+      Class<ParsableValue<?>> key = keys.get(className.toLowerCase());
+      if (key == null) {
+        throw new IllegalArgumentException(className + " is not a valid key");
+      }
+      ParsableValue<?> instance = getInstance(key);
+      instance.parse(value);
+      builder.putInstance(key, instance);
+      return this;
+    }
+
+    public ParsingBuilder putAll(Spec other) {
+      return (ParsingBuilder) super.putAll(other);
     }
 
   }
@@ -251,6 +278,28 @@ public class Spec {
     toString.appendTo(builder, map.entrySet().stream()
         .map(e -> new SimpleImmutableEntry<>(e.getKey().getSimpleName(), e.getValue())).iterator());
     return builder.append('}').toString();
+  }
+
+  /** Print documentation about all valid keys to writer. */
+  public static void printKeys(Package keyPackage, Writer writer) {
+    try (PrintWriter print = new PrintWriter(writer)) {
+      getKeyClasses(keyPackage).stream().sorted(Comparator.comparing(Entry::getKey))
+          .forEachOrdered(entry -> {
+            String typeName = ((ParameterizedType) TypeToken.of(entry.getValue())
+                .getSupertype(Value.class).getType()).getActualTypeArguments()[0].getTypeName()
+                    .replaceAll("[A-Za-z.]+[.$]", "");
+            print.format("%s : %s", entry.getKey(), typeName);
+            ValueHelp help = entry.getValue().getAnnotation(ValueHelp.class);
+            if (help != null) {
+              try {
+                IndentWriter.withIndent(print, 4).write(help.value());
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+            }
+            print.println();
+          });
+    }
   }
 
 }

@@ -1,6 +1,7 @@
 package edu.umich.srg.marketsim;
 
 
+import static edu.umich.srg.testing.Asserts.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -62,8 +63,7 @@ public class IntegrationTest {
   private static final Random rand = new Random();
   private static final Gson gson = new Gson();
   private static final Joiner stratJoiner = Joiner.on('_');
-  private static final String keyPrefix = "edu.umich.srg.marketsim.Keys$";
-  private static final CaseFormat keyCaseFormat = CaseFormat.LOWER_CAMEL;
+  private static final Package keyPackage = Keys.class.getPackage();
   private static final double tol = 1e-8;
 
   @Test
@@ -118,8 +118,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -154,8 +153,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 2, true, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 2, true, keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -186,8 +184,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, false, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, false, keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -228,8 +225,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPackage);
 
     // Save the results
     List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
@@ -241,8 +237,7 @@ public class IntegrationTest {
 
 
     // Run the simulation again
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPackage);
 
     // Save the results
     List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
@@ -275,8 +270,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once with one job
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPackage);
 
     // Save the results
     List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
@@ -288,8 +282,7 @@ public class IntegrationTest {
 
 
     // Run the simulation again with two jobs
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 2, false, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 2, false, keyPackage);
 
     // Save the results
     List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
@@ -322,8 +315,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation ten times
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 20, 1, 1, true, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 20, 1, 1, true, keyPackage);
 
     // Save the average payoff per role strategy, the only thing that can be guaranteed
     List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsNormal =
@@ -334,8 +326,7 @@ public class IntegrationTest {
     specReader = toReader(spec);
 
     // Run the simulation again but only return one aggregate observation
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 2, 10, 1, true, keyPrefix,
-        keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 2, 10, 1, true, keyPackage);
 
     List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsObsPerSim =
         aggregateStringObservations(obsData.toString(), 1);
@@ -374,7 +365,7 @@ public class IntegrationTest {
     Reader specReader1 = new StringReader(spec1);
     StringWriter obsData1 = new StringWriter();
     Runner.run(CommandLineInterface::simulate, specReader1, obsData1, numObs, simsPerObs, 1, false,
-        keyPrefix, keyCaseFormat);
+        keyPackage);
     // All results
     List<JsonObject> results1 = Arrays.stream(obsData1.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
@@ -398,7 +389,7 @@ public class IntegrationTest {
     Reader specReader2 = new StringReader(spec2);
     StringWriter obsData2 = new StringWriter();
     Runner.run(CommandLineInterface::simulate, specReader2, obsData2, numObs, simsPerObs, 1, false,
-        keyPrefix, keyCaseFormat);
+        keyPackage);
     // All results
     List<JsonObject> results2 = Arrays.stream(obsData2.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
@@ -417,6 +408,13 @@ public class IntegrationTest {
     assertEquals("Unique payoffs were identical, but not produced in the same order", payoffs1,
         payoffs2);
     assertEquals("Payoffs were identical, but the rest of the spec was not", results1, results2);
+  }
+
+  @Test
+  public void printKeysTest() {
+    StringWriter writer = new StringWriter();
+    Spec.printKeys(CommandLineInterface.class.getPackage(), writer);
+    assertFalse(writer.toString().isEmpty(), "print keys text was empty");
   }
 
   // TODO Test that agents inherit specifications from configuration

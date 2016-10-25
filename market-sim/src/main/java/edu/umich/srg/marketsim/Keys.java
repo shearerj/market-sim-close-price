@@ -2,6 +2,7 @@ package edu.umich.srg.marketsim;
 
 import com.google.common.base.Converter;
 
+import edu.umich.srg.egtaonline.spec.IgnoreValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.BoolValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.DoubleValue;
@@ -10,6 +11,7 @@ import edu.umich.srg.egtaonline.spec.ParsableValue.IntValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.LongValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.StringsValue;
 import edu.umich.srg.egtaonline.spec.Spec;
+import edu.umich.srg.egtaonline.spec.ValueHelp;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.agent.StandardMarketAgent.OrderStyle;
 
@@ -27,31 +29,32 @@ public interface Keys {
   // Simulation
   // ----------
 
-  /** The seed used to initialize all observations. If left out, it is initialized with the time. */
+  @ValueHelp("The seed used to initialize all observations. If omitted, it is initialized with "
+      + "the time.")
   class RandomSeed extends LongValue {
   }
 
-  /** The number of time steps in the simulator. */
+  @ValueHelp("The number of time steps in the simulator.")
   class SimLength extends LongValue {
   }
 
-  /** The markets that are constructed in the simulator. */
+  @ValueHelp("The markets that are constructed in the simulator.")
   class Markets extends StringsValue {
   }
 
-  /** The mean of the gaussain fundamental. */
+  @ValueHelp("The mean of the gaussain fundamental.")
   class FundamentalMean extends DoubleValue {
   }
 
-  /** The variance of the shocks in the fundamental. */
+  @ValueHelp("The variance of the shocks in the fundamental.")
   class FundamentalShockVar extends DoubleValue {
   }
 
-  /** The rate at which the fundamental reverts towards the mean. */
+  @ValueHelp("The rate at which the fundamental reverts towards the mean.")
   class FundamentalMeanReversion extends DoubleValue {
   }
 
-  /** The probability of a jump. */
+  @ValueHelp("The probability of a jump.")
   class FundamentalShockProb extends DoubleValue {
   }
 
@@ -59,11 +62,12 @@ public interface Keys {
   // Markets
   // -------
 
-  /** Whether the call market biases towards buyer or seller, 0 -> buyer price 1 -> seller price. */
+  @ValueHelp("Whether the call market biases towards buyer or seller, 0 -> buyer price, 1 -> "
+      + "seller price.")
   class Pricing extends DoubleValue {
   }
 
-  /** The clearing interval for a call market. */
+  @ValueHelp("The clearing interval for a call market.")
   class ClearInterval extends LongValue {
   }
 
@@ -71,45 +75,45 @@ public interface Keys {
   // Agents
   // ------
 
-  /** The probability that an agent arrives at any time step. */
+  @ValueHelp("The probability that an agent arrives at any time step.")
   class ArrivalRate extends DoubleValue {
   }
 
-  /** Variance of added noise to any fundamental observation. */
+  @ValueHelp("Variance of added noise to any fundamental observation.")
   class FundamentalObservationVariance extends DoubleValue {
   }
 
-  /** Whether an agent should buy or sell. */
+  @ValueHelp("Whether an agent should buy or sell.")
   class Type extends EnumValue<OrderType> {
     public Type() {
       super(OrderType.class);
     }
   }
 
-  /** The maximum absolute position an agent can hold. */
+  @ValueHelp("The maximum absolute position an agent can hold.")
   class MaxPosition extends IntValue {
   }
 
-  /** Variance used in generating an agents private value. */
+  @ValueHelp("Variance used in generating an agents private value.")
   class PrivateValueVar extends DoubleValue {
   }
 
-  /** The maximum surplus an agent will demand. */
+  @ValueHelp("The maximum surplus an agent will demand.")
   class Rmax extends IntValue {
   }
 
-  /** The minimum surplus an agent will demand. */
+  @ValueHelp("The minimum surplus an agent will demand.")
   class Rmin extends IntValue {
   }
 
-  /** How agents should decide what side to pick. */
+  @ValueHelp("How agents should decide what side to pick.")
   class Sides extends EnumValue<OrderStyle> {
     public Sides() {
       super(OrderStyle.class);
     }
   }
 
-  /** How many orders per side an agent should submit. */
+  @ValueHelp("How many orders per side an agent should submit.")
   class SubmitDepth extends IntValue {
   }
 
@@ -117,46 +121,47 @@ public interface Keys {
   // Specific agent parameters
   // -------------------------
 
-  /** Markov agent's estimate variance for price relative to the fundamental. */
+  @ValueHelp("Markov agent's estimate variance for price relative to the fundamental.")
   class PriceVarEst extends DoubleValue {
   }
 
-  /** Number of order the shock agent will submit. */
+  @ValueHelp("Number of order the shock agent will submit.")
   class NumShockOrders extends IntValue {
   }
 
-  /** The fraction of demanded surplus necessary for an agent to submit an order at bid or ask. */
+  @ValueHelp("The fraction of demanded surplus necessary for an agent to submit an order at bid "
+      + "or ask.")
   class Thresh extends DoubleValue {
   }
 
-  /** Amount of time the shock agent has to liquidate. */
+  @ValueHelp("Amount of time the shock agent has to liquidate.")
   class TimeToLiquidate extends LongValue {
   }
 
   // ------------
   // Market Maker
   // ------------
-  /** Separation between successive rungs. */
+  @ValueHelp("Separation between successive rungs.")
   class RungSep extends IntValue {
   }
 
-  /** Number of rungs to submit. */
+  @ValueHelp("Number of rungs to submit.")
   class NumRungs extends IntValue {
   }
 
-  /** Whether to tweak rung by a tick. */
+  @ValueHelp("Whether to tweak rung by a tick.")
   class TickImprovement extends BoolValue {
   }
 
-  /** Place tick improvement outside spread, instead of default inside. */
+  @ValueHelp("Place tick improvement outside spread, instead of default inside.")
   class TickOutside extends BoolValue {
   }
 
-  /** Number of orders per rung. */
+  @ValueHelp("Number of orders per rung.")
   class RungThickness extends IntValue {
   }
 
-  /** Spread between best bid and best ask. */
+  @ValueHelp("Spread between best bid and best ask.")
   class Spread extends DoubleValue {
   }
 
@@ -164,15 +169,15 @@ public interface Keys {
   // Trend Following HFT
   // -------------------
 
-  /** The minimum length of a monotonic trend to act. */
+  @ValueHelp("The minimum length of a monotonic trend to act.")
   class TrendLength extends IntValue {
   }
 
-  /** The maximum profit demanded from a trend front run. */
+  @ValueHelp("The maximum profit demanded from a trend front run.")
   class ProfitDemanded extends IntValue {
   }
 
-  /** The max amount of time to leave an order in the market. */
+  @ValueHelp("The max amount of time to leave an order in the market.")
   class Expiration extends TimeValue {
   }
 
@@ -258,6 +263,7 @@ public interface Keys {
   // --------------
 
   /** Spec parameter that's a TimeStamp. */
+  @IgnoreValue
   class TimeValue extends ParsableValue<TimeStamp> {
     protected TimeValue() {
       super(new Converter<String, TimeStamp>() {
