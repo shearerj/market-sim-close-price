@@ -6,6 +6,4 @@ public interface Sim {
 
   TimeStamp getCurrentTime();
 
-  void addFeature(String name, double value);
-
 }

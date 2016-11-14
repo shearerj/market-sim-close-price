@@ -77,7 +77,6 @@ public class NoiseAgent implements Agent {
     }
     market.submitOrder(orderTypeDistribution.sample(rand),
         Price.of(orderPriceDistribution.sample(rand)), quantityDistribution.sample(rand) + 1);
-    sim.addFeature("orders", 1);
     scheduleNextArrival();
   }
 

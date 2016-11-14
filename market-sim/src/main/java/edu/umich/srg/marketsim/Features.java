@@ -13,11 +13,9 @@ import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
-import edu.umich.srg.util.SummStats;
 
 import java.util.AbstractMap;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
@@ -25,30 +23,8 @@ import java.util.stream.Collectors;
 
 class Features {
 
-  private final Map<String, SummStats> summaryFeatures;
-
-  Features() {
-    this.summaryFeatures = new HashMap<>();
-  }
-
-  void accept(String name, double value) {
-    SummStats stats = summaryFeatures.get(name);
-    if (stats == null) {
-      stats = SummStats.empty();
-      summaryFeatures.put(name, stats);
-    }
-    stats.accept(value);
-  }
-
-  JsonObject computeFeatures(MarketSimulator simulator) {
+  static JsonObject computeFeatures(MarketSimulator simulator) {
     JsonObject features = new JsonObject();
-
-    // Summary features
-    for (Entry<String, SummStats> entry : summaryFeatures.entrySet()) {
-      String key = entry.getKey().toLowerCase().replace(' ', '_');
-      features.addProperty(key + "_c", entry.getValue().getCount());
-      features.addProperty(key + "_a", entry.getValue().getAverage());
-    }
 
     // Fundamental features
     Fundamental fundamental = simulator.getFundamental();
@@ -228,5 +204,8 @@ class Features {
       this.emSurplusLoss = emSurplusLoss;
     }
   }
+
+  // Unconstructable
+  private Features() {}
 
 }

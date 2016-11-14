@@ -25,7 +25,6 @@ public class MarketSimulator implements Sim {
   private final Collection<Market> markets;
   private final Collection<Agent> agents;
   private final Fundamental fundamental;
-  private final Features features;
   private final EventQueue eventQueue;
 
   private Map<Agent, ? extends AgentInfo> agentPayoffs;
@@ -34,7 +33,6 @@ public class MarketSimulator implements Sim {
 
   private MarketSimulator(Fundamental fundamental, Random rand) {
     this.fundamental = fundamental;
-    this.features = new Features();
     this.markets = new ArrayList<>();
     this.agents = new ArrayList<>();
     this.eventQueue = new EventQueue(rand);
@@ -70,7 +68,7 @@ public class MarketSimulator implements Sim {
   }
 
   public JsonObject computeFeatures() {
-    return features.computeFeatures(this);
+    return Features.computeFeatures(this);
   }
 
   public Collection<Market> getMarkets() {
@@ -125,11 +123,6 @@ public class MarketSimulator implements Sim {
   @Override
   public TimeStamp getCurrentTime() {
     return eventQueue.getCurrentTime();
-  }
-
-  @Override
-  public void addFeature(String name, double value) {
-    features.accept(name, value);
   }
 
   private static class SimAgentInfo implements AgentInfo {

@@ -15,7 +15,4 @@ public class MockSim implements Sim {
     return TimeStamp.ZERO;
   }
 
-  @Override
-  public void addFeature(String name, double value) {}
-
 }
