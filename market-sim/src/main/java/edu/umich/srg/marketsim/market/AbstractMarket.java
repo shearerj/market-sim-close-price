@@ -124,7 +124,6 @@ abstract class AbstractMarket implements Market, Serializable {
     JsonObject features = new JsonObject();
 
     features.add("prices", convertSparseData(prices));
-    features.addProperty("rmsd", fundamental.rmsd(prices, sim.getCurrentTime()));
 
     return features;
   }

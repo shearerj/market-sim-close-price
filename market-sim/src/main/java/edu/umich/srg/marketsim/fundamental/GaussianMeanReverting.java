@@ -1,6 +1,5 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import com.google.common.collect.Iterators;
 import com.google.common.primitives.Ints;
 
 import edu.umich.srg.collect.Sparse;
@@ -10,11 +9,9 @@ import edu.umich.srg.distributions.Hypergeometric;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.util.PositionalSeed;
-import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -134,10 +131,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
           .iterator();
     }
 
-    protected Iterable<Entry<Long, F>> getEntriesIterable() {
-      return fundamental.entrySet();
-    }
-
     protected abstract F observeFuture(Entry<Long, F> last, long time);
 
     protected abstract F observeIntermediate(Entry<Long, F> before, Entry<Long, F> after,
@@ -169,61 +162,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       double newPrice = sampler.getIntermediateValue(time, before.getValue().price,
           time - before.getKey(), after.getValue().price, after.getKey() - time);
       return new FundamentalObservation(newPrice);
-    }
-
-    @Override
-    public double rmsd(Iterator<? extends Sparse.Entry<? extends Number>> prices,
-        TimeStamp finalTime) {
-      if (!prices.hasNext()) {
-        return Double.NaN;
-      }
-      getValueAt(finalTime); // Make sure there's a final time fundamental node
-
-      Iterator<? extends Entry<Long, ? extends Number>> fundamental =
-          getEntriesIterable().iterator();
-
-      SummStats rmsd = SummStats.empty();
-      Entry<Long, ? extends Number> lastFundamental = fundamental.next();
-      Entry<Long, ? extends Number> nextFundamental = fundamental.next();
-      Sparse.Entry<? extends Number> lastPrice = prices.next();
-      Sparse.Entry<? extends Number> nextPrice = Iterators.getNext(prices, null);
-      long lastIndex = Math.max(lastFundamental.getKey(), lastPrice.getIndex());
-
-      // Guaranteed to have fundamentals up to this point, don't care about prices
-      long longTime = finalTime.get();
-      while (lastIndex < longTime) {
-        long nextIndex = Math.min(nextFundamental.getKey(),
-            nextPrice == null ? Long.MAX_VALUE : nextPrice.getIndex());
-        if (lastIndex == lastFundamental.getKey().longValue()) {
-          double diff =
-              lastFundamental.getValue().doubleValue() - lastPrice.getElement().doubleValue();
-          rmsd.accept(diff * diff);
-          lastIndex++;
-        }
-        if (lastIndex < nextIndex) {
-          double expectedRmsd =
-              sampler.expectedAverageIntermediateRmsd(lastFundamental.getValue().doubleValue(),
-                  nextFundamental.getValue().doubleValue(), lastPrice.getElement().doubleValue(),
-                  lastIndex - lastFundamental.getKey(), nextIndex - lastFundamental.getKey() - 1,
-                  nextFundamental.getKey() - lastFundamental.getKey());
-          rmsd.acceptNTimes(expectedRmsd, nextIndex - lastIndex);
-        }
-
-        lastIndex = nextIndex;
-        if (nextFundamental.getKey() == nextIndex) {
-          lastFundamental = nextFundamental;
-          // Might not exist, but we won't use it if it doesn't
-          nextFundamental = Iterators.getNext(fundamental, null);
-        }
-        if (nextPrice != null && nextPrice.getIndex() == nextIndex) {
-          lastPrice = nextPrice;
-          nextPrice = Iterators.getNext(prices, null);
-        }
-      }
-      double diff = lastFundamental.getValue().doubleValue() - lastPrice.getElement().doubleValue();
-      rmsd.accept(diff * diff);
-
-      return Math.sqrt(rmsd.getAverage());
     }
 
     private static final long serialVersionUID = 1;
@@ -279,13 +217,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       return new JumpFundamentalObservation(newPrice, jumpsBefore);
     }
 
-    @Override
-    public double rmsd(Iterator<? extends Sparse.Entry<? extends Number>> prices,
-        TimeStamp finalTime) {
-      // FIXME This is unimplemented, and doesn't seem super trivial to accomplish
-      return Double.NaN;
-    }
-
     private static final long serialVersionUID = 1;
 
   }
@@ -296,13 +227,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
     double getIntermediateValue(long time, double priceBefore, long jumpsBefore, double priceAfter,
         long jumpsAfter);
-
-    /**
-     * Returns the expected average rmsd between a and b inclusive where price was `price`, the
-     * fundamental at time zero was fundamentalZero, and fundamentalEnd at end.
-     */
-    double expectedAverageIntermediateRmsd(double fundamentalZero, double fundamentalEnd,
-        double price, long timeA, long timeB, long end);
 
   }
 
@@ -335,26 +259,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
           .sample(rand);
     }
 
-    // Calculated using mathematica
-    @Override
-    public double expectedAverageIntermediateRmsd(double fundamentalZero, double fundamentalEnd,
-        double price, long timeA, long timeB, long end) {
-      double temp1 = -fundamentalZero;
-      double temp2 = fundamentalEnd + temp1;
-      double temp3 = 6 * end * fundamentalZero;
-      double temp4 = -6 * end * price;
-      double temp5 = 3 * end;
-      double temp6 = Math.pow(temp2, 2) - (end * shockVar);
-      return (6 * Math.pow(end, 2) * Math.pow(fundamentalZero - price, 2)
-          + timeB * temp2 * (fundamentalEnd + temp1 + temp3 + temp4)
-          + timeA * temp2
-              * ((-1 + 2 * timeB) * fundamentalEnd + fundamentalZero - 2 * timeB * fundamentalZero
-                  + temp3 + temp4)
-          + timeB * end * (-1 + temp5) * shockVar + timeA * end * (1 - 2 * timeB + temp5) * shockVar
-          + 2 * Math.pow(timeA, 2) * temp6 + 2 * Math.pow(timeB, 2) * temp6)
-          / (6. * Math.pow(end, 2));
-    }
-
     private static final long serialVersionUID = 1;
 
   }
@@ -382,14 +286,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
         double priceAfter, long jumpsAfter) {
       rand.setSeed(seed.getSeed(time));
       return dist.sample(rand);
-    }
-
-    /* Average RMSD is always the same conditioned on price. */
-    @Override
-    public double expectedAverageIntermediateRmsd(double fundamentalZero, double fundamentalEnd,
-        double price, long timeA, long timeB, long end) {
-      return dist.getVariance() + dist.getMean() * dist.getMean() - 2 * dist.getMean() * price
-          + price * price;
     }
 
     private static final long serialVersionUID = 1;
@@ -436,85 +332,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
           * (kappacPowerAfter * kappacPowerAfter - 1) / ((kappac * kappac - 1)
               * (kappacPowerBefore * kappacPowerBefore * kappacPowerAfter * kappacPowerAfter - 1));
       return Gaussian.withMeanVariance(stepMean, stepVariance * shockVar).sample(rand);
-    }
-
-    // Calculated using mathematica.
-    @Override
-    public double expectedAverageIntermediateRmsd(double fundamentalZero, double fundamentalEnd,
-        double price, long timeA, long timeB, long end) {
-      double temp1 = Math.pow(kappac, 2);
-      double temp2 = temp1 - 1;
-      double temp3 = 2 * timeA;
-      double temp4 = timeA - timeB - 1;
-      double temp5 = 2 * end;
-      double temp6 = Math.pow(kappac, temp5);
-      double temp7 = temp6 - 1;
-      double temp8 = kappac - 1;
-      double temp9 = 1 + kappac;
-      double temp10 = Math.pow(temp9, 2);
-      double temp11 = Math.pow(kappac, end);
-      double temp12 = mean - price;
-      double temp13 = timeA + timeB;
-      double temp14 = Math.pow(kappac, temp3);
-      double temp15 = 2 * timeB;
-      double temp16 = Math.pow(kappac, 2 + temp15);
-      double temp17 = -mean;
-      double temp18 = fundamentalEnd + temp17;
-      double temp19 = -temp14;
-      double temp20 = Math.pow(kappac, 4 * end);
-      double temp21 = Math.pow(kappac, timeA);
-      double temp22 = 2 * temp13;
-      double temp23 = Math.pow(kappac, 1 + timeB);
-      double temp24 = Math.pow(kappac, timeB);
-      double temp25 = temp17 + price;
-      double temp26 = -1 + temp11;
-      double temp27 = Math.pow(kappac, 2 + temp3 + 4 * timeB);
-      double temp28 = Math.pow(mean, 2);
-      double temp29 = Math.pow(kappac, temp15);
-      double temp30 = temp11 * temp18 + mean;
-      double temp31 = fundamentalEnd + temp26 * mean;
-      double temp32 = Math.pow(temp18, 2);
-      double temp33 = -shockVar;
-      double temp34 = Math.pow(fundamentalEnd, 2);
-      double temp35 = temp34 * temp2 + 2 * fundamentalEnd * temp2 * temp26 * mean
-          + temp2 * Math.pow(temp26, 2) * temp28 + shockVar - temp6 * shockVar;
-      double temp36 = -2 * temp11 * temp2 * temp18 * mean;
-      double temp37 = Math.pow(kappac, 3 * end);
-      double temp38 = temp2 * Math.pow(temp12, 2);
-      return (Math.pow(fundamentalZero, 2) * temp2
-          * (Math.pow(kappac, 2 * (temp3 + timeB)) - temp27
-              - 2 * temp4 * Math.pow(kappac, 2 * (timeA + timeB + end)) * temp2
-              + temp20 * (temp14 - temp16))
-          - 2 * temp8 * Math.pow(kappac, 1 + temp3 + 3 * timeB) * temp10 * temp7 * temp30 * temp12
-          - 2 * temp8 * Math.pow(kappac, temp3 + timeB + end) * temp10 * temp7 * temp31 * temp12
-          + 2 * fundamentalZero * temp2
-              * (Math.pow(kappac, temp22 + end)
-                  * (1 + timeB - temp1 - timeB * temp1 + temp19 + temp16 + timeA * temp2) * temp18
-                  + temp37 * (temp19 + temp29 * (temp1 + temp4 * temp14 * temp2)) * temp18
-                  + temp20 * (temp21 - temp23)
-                      * (-(temp21 * mean) + temp24 * (-(kappac * mean) + temp21 * temp9 * temp12))
-                  + Math.pow(kappac, temp22)
-                      * (-temp21 + temp23)
-                      * ((-1 - kappac + temp21 + temp23) * mean + price + kappac * price)
-                  + Math.pow(kappac, timeA + timeB + temp5) * temp9
-                      * (Math.pow(kappac, 1 + timeA + temp15) * temp12 + temp21 * temp25
-                          + temp24 * (2 * temp4 * temp8 * temp21 * mean + kappac * temp12
-                              + temp14 * temp25)))
-          + Math.pow(kappac, 2 * (timeA + end)) * temp35
-          + temp27
-              * (temp36 + temp28 - temp1 * temp28 + temp33 + temp6 * (-(temp2 * temp32) + shockVar))
-          + temp29 * (2 * temp8 * Math.pow(kappac, 3 * timeA) * temp10 * temp7 * temp30 * temp12
-              + 2 * temp8 * Math.pow(kappac, 1 + timeA + end) * temp10 * temp7 * temp31 * temp12
-              + Math.pow(kappac, 4 * timeA) * (2 * temp11 * temp2 * temp18 * mean + temp2 * temp28
-                  + temp6 * (temp2 * temp32 + temp33) + shockVar)
-              - Math.pow(kappac, 2 + temp5) * temp35
-              + temp4 * temp14 * temp2
-                  * (temp36 - 2 * temp37 * temp2 * temp18 * mean + temp38
-                      - 2 * temp6 * temp2
-                          * (temp34 - 2 * fundamentalEnd * mean + 3 * temp28 - 2 * mean * price
-                              + Math.pow(price, 2))
-                      + temp33 + temp20 * (temp38 + shockVar))))
-          / (temp4 * Math.pow(kappac, 2 * temp13) * Math.pow(temp2, 2) * Math.pow(temp7, 2));
     }
 
     private static final long serialVersionUID = 1;
