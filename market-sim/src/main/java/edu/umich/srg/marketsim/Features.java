@@ -28,8 +28,7 @@ class Features {
 
     // Fundamental features
     Fundamental fundamental = simulator.getFundamental();
-    features.add("fundamental",
-        convertSparseData(fundamental.getFundamentalValues(simulator.getCurrentTime())));
+    features.add("fundamental", convertSparseData(fundamental.getFundamentalValues()));
 
     // Market features
     JsonArray marketFeatures = new JsonArray();

@@ -20,7 +20,6 @@ import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
-import edu.umich.srg.marketsim.Keys.FundamentalShockProb;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
@@ -77,9 +76,9 @@ public class FeaturesTest {
   @Theory
   public void simpleRandomTest(@TestInts({10}) int numAgents,
       @TestBools({false, true}) boolean intermediate) {
-    Fundamental fundamental = GaussianMeanReverting.create(rand, spec.get(FundamentalMean.class),
-        spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class),
-        spec.get(FundamentalShockProb.class));
+    Fundamental fundamental = GaussianMeanReverting.create(rand,
+        TimeStamp.of(spec.get(SimLength.class)), spec.get(FundamentalMean.class),
+        spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
     for (int i = 0; i < numAgents; ++i) {

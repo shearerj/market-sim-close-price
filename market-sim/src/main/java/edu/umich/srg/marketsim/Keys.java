@@ -296,7 +296,6 @@ public interface Keys {
   Spec DEFAULT_KEYS = Spec.builder() //
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
-      .put(FundamentalShockProb.class, 1d) // Shocks disabled
 
       .put(Pricing.class, 0.5) // Even call market
 

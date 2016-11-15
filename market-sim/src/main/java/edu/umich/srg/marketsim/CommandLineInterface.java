@@ -22,7 +22,6 @@ import edu.umich.srg.marketsim.EntityBuilder.AgentCreator;
 import edu.umich.srg.marketsim.EntityBuilder.MarketCreator;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
-import edu.umich.srg.marketsim.Keys.FundamentalShockProb;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.RandomSeed;
@@ -69,9 +68,9 @@ public class CommandLineInterface extends CommandLineOptions {
     Random rand = new Random(seed);
 
     Fundamental fundamental = GaussianMeanReverting.create(new Random(rand.nextLong()),
-        configuration.get(FundamentalMean.class), configuration.get(FundamentalMeanReversion.class),
-        configuration.get(FundamentalShockVar.class),
-        configuration.get(FundamentalShockProb.class));
+        TimeStamp.of(configuration.get(SimLength.class)), configuration.get(FundamentalMean.class),
+        configuration.get(FundamentalMeanReversion.class),
+        configuration.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, new Random(rand.nextLong()));
 
     List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class), configuration);

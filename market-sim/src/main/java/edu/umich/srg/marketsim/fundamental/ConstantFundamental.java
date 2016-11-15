@@ -5,9 +5,10 @@ import edu.umich.srg.collect.Sparse.Entry;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 
+import java.io.Serializable;
 import java.util.Collections;
 
-public class ConstantFundamental extends GaussianMeanReverting {
+public class ConstantFundamental implements Fundamental, Serializable {
 
   private final Price constant;
 
@@ -29,7 +30,7 @@ public class ConstantFundamental extends GaussianMeanReverting {
   }
 
   @Override
-  public Iterable<Entry<Number>> getFundamentalValues(TimeStamp finalTime) {
+  public Iterable<Entry<Number>> getFundamentalValues() {
     return Collections.singleton(Sparse.immutableEntry(0, constant));
   }
 

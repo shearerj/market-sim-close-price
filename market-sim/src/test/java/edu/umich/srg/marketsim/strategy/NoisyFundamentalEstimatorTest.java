@@ -50,7 +50,8 @@ public class NoisyFundamentalEstimatorTest {
     OptimalLinearError optimal = new OptimalLinearError();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, mean, meanReversion, shockVariance, 1);
+      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(finalTime), mean,
+          meanReversion, shockVariance);
       NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(finalTime, mean,
           meanReversion, shockVariance, observationVariance, 1);
 
@@ -86,7 +87,8 @@ public class NoisyFundamentalEstimatorTest {
     OptimalLinearError optimal = new OptimalLinearError();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, mean, meanReversion, shockVariance, 1);
+      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(finalTime), mean,
+          meanReversion, shockVariance);
       NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(finalTime, mean,
           meanReversion, shockVariance, 1, transactionVariance);
 
@@ -121,7 +123,8 @@ public class NoisyFundamentalEstimatorTest {
         hmmBias = SummStats.empty(), hmmError = SummStats.empty();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, mean, meanReversion, shockVariance, 1);
+      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(tstep * numSteps), mean,
+          meanReversion, shockVariance);
       NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(tstep * numSteps, mean,
           meanReversion, shockVariance, observationVariance, 1);
 
@@ -165,7 +168,8 @@ public class NoisyFundamentalEstimatorTest {
         baselineError = SummStats.empty();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, mean, meanReversion, shockVariance, 1);
+      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(finalTime), mean,
+          meanReversion, shockVariance);
       NoisyFundamentalEstimator estimator =
           NoisyFundamentalEstimator.create(finalTime, mean, meanReversion, shockVariance,
               observationVariance, 1),
@@ -216,7 +220,8 @@ public class NoisyFundamentalEstimatorTest {
       @TestDoubles({0, 100}) double shockVariance) {
     long simLength = 100;
 
-    Fundamental fund = GaussianMeanReverting.create(rand, mean, meanReversion, shockVariance, 1);
+    Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(simLength), mean,
+        meanReversion, shockVariance);
     NoisyFundamentalEstimator estimator =
         NoisyFundamentalEstimator.create(simLength, mean, meanReversion, shockVariance, 0, 0);
     GaussianFundamentalEstimator groundTruth =

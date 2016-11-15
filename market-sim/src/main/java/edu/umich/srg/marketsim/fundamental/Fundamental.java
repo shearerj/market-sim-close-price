@@ -12,6 +12,6 @@ public interface Fundamental {
 
   Price getValueAt(TimeStamp time);
 
-  Iterable<Entry<Number>> getFundamentalValues(TimeStamp finalTime);
+  Iterable<Entry<Number>> getFundamentalValues();
 
 }
