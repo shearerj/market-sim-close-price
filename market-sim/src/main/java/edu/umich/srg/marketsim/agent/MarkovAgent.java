@@ -1,7 +1,5 @@
 package edu.umich.srg.marketsim.agent;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
@@ -11,11 +9,8 @@ import edu.umich.srg.marketsim.Keys.PriceVarEst;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
-import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
-import edu.umich.srg.marketsim.fundamental.FundamentalView;
-import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
-import edu.umich.srg.marketsim.fundamental.NoisyFundamentalEstimator;
+import edu.umich.srg.marketsim.fundamental.NoisyGaussianMeanRevertingView;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 
@@ -28,20 +23,17 @@ import java.util.Random;
  */
 public class MarkovAgent extends StandardMarketAgent {
 
-  private final FundamentalView fundamental;
-  private final NoisyFundamentalEstimator estimator;
+  private final double transactionVariance;
+  private final NoisyGaussianMeanRevertingView fundamental;
 
   /** Standard constructor for the Markov agent. */
   public MarkovAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     super(sim, market, spec, rand);
-    checkArgument(fundamental instanceof GaussianMeanReverting);
-
-    this.fundamental = FundamentalView.create(sim, fundamental, TimeStamp.ZERO,
-        spec.get(FundamentalObservationVariance.class), rand);
-    this.estimator =
-        NoisyFundamentalEstimator.create(spec.get(SimLength.class), spec.get(FundamentalMean.class),
-            spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class),
-            spec.get(FundamentalObservationVariance.class), spec.get(PriceVarEst.class));
+    this.transactionVariance = spec.get(PriceVarEst.class);
+    this.fundamental =
+        NoisyGaussianMeanRevertingView.create(sim, fundamental, rand, spec.get(SimLength.class),
+            spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class),
+            spec.get(FundamentalShockVar.class), spec.get(FundamentalObservationVariance.class));
   }
 
   public static MarkovAgent createFromSpec(Sim sim, Fundamental fundamental,
@@ -50,19 +42,13 @@ public class MarkovAgent extends StandardMarketAgent {
   }
 
   @Override
-  protected void strategy() {
-    estimator.addFundamentalObservation(sim.getCurrentTime(), fundamental.getFundamental());
-    super.strategy();
-  }
-
-  @Override
   public void notifyTransaction(MarketView market, Price price, int quantity) {
-    estimator.addTransactionObservation(sim.getCurrentTime(), price, quantity);
+    fundamental.addObservation(price.doubleValue(), quantity, transactionVariance);
   }
 
   @Override
   protected double getFinalFundamentalEstiamte() {
-    return estimator.estimate();
+    return fundamental.getEstimatedFinalFundamental();
   }
 
   @Override

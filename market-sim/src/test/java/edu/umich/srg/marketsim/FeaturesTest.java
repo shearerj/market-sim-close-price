@@ -76,9 +76,9 @@ public class FeaturesTest {
   @Theory
   public void simpleRandomTest(@TestInts({10}) int numAgents,
       @TestBools({false, true}) boolean intermediate) {
-    Fundamental fundamental = GaussianMeanReverting.create(rand,
-        TimeStamp.of(spec.get(SimLength.class)), spec.get(FundamentalMean.class),
-        spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class));
+    Fundamental fundamental = GaussianMeanReverting.create(rand, spec.get(SimLength.class),
+        spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class),
+        spec.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
     for (int i = 0; i < numAgents; ++i) {

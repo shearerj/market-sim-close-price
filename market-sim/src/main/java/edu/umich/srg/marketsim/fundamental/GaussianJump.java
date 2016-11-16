@@ -9,7 +9,6 @@ import edu.umich.srg.distributions.Binomial;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Hypergeometric;
 import edu.umich.srg.marketsim.Price;
-import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
@@ -33,14 +32,14 @@ import java.util.TreeMap;
 public class GaussianJump implements Fundamental, Serializable {
 
   /** Create a standard gaussian mean reverting fundamental stochastic process. */
-  public static Fundamental create(Random rand, TimeStamp finalTime, double mean, double shockVar,
+  public static Fundamental create(Random rand, long finalTime, double mean, double shockVar,
       double shockProb) {
     if (shockProb == 0) {
       return ConstantFundamental.create(Price.of(mean));
     } else if (shockProb == 1) {
       return GaussianMeanReverting.create(rand, finalTime, mean, 0, shockVar);
     } else {
-      return new GaussianJump(finalTime.get(), mean, shockVar, shockProb, rand);
+      return new GaussianJump(finalTime, mean, shockVar, shockProb, rand);
     }
   }
 
@@ -69,8 +68,7 @@ public class GaussianJump implements Fundamental, Serializable {
   }
 
   @Override
-  public Price getValueAt(TimeStamp timeStamp) {
-    long time = timeStamp.get();
+  public double getValueAt(long time) {
     checkArgument(time <= fundamental.lastEntry().getKey(), "Can't ask for time beyond final time");
 
     Entry<Long, FundObs> before = fundamental.floorEntry(time);
@@ -89,17 +87,16 @@ public class GaussianJump implements Fundamental, Serializable {
     }
 
     if (before.getKey() == time) {
-      return Price.of(before.getValue().price).nonnegative();
+      return before.getValue().price;
     } else {
-      return Price.of(after.getValue().price).nonnegative();
+      return after.getValue().price;
     }
   }
 
   @Override
-  public Iterable<Sparse.Entry<Number>> getFundamentalValues() {
+  public Iterable<Sparse.Entry<Double>> getFundamentalValues() {
     return () -> fundamental.entrySet().stream()
-        .map(e -> Sparse.<Number>immutableEntry(e.getKey(), Price.of(e.getValue().price)))
-        .iterator();
+        .map(e -> Sparse.immutableEntry(e.getKey(), e.getValue().price)).iterator();
   }
 
   private FundObs observeIntermediate(Entry<Long, FundObs> before, Entry<Long, FundObs> after,

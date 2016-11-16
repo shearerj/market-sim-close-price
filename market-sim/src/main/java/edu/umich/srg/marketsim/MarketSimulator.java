@@ -100,7 +100,7 @@ public class MarketSimulator implements Sim {
       }
 
       // Get current fundamental price
-      double fundamentalValue = fundamental.getValueAt(getCurrentTime()).doubleValue();
+      double fundamentalValue = fundamental.getValueAt(getCurrentTime().get());
       for (Entry<Agent, SimAgentInfo> e : payoffs.entrySet()) {
         Agent agent = e.getKey();
         SimAgentInfo info = e.getValue();

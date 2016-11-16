@@ -12,12 +12,7 @@ import org.junit.runner.RunWith;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
-import edu.umich.srg.marketsim.Price;
-import edu.umich.srg.marketsim.TimeStamp;
-import edu.umich.srg.marketsim.fundamental.Fundamental;
-import edu.umich.srg.marketsim.fundamental.GaussianFundamentalEstimator;
-import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
-import edu.umich.srg.marketsim.fundamental.NoisyFundamentalEstimator;
+import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestDoubles;
@@ -45,36 +40,30 @@ public class NoisyFundamentalEstimatorTest {
   public void fundamentalAccuracyTest(@TestInts({1, 4}) int finalTime,
       @TestDoubles({0, 0.5, 1}) double meanReversion,
       @TestDoubles({0, 100}) double observationVariance) {
-    Gaussian noise = Gaussian.withMeanVariance(0, observationVariance);
-
     SummStats naiveBias = SummStats.empty(), naiveError = SummStats.empty(),
         hmmBias = SummStats.empty(), hmmError = SummStats.empty();
-    OptimalLinearError optimal = new OptimalLinearError();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(finalTime), mean,
-          meanReversion, shockVariance);
-      NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(finalTime, mean,
-          meanReversion, shockVariance, observationVariance, 1);
+      MockSim sim = new MockSim();
+      Fundamental fund =
+          GaussianMeanReverting.create(rand, finalTime, mean, meanReversion, shockVariance);
+      NoisyGaussianMeanRevertingView estimator = NoisyGaussianMeanRevertingView.create(sim, fund,
+          rand, finalTime, mean, meanReversion, shockVariance, observationVariance);
 
-      double actual = fund.getValueAt(TimeStamp.of(finalTime)).doubleValue();
-      Price observation = Price.of(actual + noise.sample(rand));
-      estimator.addFundamentalObservation(TimeStamp.of(finalTime), observation);
-      double estimate = estimator.estimate();
+      sim.setTime(finalTime);
+      double estimate = estimator.getEstimatedFinalFundamental();
+      double actual = fund.getValueAt(finalTime);
 
       naiveBias.accept(mean - actual);
       hmmBias.accept(estimate - actual);
 
       naiveError.accept((mean - actual) * (mean - actual));
       hmmError.accept((estimate - actual) * (estimate - actual));
-
-      optimal.addObservation(actual, observation.doubleValue());
     }
 
     assertEquals(0, naiveBias.getAverage(), eps);
     assertEquals(0, hmmBias.getAverage(), eps);
     assertTrue(naiveError.getAverage() > hmmError.getAverage() - eps);
-    assertTrue(hmmError.getAverage() > optimal.getError() - eps);
   }
 
   @Ignore
@@ -89,15 +78,17 @@ public class NoisyFundamentalEstimatorTest {
     OptimalLinearError optimal = new OptimalLinearError();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(finalTime), mean,
-          meanReversion, shockVariance);
-      NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(finalTime, mean,
-          meanReversion, shockVariance, 1, transactionVariance);
+      MockSim sim = new MockSim();
+      Fundamental fund =
+          GaussianMeanReverting.create(rand, finalTime, mean, meanReversion, shockVariance);
+      NoisyGaussianMeanRevertingView estimator = NoisyGaussianMeanRevertingView.create(sim, fund,
+          rand, finalTime, mean, meanReversion, shockVariance, Double.POSITIVE_INFINITY);
 
-      double actual = fund.getValueAt(TimeStamp.of(finalTime)).doubleValue();
-      Price observation = Price.of(actual + noise.sample(rand));
-      estimator.addTransactionObservation(TimeStamp.of(finalTime), observation, 1);
-      double estimate = estimator.estimate();
+      sim.setTime(finalTime);
+      double actual = fund.getValueAt(finalTime);
+      double observation = actual + noise.sample(rand);
+      estimator.addObservation(observation, 1, transactionVariance);
+      double estimate = estimator.getEstimatedFinalFundamental();
 
       naiveBias.accept(mean - actual);
       hmmBias.accept(estimate - actual);
@@ -105,7 +96,7 @@ public class NoisyFundamentalEstimatorTest {
       naiveError.accept((mean - actual) * (mean - actual));
       hmmError.accept((estimate - actual) * (estimate - actual));
 
-      optimal.addObservation(actual, observation.doubleValue());
+      optimal.addObservation(actual, observation);
     }
 
     assertEquals(0, naiveBias.getAverage(), eps);
@@ -119,32 +110,25 @@ public class NoisyFundamentalEstimatorTest {
   public void multiSampleTest(@TestInts({1, 2}) int tstep, @TestInts({2, 5}) int numSteps,
       @TestDoubles({0, 0.5, 1}) double meanReversion,
       @TestDoubles({0, 100}) double observationVariance) {
-    Gaussian noise = Gaussian.withMeanVariance(0, observationVariance);
-
     SummStats naiveBias = SummStats.empty(), naiveError = SummStats.empty(),
         hmmBias = SummStats.empty(), hmmError = SummStats.empty();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(tstep * numSteps), mean,
-          meanReversion, shockVariance);
-      NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(tstep * numSteps, mean,
-          meanReversion, shockVariance, observationVariance, 1);
-
-      double observations[] = new double[numSteps + 1];
-      observations[0] = 1;
+      MockSim sim = new MockSim();
+      Fundamental fund =
+          GaussianMeanReverting.create(rand, tstep * numSteps, mean, meanReversion, shockVariance);
+      NoisyGaussianMeanRevertingView estimator = NoisyGaussianMeanRevertingView.create(sim, fund,
+          rand, tstep * numSteps, mean, meanReversion, shockVariance, observationVariance);
 
       double actual = 0;
+      double estimate = 0;
       int time = 0;
       for (int j = 0; j < numSteps; ++j) {
         time += tstep;
-
-        actual = fund.getValueAt(TimeStamp.of(time)).doubleValue();
-        Price observation = Price.of(actual + noise.sample(rand));
-        estimator.addFundamentalObservation(TimeStamp.of(time), observation);
-        observations[j + 1] = observation.doubleValue();
+        sim.setTime(time);
+        actual = fund.getValueAt(time);
+        estimate = estimator.getEstimatedFinalFundamental();
       }
-
-      double estimate = estimator.estimate();
 
       naiveBias.accept(mean - actual);
       hmmBias.accept(estimate - actual);
@@ -163,31 +147,27 @@ public class NoisyFundamentalEstimatorTest {
   public void multipleFundamentalAccuracyTest(@TestInts({1, 4}) int finalTime,
       @TestDoubles({0, 0.5, 1}) double meanReversion,
       @TestDoubles({0, 100}) double observationVariance, @TestInts({2}) int numSamples) {
-    Gaussian noise = Gaussian.withMeanVariance(0, observationVariance);
-
     SummStats naiveBias = SummStats.empty(), naiveError = SummStats.empty(),
         hmmBias = SummStats.empty(), hmmError = SummStats.empty(), baselineBias = SummStats.empty(),
         baselineError = SummStats.empty();
 
     for (int i = 0; i < times; ++i) {
-      Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(finalTime), mean,
-          meanReversion, shockVariance);
-      NoisyFundamentalEstimator estimator =
-          NoisyFundamentalEstimator.create(finalTime, mean, meanReversion, shockVariance,
-              observationVariance, 1),
-          baseline = NoisyFundamentalEstimator.create(finalTime, mean, meanReversion, shockVariance,
-              observationVariance, 1);
+      MockSim sim = new MockSim();
+      Fundamental fund =
+          GaussianMeanReverting.create(rand, finalTime, mean, meanReversion, shockVariance);
+      NoisyGaussianMeanRevertingView estimator =
+          NoisyGaussianMeanRevertingView.create(sim, fund, rand, finalTime, mean, meanReversion,
+              shockVariance, observationVariance),
+          baseline = NoisyGaussianMeanRevertingView.create(sim, fund, rand, finalTime, mean,
+              meanReversion, shockVariance, observationVariance);
 
-      double actual = fund.getValueAt(TimeStamp.of(finalTime)).doubleValue();
-
-      Price observation = null;
+      sim.setTime(finalTime);
+      double actual = fund.getValueAt(finalTime);
+      double estimate = 0;
       for (int j = 0; j < numSamples; ++j) {
-        observation = Price.of(actual + noise.sample(rand));
-        estimator.addFundamentalObservation(TimeStamp.of(finalTime), observation);
+        estimate = estimator.getEstimatedFinalFundamental();
       }
-      baseline.addFundamentalObservation(TimeStamp.of(finalTime), observation);
-
-      double estimate = estimator.estimate(), baselineEstimate = baseline.estimate();
+      double baselineEstimate = baseline.getEstimatedFinalFundamental();
 
       naiveBias.accept(mean - actual);
       hmmBias.accept(estimate - actual);
@@ -209,11 +189,12 @@ public class NoisyFundamentalEstimatorTest {
   @Theory
   public void infiniteObservationVarianceTest(@TestDoubles({0, 0.2, 1}) double meanReversion,
       @TestDoubles({0, 100}) double shockVariance) {
-    NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(100, mean, meanReversion,
-        shockVariance, Double.POSITIVE_INFINITY, 0);
-    long price = Math.abs(rand.nextLong());
-    estimator.addFundamentalObservation(TimeStamp.of(10), Price.of(price));
-    assertEquals(Price.of(mean), Price.of(estimator.estimate()));
+    MockSim sim = new MockSim();
+    Fundamental fund = ConstantFundamental.create(mean);
+    NoisyGaussianMeanRevertingView estimator = NoisyGaussianMeanRevertingView.create(sim, fund,
+        rand, 100, mean, meanReversion, shockVariance, Double.POSITIVE_INFINITY);
+    double estimate = estimator.getEstimatedFinalFundamental();
+    assertEquals(mean, estimate, 0);
   }
 
   @Repeat(100)
@@ -222,22 +203,20 @@ public class NoisyFundamentalEstimatorTest {
       @TestDoubles({0, 100}) double shockVariance) {
     long simLength = 100;
 
-    Fundamental fund = GaussianMeanReverting.create(rand, TimeStamp.of(simLength), mean,
-        meanReversion, shockVariance);
-    NoisyFundamentalEstimator estimator =
-        NoisyFundamentalEstimator.create(simLength, mean, meanReversion, shockVariance, 0, 0);
-    GaussianFundamentalEstimator groundTruth =
-        GaussianFundamentalEstimator.create(simLength, mean, meanReversion);
+    MockSim sim = new MockSim();
+    Fundamental fund =
+        GaussianMeanReverting.create(rand, simLength, mean, meanReversion, shockVariance);
+    NoisyGaussianMeanRevertingView estimator = NoisyGaussianMeanRevertingView.create(sim, fund,
+        rand, simLength, mean, meanReversion, shockVariance, 0);
+    GaussianMeanRevertingView groundTruth =
+        GaussianMeanRevertingView.create(sim, fund, simLength, mean, meanReversion);
 
     IntUniform nextTime = Uniform.closed(1, 3);
     int time = 0;
     while (time < simLength) {
-      TimeStamp t = TimeStamp.of(time);
-
-      Price obs = fund.getValueAt(t);
-      estimator.addFundamentalObservation(t, obs);
-      assertEquals(groundTruth.estimate(t, obs), estimator.estimate(), eps);
-
+      sim.setTime(time);
+      assertEquals(groundTruth.getEstimatedFinalFundamental(),
+          estimator.getEstimatedFinalFundamental(), eps);
       time += nextTime.sample(rand);
     }
   }

@@ -1,8 +1,6 @@
 package edu.umich.srg.marketsim.fundamental;
 
 import edu.umich.srg.collect.Sparse.Entry;
-import edu.umich.srg.marketsim.Price;
-import edu.umich.srg.marketsim.TimeStamp;
 
 /**
  * Class to store and compute a stochastic process used as a base to determine the private
@@ -10,8 +8,14 @@ import edu.umich.srg.marketsim.TimeStamp;
  */
 public interface Fundamental {
 
-  Price getValueAt(TimeStamp time);
+  double getValueAt(long time);
 
-  Iterable<Entry<Number>> getFundamentalValues();
+  Iterable<Entry<Double>> getFundamentalValues();
+
+  interface FundamentalView {
+
+    double getEstimatedFinalFundamental();
+
+  }
 
 }

@@ -68,7 +68,7 @@ public class CommandLineInterface extends CommandLineOptions {
     Random rand = new Random(seed);
 
     Fundamental fundamental = GaussianMeanReverting.create(new Random(rand.nextLong()),
-        TimeStamp.of(configuration.get(SimLength.class)), configuration.get(FundamentalMean.class),
+        configuration.get(SimLength.class), configuration.get(FundamentalMean.class),
         configuration.get(FundamentalMeanReversion.class),
         configuration.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, new Random(rand.nextLong()));

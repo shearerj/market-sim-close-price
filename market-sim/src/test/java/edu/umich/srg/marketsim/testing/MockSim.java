@@ -5,14 +5,22 @@ import edu.umich.srg.marketsim.TimeStamp;
 
 public class MockSim implements Sim {
 
-  @Override
-  public void scheduleIn(TimeStamp delay, Runnable activity) {
+  private TimeStamp currentTime;
 
+  public MockSim() {
+    currentTime = TimeStamp.ZERO;
   }
 
   @Override
+  public void scheduleIn(TimeStamp delay, Runnable activity) {}
+
+  @Override
   public TimeStamp getCurrentTime() {
-    return TimeStamp.ZERO;
+    return currentTime;
+  }
+
+  public void setTime(long newTime) {
+    currentTime = TimeStamp.of(newTime);
   }
 
 }

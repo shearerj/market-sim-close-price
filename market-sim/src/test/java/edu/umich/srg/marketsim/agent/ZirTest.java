@@ -15,7 +15,6 @@ import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.MarketSimulator;
 import edu.umich.srg.marketsim.TimeStamp;
-import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.CdaMarket;
@@ -34,8 +33,7 @@ public class ZirTest {
     int numAgents = 10;
     long simLength = 10;
 
-    Fundamental fundamental =
-        GaussianMeanReverting.create(new Random(), TimeStamp.of(simLength), 1e9, 0, 0);
+    Fundamental fundamental = GaussianMeanReverting.create(new Random(), simLength, 1e9, 0, 0);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
     Spec spec =

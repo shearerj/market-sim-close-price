@@ -4,8 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Gaussian;
-import edu.umich.srg.marketsim.Price;
-import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
@@ -29,14 +27,14 @@ import java.util.TreeMap;
 public abstract class GaussianMeanReverting implements Fundamental, Serializable {
 
   /** Create a standard Gaussian mean reverting fundamental stochastic process. */
-  public static Fundamental create(Random rand, TimeStamp finalTime, double mean,
-      double meanReversion, double shockVar) {
+  public static Fundamental create(Random rand, long finalTime, double mean, double meanReversion,
+      double shockVar) {
     if (meanReversion == 0) {
-      return new RandomWalk(rand, finalTime.get(), mean, shockVar);
+      return new RandomWalk(rand, finalTime, mean, shockVar);
     } else if (meanReversion == 1) {
-      return new IidGaussian(rand, finalTime.get(), mean, shockVar);
+      return new IidGaussian(rand, finalTime, mean, shockVar);
     } else {
-      return new MeanReverting(rand, finalTime.get(), mean, shockVar, meanReversion);
+      return new MeanReverting(rand, finalTime, mean, shockVar, meanReversion);
     }
   }
 
@@ -50,8 +48,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
   }
 
   @Override
-  public Price getValueAt(TimeStamp timeStamp) {
-    long time = timeStamp.get();
+  public double getValueAt(long time) {
     checkArgument(time <= fundamental.lastEntry().getKey(), "Can't ask for time beyond final time");
 
     Entry<Long, Double> before = fundamental.floorEntry(time);
@@ -72,18 +69,16 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     if (before.getKey() == time) {
-      return Price.of(before.getValue()).nonnegative();
+      return before.getValue();
     } else {
-      return Price.of(after.getValue()).nonnegative();
+      return after.getValue();
     }
   }
 
   @Override
-  public Iterable<Sparse.Entry<Number>> getFundamentalValues() {
-
+  public Iterable<Sparse.Entry<Double>> getFundamentalValues() {
     return () -> fundamental.entrySet().stream()
-        .map(e -> Sparse.<Number>immutableEntry(e.getKey(), Price.of(e.getValue().doubleValue())))
-        .iterator();
+        .map(e -> Sparse.immutableEntry(e.getKey(), e.getValue().doubleValue())).iterator();
   }
 
   protected abstract double getIntermediateValue(long time, double priceBefore, long timeBefore,

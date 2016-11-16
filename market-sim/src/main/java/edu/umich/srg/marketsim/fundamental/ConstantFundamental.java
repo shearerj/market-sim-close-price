@@ -2,35 +2,33 @@ package edu.umich.srg.marketsim.fundamental;
 
 import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.collect.Sparse.Entry;
-import edu.umich.srg.marketsim.Price;
-import edu.umich.srg.marketsim.TimeStamp;
 
 import java.io.Serializable;
 import java.util.Collections;
 
 public class ConstantFundamental implements Fundamental, Serializable {
 
-  private final Price constant;
+  private final double constant;
 
-  private ConstantFundamental(Price constant) {
+  private ConstantFundamental(double constant) {
     this.constant = constant;
   }
 
-  public static ConstantFundamental create(Price constant) {
+  public static ConstantFundamental create(double constant) {
     return new ConstantFundamental(constant);
   }
 
   public static ConstantFundamental create(Number constant) {
-    return new ConstantFundamental(Price.of(constant.doubleValue()));
+    return new ConstantFundamental(constant.doubleValue());
   }
 
   @Override
-  public Price getValueAt(TimeStamp time) {
+  public double getValueAt(long time) {
     return constant;
   }
 
   @Override
-  public Iterable<Entry<Number>> getFundamentalValues() {
+  public Iterable<Entry<Double>> getFundamentalValues() {
     return Collections.singleton(Sparse.immutableEntry(0, constant));
   }
 
