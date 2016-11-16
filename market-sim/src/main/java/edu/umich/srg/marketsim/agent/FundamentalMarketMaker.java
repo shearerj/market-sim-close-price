@@ -7,19 +7,15 @@ import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
-import edu.umich.srg.marketsim.Keys.FundamentalMean;
-import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.NumRungs;
 import edu.umich.srg.marketsim.Keys.RungSep;
 import edu.umich.srg.marketsim.Keys.RungThickness;
-import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.Spread;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
-import edu.umich.srg.marketsim.fundamental.GaussianMeanRevertingView;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
@@ -48,9 +44,7 @@ public class FundamentalMarketMaker implements Agent {
     this.sim = sim;
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
-
-    this.fundamental = GaussianMeanRevertingView.create(sim, fundamental, spec.get(SimLength.class),
-        spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class));
+    this.fundamental = fundamental.getView(sim);
 
     this.halfSpread = spec.get(Spread.class) / 2;
     this.rungThickness = spec.get(RungThickness.class);

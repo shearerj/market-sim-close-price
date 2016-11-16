@@ -1,13 +1,9 @@
 package edu.umich.srg.marketsim.agent;
 
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.marketsim.Keys.FundamentalMean;
-import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
-import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
-import edu.umich.srg.marketsim.fundamental.GaussianMeanRevertingView;
 import edu.umich.srg.marketsim.market.Market;
 
 import java.util.Collection;
@@ -20,8 +16,7 @@ public class ZirAgent extends StandardMarketAgent {
   /** Standard constructor for ZIR agent. */
   public ZirAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     super(sim, market, spec, rand);
-    this.fundamental = GaussianMeanRevertingView.create(sim, fundamental, spec.get(SimLength.class),
-        spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class));
+    this.fundamental = fundamental.getView(sim);
   }
 
   public static ZirAgent createFromSpec(Sim sim, Fundamental fundamental,

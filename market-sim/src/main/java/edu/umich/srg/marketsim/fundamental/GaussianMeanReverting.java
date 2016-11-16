@@ -4,10 +4,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Gaussian;
+import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -39,10 +42,12 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
   }
 
   private final NavigableMap<Long, Double> fundamental;
+  protected final long finalTime;
 
   private GaussianMeanReverting(long finalTime, double start, double end) {
     // Put in zero and one, so doubling works
     this.fundamental = new TreeMap<>();
+    this.finalTime = finalTime;
     fundamental.put(0L, start);
     fundamental.put(finalTime, end);
   }
@@ -89,12 +94,14 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final PositionalSeed seed;
     private final Random rand;
     private final double shockVar;
+    private final Map<Sim, FundamentalView> cachedViews;
 
     private RandomWalk(Random rand, long finalTime, double mean, double shockVar) {
       super(finalTime, mean, Gaussian.withMeanVariance(mean, shockVar * finalTime).sample(rand));
       this.seed = PositionalSeed.with(rand.nextLong());
       this.shockVar = shockVar;
       this.rand = rand;
+      this.cachedViews = new HashMap<>();
     }
 
     @Override
@@ -104,6 +111,27 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       return Gaussian.withMeanVariance(
           (priceBefore * timeAfter + priceAfter * timeBefore) / (timeBefore + timeAfter),
           timeBefore * timeAfter / (double) (timeBefore + timeAfter) * shockVar).sample(rand);
+    }
+
+
+    @Override
+    public FundamentalView getView(Sim sim) {
+      return cachedViews.computeIfAbsent(sim, RandomWalkView::new);
+    }
+
+    private class RandomWalkView implements FundamentalView {
+
+      private final Sim sim;
+
+      private RandomWalkView(Sim sim) {
+        this.sim = sim;
+      }
+
+      @Override
+      public double getEstimatedFinalFundamental() {
+        return getValueAt(sim.getCurrentTime().get());
+      }
+
     }
 
     private static final long serialVersionUID = 1;
@@ -116,12 +144,14 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final PositionalSeed seed;
     private final Random rand;
     private final Gaussian dist;
+    private final Map<Sim, FundamentalView> cachedViews;
 
     private IidGaussian(Random rand, long finalTime, double mean, double shockVar) {
       super(finalTime, mean, Gaussian.withMeanVariance(mean, shockVar).sample(rand));
       this.seed = PositionalSeed.with(rand.nextLong());
       this.dist = Gaussian.withMeanVariance(mean, shockVar);
       this.rand = rand;
+      this.cachedViews = new HashMap<>();
     }
 
     @Override
@@ -129,6 +159,30 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
         double priceAfter, long jumpsAfter) {
       rand.setSeed(seed.getSeed(time));
       return dist.sample(rand);
+    }
+
+    @Override
+    public FundamentalView getView(Sim sim) {
+      return cachedViews.computeIfAbsent(sim, IidGaussianView::new);
+    }
+
+    private class IidGaussianView implements FundamentalView {
+
+      private final Sim sim;
+
+      private IidGaussianView(Sim sim) {
+        this.sim = sim;
+      }
+
+      @Override
+      public double getEstimatedFinalFundamental() {
+        if (sim.getCurrentTime().get() == finalTime) {
+          return getValueAt(finalTime);
+        } else {
+          return dist.getMean();
+        }
+      }
+
     }
 
     private static final long serialVersionUID = 1;
@@ -143,6 +197,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final double shockVar;
     private final double mean;
     private final double kappac;
+    private final Map<Sim, FundamentalView> cachedViews;
 
     private MeanReverting(Random rand, long finalTime, double mean, double shockVar,
         double meanReversion) {
@@ -152,6 +207,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       this.shockVar = shockVar;
       this.kappac = 1 - meanReversion;
       this.rand = rand;
+      this.cachedViews = new HashMap<>();
     }
 
     private static double getFinalValue(Random rand, double mean, long finalTime, double kappac,
@@ -177,6 +233,28 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
           * (kappacPowerAfter * kappacPowerAfter - 1) / ((kappac * kappac - 1)
               * (kappacPowerBefore * kappacPowerBefore * kappacPowerAfter * kappacPowerAfter - 1));
       return Gaussian.withMeanVariance(stepMean, stepVariance * shockVar).sample(rand);
+    }
+
+    @Override
+    public FundamentalView getView(Sim sim) {
+      return cachedViews.computeIfAbsent(sim, MeanRevertingView::new);
+    }
+
+    private class MeanRevertingView implements FundamentalView {
+
+      private final Sim sim;
+
+      private MeanRevertingView(Sim sim) {
+        this.sim = sim;
+      }
+
+      @Override
+      public double getEstimatedFinalFundamental() {
+        long time = sim.getCurrentTime().get();
+        double kappacToPower = Math.pow(kappac, finalTime - time);
+        return (1 - kappacToPower) * mean + kappacToPower * getValueAt(time);
+      }
+
     }
 
     private static final long serialVersionUID = 1;

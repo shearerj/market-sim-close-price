@@ -8,11 +8,13 @@ import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Binomial;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Hypergeometric;
-import edu.umich.srg.marketsim.Price;
+import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -35,7 +37,7 @@ public class GaussianJump implements Fundamental, Serializable {
   public static Fundamental create(Random rand, long finalTime, double mean, double shockVar,
       double shockProb) {
     if (shockProb == 0) {
-      return ConstantFundamental.create(Price.of(mean));
+      return ConstantFundamental.create(mean);
     } else if (shockProb == 1) {
       return GaussianMeanReverting.create(rand, finalTime, mean, 0, shockVar);
     } else {
@@ -47,6 +49,7 @@ public class GaussianJump implements Fundamental, Serializable {
   private final PositionalSeed seed;
   private final Random rand;
   private final double shockVar;
+  private final Map<Sim, FundamentalView> cachedViews;
 
   private GaussianJump(long finalTime, double mean, double shockVar, double shockProb,
       Random rand) {
@@ -54,6 +57,7 @@ public class GaussianJump implements Fundamental, Serializable {
     this.shockVar = shockVar;
     this.seed = PositionalSeed.with(rand.nextLong());
     this.rand = rand;
+    this.cachedViews = new HashMap<>();
 
     fundamental.put(0L, new FundObs(mean, 0));
     long time = 0;
@@ -136,6 +140,26 @@ public class GaussianJump implements Fundamental, Serializable {
     }
 
     private static final long serialVersionUID = 1;
+
+  }
+
+  @Override
+  public FundamentalView getView(Sim sim) {
+    return cachedViews.computeIfAbsent(sim, GaussianJumpView::new);
+  }
+
+  private class GaussianJumpView implements FundamentalView {
+
+    private final Sim sim;
+
+    private GaussianJumpView(Sim sim) {
+      this.sim = sim;
+    }
+
+    @Override
+    public double getEstimatedFinalFundamental() {
+      return getValueAt(sim.getCurrentTime().get());
+    }
 
   }
 

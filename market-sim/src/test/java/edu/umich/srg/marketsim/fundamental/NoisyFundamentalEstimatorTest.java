@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
+import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
 import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
@@ -206,10 +207,9 @@ public class NoisyFundamentalEstimatorTest {
     MockSim sim = new MockSim();
     Fundamental fund =
         GaussianMeanReverting.create(rand, simLength, mean, meanReversion, shockVariance);
-    NoisyGaussianMeanRevertingView estimator = NoisyGaussianMeanRevertingView.create(sim, fund,
-        rand, simLength, mean, meanReversion, shockVariance, 0);
-    GaussianMeanRevertingView groundTruth =
-        GaussianMeanRevertingView.create(sim, fund, simLength, mean, meanReversion);
+    FundamentalView estimator = NoisyGaussianMeanRevertingView.create(sim, fund, rand, simLength,
+        mean, meanReversion, shockVariance, 0);
+    FundamentalView groundTruth = fund.getView(sim);
 
     IntUniform nextTime = Uniform.closed(1, 3);
     int time = 0;
