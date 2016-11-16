@@ -1,4 +1,4 @@
-package edu.umich.srg.marketsim.strategy;
+package edu.umich.srg.marketsim.fundamental;
 
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;

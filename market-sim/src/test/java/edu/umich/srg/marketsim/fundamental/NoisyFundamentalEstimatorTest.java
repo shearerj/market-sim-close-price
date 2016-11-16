@@ -1,4 +1,4 @@
-package edu.umich.srg.marketsim.strategy;
+package edu.umich.srg.marketsim.fundamental;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -15,7 +15,9 @@ import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.fundamental.GaussianFundamentalEstimator;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
+import edu.umich.srg.marketsim.fundamental.NoisyFundamentalEstimator;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestDoubles;

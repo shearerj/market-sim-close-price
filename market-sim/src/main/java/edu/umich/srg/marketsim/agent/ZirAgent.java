@@ -9,9 +9,9 @@ import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.FundamentalView;
+import edu.umich.srg.marketsim.fundamental.GaussianFundamentalEstimator;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.Market;
-import edu.umich.srg.marketsim.strategy.GaussianFundamentalEstimator;
 
 import java.util.Collection;
 import java.util.Random;

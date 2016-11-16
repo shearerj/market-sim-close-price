@@ -22,11 +22,11 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.FundamentalView;
+import edu.umich.srg.marketsim.fundamental.NoisyFundamentalEstimator;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.strategy.MarketMakerLadder;
-import edu.umich.srg.marketsim.strategy.NoisyFundamentalEstimator;
 
 import java.util.Collection;
 import java.util.Random;
