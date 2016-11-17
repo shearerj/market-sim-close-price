@@ -124,7 +124,6 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
   public SummStats combine(SummStats other) {
     count += other.count;
     double delta = other.average - average;
-    // XXX not certain of proper order of operations to minimize precision loss
     average += delta * other.count / count;
     squaredError += other.squaredError + delta * (other.average - average) * other.count;
     min = Math.min(min, other.min);

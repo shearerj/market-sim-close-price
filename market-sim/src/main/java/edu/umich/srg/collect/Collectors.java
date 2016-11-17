@@ -16,7 +16,6 @@ public class Collectors {
     return new DoubleArraySummaryStatistics(length);
   }
 
-  // TODO Generalize this to arbitrary consumers or collectors or something
   private static class DoubleArraySummaryStatistics
       implements Collector<double[], DoubleSummaryStatistics[], DoubleSummaryStatistics[]> {
 

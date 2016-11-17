@@ -17,7 +17,6 @@ import java.util.Map;
 public class SurplusThreshold {
 
   // This class is memoized on the assumption that not many different thresholds will be used
-  // TODO consider moving to guava LoadingCache
   private static final Map<Double, SurplusThreshold> memoized = new HashMap<>();
 
   private final double threshold;

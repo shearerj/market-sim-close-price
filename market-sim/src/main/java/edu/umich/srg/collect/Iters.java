@@ -64,30 +64,6 @@ public final class Iters {
     };
   }
 
-  // TODO There has to be a better way
-  /**
-   * This is a wrapper iterator that will print any exception stack traces that may be gobbled up by
-   * a thread pool.
-   */
-  public static <T> Iterator<T> printExceptions(Iterator<T> iterator) {
-    return new Iterator<T>() {
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public T next() {
-        try {
-          return iterator.next();
-        } catch (Exception e) {
-          e.printStackTrace();
-          throw e;
-        }
-      }
-    };
-  }
-
   private Iters() {} // Unconstructable
 
 }

@@ -608,7 +608,6 @@ public class AbstractMarketTest {
   //
   // assertEquals(truth, stats.getTimeStats().get(Stats.TRANSACTION_PRICE));
   //
-  // // XXX Doesn't account for order quantity
   // assertEquals(125, stats.getSummaryStats().get(Stats.PRICE).mean(), eps);
   // assertEquals(4, stats.getSummaryStats().get(Stats.PRICE).n());
   // }

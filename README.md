@@ -62,3 +62,9 @@ Documentation Contents
 - [Fundamental](docs/fundamental.md) - General mathematical information about the Gaussian mean-reverting fundamental process we use in the simulator.
 - [Keys](docs/keys.md) - Auto-generated documentation on all of the keys available to the simulator.
   Not quite perfect, instead we recommend getting better type information from `./market-sim -k`.
+
+
+TODO
+----
+
+- Remove TimeStamp and Price in favor or primitives

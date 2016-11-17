@@ -16,6 +16,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -35,7 +36,11 @@ import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
+import edu.umich.srg.marketsim.Keys.MaxPosition;
+import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.RandomSeed;
+import edu.umich.srg.marketsim.Keys.Rmax;
+import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
@@ -419,17 +424,77 @@ public class IntegrationTest {
     assertFalse(writer.toString().isEmpty(), "print keys text was empty");
   }
 
-  // TODO Test that agents inherit specifications from configuration
+  @Test
+  /** Agent must inherit from global spec otherwise it'd be ill specified. */
+  public void inheritanceTest1() {
+    Spec configuration = Spec.builder() //
+        .put(SimLength.class, 10l) //
+        .put(Markets.class, ImmutableList.of("cda")) //
+        .put(FundamentalMeanReversion.class, 0d) //
+        .put(FundamentalShockVar.class, 0d) //
+        .put(ArrivalRate.class, 1d) //
+        .put(MaxPosition.class, 10) //
+        .put(PrivateValueVar.class, 0d) //
+        .put(Rmin.class, 0) //
+        .put(Rmax.class, 0) //
+        .build();
 
-  // TODO Test that invalid agent names throw exception
+    Multiset<RoleStrat> assignment = HashMultiset.create(1);
+    assignment.add(RoleStrat.of("role", toStratString("zir", Spec.empty())));
+    SimSpec spec = SimSpec.create(assignment, configuration);
+    CommandLineInterface.simulate(spec, 0);
+  }
+
+  @Test
+  /**
+   * If agent inherits from spec, they should never trade, so cda prices will be empty
+   * 
+   * This test isn't perfect as very unlikely random events could result in them not trading
+   * spontaneously, or if private values are very high, they could trade despite the shading. That
+   * being said, I think the probability is low wnough to justify this test.
+   */
+  public void inheritanceTest2() {
+    Spec configuration = Spec.builder() //
+        .put(SimLength.class, 1000l) //
+        .put(Markets.class, ImmutableList.of("cda")) //
+        .put(FundamentalMeanReversion.class, 0d) //
+        .put(FundamentalShockVar.class, 0d) //
+        .put(ArrivalRate.class, 1d) //
+        .put(MaxPosition.class, 10) //
+        .put(PrivateValueVar.class, 0d) //
+        .put(Rmin.class, 100000) //
+        .put(Rmax.class, 100000) //
+        .build();
+    Spec truthful = Spec.fromPairs(Rmin.class, 0, Rmax.class, 0);
+
+    Multiset<RoleStrat> assignment = HashMultiset.create(1);
+    assignment.add(RoleStrat.of("role", toStratString("zir", Spec.empty())));
+    assignment.add(RoleStrat.of("role", toStratString("zir", truthful)));
+    SimSpec spec = SimSpec.create(assignment, configuration);
+    Observation obs = CommandLineInterface.simulate(spec, 0);
+
+    JsonArray prices = obs.getFeatures().get("markets").getAsJsonArray().get(0).getAsJsonObject()
+        .get("prices").getAsJsonArray();
+    assertEquals(prices.size(), 0);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void invalidAgentTest() {
+    String spec = "{\"assignment\":{\"role\":{" // Base assignment
+        + "\"invalid\":1" // Agent type one
+        + "}},\"configuration\":{\"randomSeed\":1234,\"markets\":\"cda\","
+        + "\"simLength\":10,\"fundamentalMean\":1500,\"fundamentalMeanReversion\":0,"
+        + "\"fundamentalShockVar\":0}}";
+
+    Reader specReader = new StringReader(spec);
+    StringWriter obsData = new StringWriter();
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPackage);
+  }
 
   private static String toStratString(String name, Spec spec) {
     StringBuilder strat = new StringBuilder(name).append(':');
-    stratJoiner.appendTo(strat,
-        spec.entrySet().stream()
-            .map(e -> CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, e.getKey().getSimpleName())
-                + '_' + e.getValue())
-            .iterator());
+    stratJoiner.appendTo(strat, spec.entrySet().stream()
+        .map(e -> e.getKey().getSimpleName() + '_' + e.getValue()).iterator());
     return strat.toString();
   }
 
