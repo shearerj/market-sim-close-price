@@ -1,5 +1,6 @@
 package edu.umich.srg.egtaonline.spec;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Converter;
@@ -131,7 +132,8 @@ public abstract class ParsableValue<T> extends Value<T> {
   }
 
   private static final class CompactBoolConverter extends Converter<String, Boolean> {
-    private static final Set<String> trueStrings = ImmutableSet.of("t", "true");
+    private static final Set<String> trueStrings = ImmutableSet.of("t", "true", "1");
+    private static final Set<String> falseStrings = ImmutableSet.of("f", "false", "0");
 
     @Override
     protected String doBackward(Boolean bool) {
@@ -140,7 +142,11 @@ public abstract class ParsableValue<T> extends Value<T> {
 
     @Override
     protected Boolean doForward(String string) {
-      return trueStrings.contains(checkNotNull(string).toLowerCase());
+      String lower = checkNotNull(string).toLowerCase();
+      boolean value = trueStrings.contains(lower);
+      checkArgument(value || falseStrings.contains(lower),
+          "String must be a true (%s) or false (%s) string", trueStrings, falseStrings);
+      return value;
     }
   }
 

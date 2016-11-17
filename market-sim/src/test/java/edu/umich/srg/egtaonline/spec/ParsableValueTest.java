@@ -20,13 +20,18 @@ public class ParsableValueTest {
     A, B, CEEEE
   };
 
-  // FIXME Test empty string conditions
-
   @Test
   public void doubleTest() {
     DoubleValue d = new DoubleValue() {};
     d.parse("5.6");
     assertEquals(5.6, d.get(), 0);
+  }
+
+
+  @Test(expected = NumberFormatException.class)
+  public void emptyDoubleTest() {
+    DoubleValue d = new DoubleValue() {};
+    d.parse("");
   }
 
   @Test
@@ -36,11 +41,23 @@ public class ParsableValueTest {
     assertEquals(7, (int) i.get());
   }
 
+  @Test(expected = NumberFormatException.class)
+  public void emptyIntTest() {
+    IntValue i = new IntValue() {};
+    i.parse("");
+  }
+
   @Test
   public void longTest() {
     LongValue l = new LongValue() {};
     l.parse("8");
     assertEquals(8l, (long) l.get());
+  }
+
+  @Test(expected = NumberFormatException.class)
+  public void emptyLongTest() {
+    LongValue l = new LongValue() {};
+    l.parse("");
   }
 
   @Test
@@ -54,6 +71,8 @@ public class ParsableValueTest {
     assertEquals(true, (boolean) b.get());
     b.parse("tRuE");
     assertEquals(true, (boolean) b.get());
+    b.parse("1");
+    assertEquals(true, (boolean) b.get());
     b.parse("f");
     assertEquals(false, (boolean) b.get());
     b.parse("F");
@@ -62,6 +81,14 @@ public class ParsableValueTest {
     assertEquals(false, (boolean) b.get());
     b.parse("fAlSe");
     assertEquals(false, (boolean) b.get());
+    b.parse("0");
+    assertEquals(false, (boolean) b.get());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyBoolTest() {
+    BoolValue b = new BoolValue() {};
+    b.parse("");
   }
 
   @Test
@@ -69,6 +96,8 @@ public class ParsableValueTest {
     StringValue l = new StringValue() {};
     l.parse("simulation!");
     assertEquals("simulation!", l.get());
+    l.parse("");
+    assertEquals("", l.get());
   }
 
   @Test
@@ -78,6 +107,8 @@ public class ParsableValueTest {
     assertEquals(ImmutableList.of(8), ImmutableList.copyOf(l.get()));
     l.parse("8/7/6/100");
     assertEquals(ImmutableList.of(8, 7, 6, 100), ImmutableList.copyOf(l.get()));
+    l.parse("");
+    assertEquals(ImmutableList.of(), ImmutableList.copyOf(l.get()));
   }
 
   @Test
@@ -89,6 +120,12 @@ public class ParsableValueTest {
     assertEquals(Enumerated.B, e.get());
     e.parse("CEEEE");
     assertEquals(Enumerated.CEEEE, e.get());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyEnumTest() {
+    EnumValue<Enumerated> e = new EnumValue<Enumerated>(Enumerated.class) {};
+    e.parse("");
   }
 
 }
