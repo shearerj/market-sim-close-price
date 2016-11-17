@@ -35,7 +35,7 @@ public class ZirTest {
 
     Fundamental fundamental = GaussianMeanReverting.create(new Random(), simLength, 1e9, 0, 0);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     Spec spec =
         Spec.builder().putAll(Keys.DEFAULT_KEYS).put(ArrivalRate.class, 0.5).put(Rmin.class, 100)
             .put(Rmax.class, 500).put(MaxPosition.class, 5).put(PrivateValueVar.class, 1e3)

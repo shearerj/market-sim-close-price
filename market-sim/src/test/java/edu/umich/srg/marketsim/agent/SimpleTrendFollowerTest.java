@@ -40,7 +40,7 @@ public class SimpleTrendFollowerTest {
   public void setup() {
     Fundamental fundamental = ConstantFundamental.create(1e9);
     sim = MarketSimulator.create(fundamental, rand);
-    market = sim.addMarket(CdaMarket.create(sim));
+    market = sim.addMarket(CdaMarket.create(sim, fundamental));
     Agent mockAgent = new MockAgent();
     view = market.getView(mockAgent, TimeStamp.ZERO);
   }

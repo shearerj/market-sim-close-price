@@ -3,14 +3,16 @@ package edu.umich.srg.marketsim.fundamental;
 import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.collect.Sparse.Entry;
 import edu.umich.srg.marketsim.Sim;
+import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Random;
 
 public class ConstantFundamental implements Fundamental, Serializable {
 
   private final double constant;
-  private final FundamentalView view;
+  private final GaussianFundamentalView view;
 
   private ConstantFundamental(double constant) {
     this.constant = constant;
@@ -32,15 +34,23 @@ public class ConstantFundamental implements Fundamental, Serializable {
   }
 
   @Override
-  public FundamentalView getView(Sim sim) {
+  public GaussianFundamentalView getView(Sim sim) {
     return view;
   }
 
-  private class ConstantView implements FundamentalView {
+  private class ConstantView implements GaussableView, GaussianFundamentalView {
 
     @Override
     public double getEstimatedFinalFundamental() {
       return constant;
+    }
+
+    @Override
+    public void addObservation(double observation, double variance, int quantity) {}
+
+    @Override
+    public GaussianFundamentalView addNoise(Random rand, double variance) {
+      return this;
     }
 
   }

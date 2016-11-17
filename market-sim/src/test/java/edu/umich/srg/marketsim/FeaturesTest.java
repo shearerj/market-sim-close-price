@@ -80,7 +80,7 @@ public class FeaturesTest {
         spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class),
         spec.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     for (int i = 0; i < numAgents; ++i) {
       sim.addAgent(new ZirAgent(sim, cda, fundamental, spec, rand));
     }
@@ -114,8 +114,9 @@ public class FeaturesTest {
     PrivateValue pv = PrivateValues.fromMarginalBuys(new double[] {10, 3});
 
     // First create simulation with only "background" agents
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-    CdaMarket market = CdaMarket.create(sim);
+    Fundamental fundamental = ConstantFundamental.create(0);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    CdaMarket market = CdaMarket.create(sim, fundamental);
     sim.addMarket(market);
     for (int i = 0; i < numAgents; ++i) {
       Agent agent = MockAgent.builder().privateValue(pv).build();
@@ -130,7 +131,7 @@ public class FeaturesTest {
 
     // Now add an intermediary (no private value)
     sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-    market = CdaMarket.create(sim);
+    market = CdaMarket.create(sim, fundamental);
     sim.addMarket(market);
     for (int i = 0; i < numAgents; ++i) {
       Agent agent = MockAgent.builder().privateValue(pv).build();
@@ -154,8 +155,9 @@ public class FeaturesTest {
    */
   @Test
   public void multipleTradeTest() throws ExecutionException, InterruptedException {
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-    CdaMarket market = CdaMarket.create(sim);
+    Fundamental fundamental = ConstantFundamental.create(0);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    CdaMarket market = CdaMarket.create(sim, fundamental);
     sim.addMarket(market);
     // Buyer
     Agent buyer = MockAgent.builder()
@@ -177,8 +179,9 @@ public class FeaturesTest {
   /** Test that submissions is accurately counted. */
   @Test
   public void submissionsTest() {
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Fundamental fundamental = ConstantFundamental.create(0);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     // Buy 2 @ 200
     sim.addAgent(new MockAgent() {
@@ -220,8 +223,9 @@ public class FeaturesTest {
 
   @Test
   public void noTradeTest() {
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Fundamental fundamental = ConstantFundamental.create(0);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     // Buyer willing to buy at 5
     sim.addAgent(new MockAgent() {

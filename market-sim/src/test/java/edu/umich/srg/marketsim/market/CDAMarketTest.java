@@ -10,12 +10,15 @@ import org.junit.Test;
 
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
 
 public class CDAMarketTest {
+  private Fundamental fund;
   private MockSim sim;
   private CdaMarket market;
   private MockAgent agent;
@@ -24,7 +27,8 @@ public class CDAMarketTest {
   @Before
   public void setup() {
     sim = new MockSim();
-    market = CdaMarket.create(sim);
+    fund = ConstantFundamental.create(0);
+    market = CdaMarket.create(sim, fund);
     agent = new MockAgent();
     view = market.getView(agent, TimeStamp.ZERO);
   }

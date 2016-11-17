@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.marketsim.Sim;
+import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
@@ -29,25 +30,30 @@ import java.util.TreeMap;
 
 public abstract class GaussianMeanReverting implements Fundamental, Serializable {
 
+  /*
+   * XXX If mean reversion is 1 this can be made more efficient, but it's a degernate case so it's
+   * not implemented
+   */
   /** Create a standard Gaussian mean reverting fundamental stochastic process. */
   public static Fundamental create(Random rand, long finalTime, double mean, double meanReversion,
       double shockVar) {
-    if (meanReversion == 0) {
+    if (shockVar == 0) {
+      return ConstantFundamental.create(mean);
+    } else if (meanReversion == 0) {
       return new RandomWalk(rand, finalTime, mean, shockVar);
-    } else if (meanReversion == 1) {
-      return new IidGaussian(rand, finalTime, mean, shockVar);
     } else {
       return new MeanReverting(rand, finalTime, mean, shockVar, meanReversion);
     }
   }
 
-  private final NavigableMap<Long, Double> fundamental;
+  protected final NavigableMap<Long, Double> fundamental;
   protected final long finalTime;
+  protected final double initial;
 
   private GaussianMeanReverting(long finalTime, double start, double end) {
-    // Put in zero and one, so doubling works
     this.fundamental = new TreeMap<>();
     this.finalTime = finalTime;
+    this.initial = start;
     fundamental.put(0L, start);
     fundamental.put(finalTime, end);
   }
@@ -94,7 +100,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final PositionalSeed seed;
     private final Random rand;
     private final double shockVar;
-    private final Map<Sim, FundamentalView> cachedViews;
+    private final Map<Sim, GaussableView> cachedViews;
 
     private RandomWalk(Random rand, long finalTime, double mean, double shockVar) {
       super(finalTime, mean, Gaussian.withMeanVariance(mean, shockVar * finalTime).sample(rand));
@@ -115,21 +121,33 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
 
     @Override
-    public FundamentalView getView(Sim sim) {
+    public GaussableView getView(Sim sim) {
       return cachedViews.computeIfAbsent(sim, RandomWalkView::new);
     }
 
-    private class RandomWalkView implements FundamentalView {
-
-      private final Sim sim;
+    private class RandomWalkView extends GaussianMeanRevertingView {
 
       private RandomWalkView(Sim sim) {
-        this.sim = sim;
+        super(sim);
       }
 
       @Override
-      public double getEstimatedFinalFundamental() {
-        return getValueAt(sim.getCurrentTime().get());
+      protected double finalFromMean(long time, double mean) {
+        return mean;
+      }
+
+      @Override
+      protected GaussianEstimator generateEstimator() {
+        return new RandomWalkEstimator();
+      }
+
+    }
+
+    private class RandomWalkEstimator extends GaussianEstimator {
+
+      @Override
+      void updateTime(long advance) {
+        posteriorVariance += advance * shockVar;
       }
 
     }
@@ -137,58 +155,6 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private static final long serialVersionUID = 1;
 
   }
-
-
-  private static class IidGaussian extends GaussianMeanReverting implements Serializable {
-
-    private final PositionalSeed seed;
-    private final Random rand;
-    private final Gaussian dist;
-    private final Map<Sim, FundamentalView> cachedViews;
-
-    private IidGaussian(Random rand, long finalTime, double mean, double shockVar) {
-      super(finalTime, mean, Gaussian.withMeanVariance(mean, shockVar).sample(rand));
-      this.seed = PositionalSeed.with(rand.nextLong());
-      this.dist = Gaussian.withMeanVariance(mean, shockVar);
-      this.rand = rand;
-      this.cachedViews = new HashMap<>();
-    }
-
-    @Override
-    public double getIntermediateValue(long time, double priceBefore, long jumpsBefore,
-        double priceAfter, long jumpsAfter) {
-      rand.setSeed(seed.getSeed(time));
-      return dist.sample(rand);
-    }
-
-    @Override
-    public FundamentalView getView(Sim sim) {
-      return cachedViews.computeIfAbsent(sim, IidGaussianView::new);
-    }
-
-    private class IidGaussianView implements FundamentalView {
-
-      private final Sim sim;
-
-      private IidGaussianView(Sim sim) {
-        this.sim = sim;
-      }
-
-      @Override
-      public double getEstimatedFinalFundamental() {
-        if (sim.getCurrentTime().get() == finalTime) {
-          return getValueAt(finalTime);
-        } else {
-          return dist.getMean();
-        }
-      }
-
-    }
-
-    private static final long serialVersionUID = 1;
-
-  }
-
 
   private static class MeanReverting extends GaussianMeanReverting implements Serializable {
 
@@ -240,24 +206,154 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       return cachedViews.computeIfAbsent(sim, MeanRevertingView::new);
     }
 
-    private class MeanRevertingView implements FundamentalView {
-
-      private final Sim sim;
+    private class MeanRevertingView extends GaussianMeanRevertingView {
 
       private MeanRevertingView(Sim sim) {
-        this.sim = sim;
+        super(sim);
       }
 
       @Override
-      public double getEstimatedFinalFundamental() {
-        long time = sim.getCurrentTime().get();
+      protected double finalFromMean(long time, double mean) {
         double kappacToPower = Math.pow(kappac, finalTime - time);
-        return (1 - kappacToPower) * mean + kappacToPower * getValueAt(time);
+        return (1 - kappacToPower) * mean + kappacToPower * mean;
+      }
+
+      @Override
+      protected GaussianEstimator generateEstimator() {
+        return new MeanRevertingEstimator();
+      }
+
+    }
+
+    private class MeanRevertingEstimator extends GaussianEstimator {
+
+      @Override
+      void updateTime(long advance) {
+        double kappacToPower = Math.pow(kappac, advance);
+        posteriorMean = (1 - kappacToPower) * initial + kappacToPower * posteriorMean;
+        posteriorVariance = kappacToPower * kappacToPower * posteriorVariance
+            + (1 - kappacToPower * kappacToPower) / (1 - kappac * kappac) * shockVar;
       }
 
     }
 
     private static final long serialVersionUID = 1;
+
+  }
+
+  private abstract class GaussianMeanRevertingView implements GaussableView {
+
+    protected final Sim sim;
+
+    private GaussianMeanRevertingView(Sim sim) {
+      this.sim = sim;
+    }
+
+    @Override
+    public double getEstimatedFinalFundamental() {
+      long time = sim.getCurrentTime().get();
+      return finalFromMean(time, getValueAt(time));
+    }
+
+    @Override
+    public GaussianFundamentalView addNoise(Random rand, double variance) {
+      GaussianEstimator estimator = generateEstimator();
+      if (Double.isInfinite(variance)) {
+        return new NoisyView(sim, estimator);
+      } else {
+        return new InformativeNoisyView(sim, estimator, rand, variance);
+      }
+    }
+
+    protected abstract double finalFromMean(long time, double mean);
+
+    protected abstract GaussianEstimator generateEstimator();
+
+    protected class NoisyView implements GaussianFundamentalView {
+
+      protected final Sim sim;
+      protected final GaussianEstimator estimator;
+
+      private NoisyView(Sim sim, GaussianEstimator estimator) {
+        this.sim = sim;
+        this.estimator = estimator;
+      }
+
+      @Override
+      public double getEstimatedFinalFundamental() {
+        long time = sim.getCurrentTime().get();
+        estimator.advanceTime(time);
+        return finalFromMean(estimator.lastUpdate, estimator.posteriorMean);
+      }
+
+      @Override
+      public void addObservation(double observation, double variance, int quantity) {
+        long time = sim.getCurrentTime().get();
+        estimator.advanceTime(time);
+        estimator.observationUpdate(observation, variance, quantity);
+      }
+
+    }
+
+    protected class InformativeNoisyView extends NoisyView {
+
+      private final Random rand;
+      private final Gaussian dist;
+
+      private InformativeNoisyView(Sim sim, GaussianEstimator estimator, Random rand,
+          double variance) {
+        super(sim, estimator);
+        this.rand = rand;
+        this.dist = Gaussian.withMeanVariance(0, variance);
+      }
+
+      @Override
+      public double getEstimatedFinalFundamental() {
+        long time = sim.getCurrentTime().get();
+        estimator.advanceTime(time);
+        double obs = getValueAt(time) + dist.sample(rand);
+        estimator.observationUpdate(obs, dist.getVariance(), 1);
+        return finalFromMean(estimator.lastUpdate, estimator.posteriorMean);
+      }
+
+    }
+
+  }
+
+  private abstract class GaussianEstimator {
+    protected long lastUpdate;
+    protected double posteriorMean;
+    protected double posteriorVariance;
+
+    private GaussianEstimator() {
+      this.posteriorMean = initial;
+      this.lastUpdate = 0;
+      this.posteriorVariance = 0;
+    }
+
+    private void advanceTime(long time) {
+      if (time > lastUpdate) {
+        updateTime(time - lastUpdate);
+      }
+      lastUpdate = time;
+    }
+
+    private void observationUpdate(double observation, double variance, int times) {
+      if (variance == 0) {
+        posteriorMean = observation;
+        posteriorVariance = 0;
+      } else if (Double.isFinite(variance)) {
+        // No update for infinite variance
+        double varToPower = Math.pow(variance, times - 1);
+        posteriorMean = (posteriorMean * variance * varToPower
+            + times * observation * varToPower * posteriorVariance)
+            / (varToPower * variance + times * varToPower * posteriorVariance);
+        posteriorVariance = posteriorVariance * varToPower * variance
+            / (varToPower * variance + times * varToPower * posteriorVariance);
+      }
+    }
+
+    abstract void updateTime(long advance);
 
   }
 

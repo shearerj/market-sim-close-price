@@ -33,7 +33,7 @@ class Features {
     // Market features
     JsonArray marketFeatures = new JsonArray();
     for (Market market : simulator.getMarkets()) {
-      marketFeatures.add(market.getFeatures(fundamental));
+      marketFeatures.add(market.getFeatures());
     }
     features.add("markets", marketFeatures);
 

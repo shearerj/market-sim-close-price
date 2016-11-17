@@ -6,7 +6,6 @@ import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
-import edu.umich.srg.marketsim.fundamental.Fundamental;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
@@ -23,7 +22,7 @@ public interface Market {
 
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
 
-  JsonObject getFeatures(Fundamental fundamental);
+  JsonObject getFeatures();
 
   interface MarketView {
 

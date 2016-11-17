@@ -38,16 +38,16 @@ public class CdaMarket extends AbstractMarket {
     };
   };
 
-  private CdaMarket(Sim sim) {
-    super(sim, cdaPricing);
+  private CdaMarket(Sim sim, Fundamental fundamental) {
+    super(sim, fundamental, cdaPricing);
   }
 
-  public static CdaMarket create(Sim sim) {
-    return new CdaMarket(sim);
+  public static CdaMarket create(Sim sim, Fundamental fundamental) {
+    return new CdaMarket(sim, fundamental);
   }
 
-  public static CdaMarket createFromSpec(Sim sim, Spec spec) {
-    return new CdaMarket(sim);
+  public static CdaMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec) {
+    return new CdaMarket(sim, fundamental);
   }
 
   @Override
@@ -71,8 +71,8 @@ public class CdaMarket extends AbstractMarket {
   }
 
   @Override
-  public JsonObject getFeatures(Fundamental fundamental) {
-    JsonObject features = super.getFeatures(fundamental);
+  public JsonObject getFeatures() {
+    JsonObject features = super.getFeatures();
     features.add("type", new JsonPrimitive("cda"));
     return features;
   }

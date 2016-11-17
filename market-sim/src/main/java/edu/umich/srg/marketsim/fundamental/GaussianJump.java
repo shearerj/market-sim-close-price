@@ -36,7 +36,7 @@ public class GaussianJump implements Fundamental, Serializable {
   /** Create a standard gaussian mean reverting fundamental stochastic process. */
   public static Fundamental create(Random rand, long finalTime, double mean, double shockVar,
       double shockProb) {
-    if (shockProb == 0) {
+    if (shockProb == 0 || shockVar == 0) {
       return ConstantFundamental.create(mean);
     } else if (shockProb == 1) {
       return GaussianMeanReverting.create(rand, finalTime, mean, 0, shockVar);

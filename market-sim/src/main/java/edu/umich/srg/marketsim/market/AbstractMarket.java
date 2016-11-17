@@ -19,6 +19,8 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
+import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -44,18 +46,22 @@ abstract class AbstractMarket implements Market, Serializable {
   private final PricingRule pricing;
 
   // Bookkeeping
+  private final FundamentalView fundView;
   private final Collection<AbstractMarketView> views;
   private final Map<Order<Price>, AbstractMarketView> orderOwners;
-  private final Sparse<Number> prices;
+  private final Sparse<Double> prices;
+  private final SummStats rmsd;
 
-  AbstractMarket(Sim sim, PricingRule pricing) {
+  AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing) {
     this.sim = sim;
     this.orderbook = new FourHeap<>();
     this.pricing = pricing;
 
+    this.fundView = fundamental.getView(sim);
     this.views = new ArrayList<>();
     this.orderOwners = new HashMap<>();
     this.prices = SparseArrayList.empty();
+    this.rmsd = SummStats.empty();
   }
 
   Order<Price> submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
@@ -93,7 +99,10 @@ abstract class AbstractMarket implements Market, Serializable {
         view.transaction(price, matched.getQuantity());
       }
 
-      prices.add(sim.getCurrentTime().get(), price);
+      // Bookkeeping
+      prices.add(sim.getCurrentTime().get(), price.doubleValue());
+      double diff = price.doubleValue() - fundView.getEstimatedFinalFundamental();
+      rmsd.acceptNTimes(diff * diff, matched.getQuantity());
     }
   }
 
@@ -120,10 +129,11 @@ abstract class AbstractMarket implements Market, Serializable {
   }
 
   @Override
-  public JsonObject getFeatures(Fundamental fundamental) {
+  public JsonObject getFeatures() {
     JsonObject features = new JsonObject();
 
     features.add("prices", convertSparseData(prices));
+    features.add("rmsd", new JsonPrimitive(Math.sqrt(rmsd.getAverage())));
 
     return features;
   }

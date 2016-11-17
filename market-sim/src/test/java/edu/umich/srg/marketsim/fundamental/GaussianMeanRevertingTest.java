@@ -10,6 +10,10 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
+import edu.umich.srg.distributions.Uniform;
+import edu.umich.srg.distributions.Uniform.IntUniform;
+import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
+import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestDoubles;
@@ -24,6 +28,7 @@ public class GaussianMeanRevertingTest {
 
   private static final Random rand = new Random();
   private static final int mean = 1000;
+  private static final double eps = 0.5;
 
   @Repeat(1000)
   @Theory
@@ -58,6 +63,40 @@ public class GaussianMeanRevertingTest {
     Fundamental fundamental = GaussianMeanReverting.create(rand, time, mean, 0.5, 100);
     fundamental.getValueAt(time - 1);
     assertEquals(42, Iterables.size(fundamental.getFundamentalValues()));
+  }
+
+
+  @Repeat(100)
+  @Theory
+  public void infiniteObservationVarianceTest(@TestDoubles({0, 0.2, 1}) double meanReversion,
+      @TestDoubles({0, 100}) double shockVariance) {
+    MockSim sim = new MockSim();
+    Fundamental fund = ConstantFundamental.create(mean);
+    GaussianFundamentalView estimator = ((GaussableView) fund.getView(sim)).addNoise(rand, 0);
+    double estimate = estimator.getEstimatedFinalFundamental();
+    assertEquals(mean, estimate, 0);
+  }
+
+  @Repeat(100)
+  @Theory
+  public void zeroObservationVarianceTest(@TestDoubles({/* 0, */ 0.2, 1}) double meanReversion,
+      @TestDoubles({/* 0, */ 100}) double shockVariance) {
+    long simLength = 100;
+
+    MockSim sim = new MockSim();
+    Fundamental fund =
+        GaussianMeanReverting.create(rand, simLength, mean, meanReversion, shockVariance);
+    GaussableView groundTruth = (GaussableView) fund.getView(sim);
+    GaussianFundamentalView estimator = groundTruth.addNoise(rand, 0);
+
+    IntUniform nextTime = Uniform.closed(1, 3);
+    int time = 0;
+    while (time < simLength) {
+      sim.setTime(time);
+      assertEquals(groundTruth.getEstimatedFinalFundamental(),
+          estimator.getEstimatedFinalFundamental(), eps);
+      time += nextTime.sample(rand);
+    }
   }
 
 }

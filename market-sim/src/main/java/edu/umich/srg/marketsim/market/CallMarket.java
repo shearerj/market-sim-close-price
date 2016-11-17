@@ -28,22 +28,23 @@ public class CallMarket extends AbstractMarket {
   private final long clearInterval;
   private boolean nextClearScheduled;
 
-  private CallMarket(Sim sim, CallPricing pricing, long clearInterval) {
-    super(sim, pricing);
+  private CallMarket(Sim sim, Fundamental fundamental, CallPricing pricing, long clearInterval) {
+    super(sim, fundamental, pricing);
     this.clearInterval = clearInterval;
     this.nextClearScheduled = false;
   }
 
-  public static CallMarket create(Sim sim, double pricing, long clearInterval) {
-    return new CallMarket(sim, new CallPricing(pricing), clearInterval);
+  public static CallMarket create(Sim sim, Fundamental fundamental, double pricing,
+      long clearInterval) {
+    return new CallMarket(sim, fundamental, new CallPricing(pricing), clearInterval);
   }
 
-  public static CallMarket create(Sim sim, long clearInterval) {
-    return create(sim, 0.5, clearInterval);
+  public static CallMarket create(Sim sim, Fundamental fundamental, long clearInterval) {
+    return create(sim, fundamental, 0.5, clearInterval);
   }
 
-  public static CallMarket createFromSpec(Sim sim, Spec spec) {
-    return create(sim, spec.get(Pricing.class), spec.get(ClearInterval.class));
+  public static CallMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec) {
+    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class));
   }
 
   /*
@@ -87,8 +88,8 @@ public class CallMarket extends AbstractMarket {
   }
 
   @Override
-  public JsonObject getFeatures(Fundamental fundamental) {
-    JsonObject features = super.getFeatures(fundamental);
+  public JsonObject getFeatures() {
+    JsonObject features = super.getFeatures();
     features.add("type", new JsonPrimitive("call"));
     return features;
   }

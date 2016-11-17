@@ -40,6 +40,7 @@ import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
@@ -70,8 +71,9 @@ public class IntegrationTest {
   public void simpleMinimalTest() {
     int numAgents = 10;
 
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Fundamental fundamental = ConstantFundamental.create(0);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     for (int i = 0; i < numAgents; ++i)
       sim.addAgent(new NoiseAgent(sim, cda, Spec.fromPairs(ArrivalRate.class, 0.5), rand));
     sim.initialize();

@@ -73,7 +73,8 @@ public class CommandLineInterface extends CommandLineOptions {
         configuration.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, new Random(rand.nextLong()));
 
-    List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class), configuration);
+    List<Market> markets =
+        addMarkets(sim, fundamental, spec.configuration.get(Markets.class), configuration);
     List<PlayerInfo> playerInfo =
         addPlayers(sim, fundamental, spec.assignment, markets, configuration, rand.nextLong());
 
@@ -102,14 +103,14 @@ public class CommandLineInterface extends CommandLineOptions {
     };
   }
 
-  private static List<Market> addMarkets(MarketSimulator sim, Iterable<String> marketSpecs,
-      Spec configuration) {
+  private static List<Market> addMarkets(MarketSimulator sim, Fundamental fundamental,
+      Iterable<String> marketSpecs, Spec configuration) {
     ImmutableList.Builder<Market> marketBuilder = ImmutableList.builder();
     for (String stringSpec : marketSpecs) {
       MarketCreator creator = EntityBuilder.getMarketCreator(getType(stringSpec));
       Spec marketSpec = getSpec(stringSpec).withDefault(configuration);
 
-      Market market = creator.createMarket(sim, marketSpec);
+      Market market = creator.createMarket(sim, fundamental, marketSpec);
       sim.addMarket(market);
       marketBuilder.add(market);
     }

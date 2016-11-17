@@ -42,7 +42,7 @@ public class StandardMarketAgentTest {
   public void bothSidesTest() {
     Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     Spec spec = Spec.fromDefaultPairs(base, Sides.class, OrderStyle.BOTH);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
@@ -77,7 +77,7 @@ public class StandardMarketAgentTest {
   public void multiOrderTest() {
     Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     Spec spec = Spec.fromDefaultPairs(base, SubmitDepth.class, 2);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
@@ -111,7 +111,7 @@ public class StandardMarketAgentTest {
   public void bothSidesAndSubmitDepthTest() {
     Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     Spec spec = Spec.fromDefaultPairs(base, Sides.class, OrderStyle.BOTH, SubmitDepth.class, 3);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
@@ -146,7 +146,7 @@ public class StandardMarketAgentTest {
   public void clippedMultiOrderTest() {
     Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     Spec spec = Spec.fromDefaultPairs(base, SubmitDepth.class, 3, MaxPosition.class, 2);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {

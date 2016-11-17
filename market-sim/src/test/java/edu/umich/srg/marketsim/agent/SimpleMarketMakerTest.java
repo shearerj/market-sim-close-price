@@ -15,6 +15,7 @@ import edu.umich.srg.marketsim.MarketSimulator;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
@@ -28,8 +29,9 @@ public class SimpleMarketMakerTest {
 
   @Test
   public void basicIntegrationTransactionTest() {
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(500), rand);
-    Market cda = sim.addMarket(CdaMarket.create(sim));
+    Fundamental fundamental = ConstantFundamental.create(500);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     // Background Agents
     for (int i = 0; i < 20; ++i)

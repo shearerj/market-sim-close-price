@@ -12,6 +12,7 @@ import org.junit.Test;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
@@ -673,7 +674,8 @@ public class AbstractMarketTest {
   private class MockMarket extends AbstractMarket {
 
     private MockMarket() {
-      super(AbstractMarketTest.this.sim, AbstractMarketTest::mockPricing);
+      super(AbstractMarketTest.this.sim, ConstantFundamental.create(0),
+          AbstractMarketTest::mockPricing);
     }
 
     private static final long serialVersionUID = 971056535454290161L;

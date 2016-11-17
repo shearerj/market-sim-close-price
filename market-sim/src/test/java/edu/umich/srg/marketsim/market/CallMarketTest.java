@@ -13,6 +13,7 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
@@ -23,12 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CallMarketTest {
 
   private static final Random rand = new Random();
+  private static final Fundamental fund = ConstantFundamental.create(0);
 
   /** Test normal pricing policy */
   @Test
   public void normalPricingPolicyTest() {
     MockSim sim = new MockSim();
-    CallMarket market = CallMarket.create(sim, 100);
+    CallMarket market = CallMarket.create(sim, fund, 100);
     AtomicInteger transacted = new AtomicInteger(0);
     Agent agent = new MockAgent() {
 
@@ -53,7 +55,7 @@ public class CallMarketTest {
   @Test
   public void abnormalPricingPolicyTest() {
     MockSim sim = new MockSim();
-    CallMarket market = CallMarket.create(sim, 0.2, 100);
+    CallMarket market = CallMarket.create(sim, fund, 0.2, 100);
     AtomicInteger transacted = new AtomicInteger(0);
     Agent agent = new MockAgent() {
 
@@ -78,7 +80,7 @@ public class CallMarketTest {
   @Test
   public void clearActivityInsertion() {
     MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(1000), rand);
-    CallMarket market = CallMarket.create(sim, 100);
+    CallMarket market = CallMarket.create(sim, fund, 100);
     AtomicInteger numQuotes = new AtomicInteger(0);
     Agent agent = new MockAgent() {
 
