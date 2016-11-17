@@ -14,7 +14,7 @@ import java.util.Random;
  * that this code is accurate. If the hypergeometric code is changed, these should be rerun.
  */
 @Ignore
-public class HypergeometricTest {
+public class RandomHypergeometricTest {
 
   private static final Random rand = new Random();
   private static final double eps = 1e-14;

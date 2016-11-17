@@ -13,12 +13,12 @@ import edu.umich.srg.util.SummStats;
 import java.util.Random;
 import java.util.stream.DoubleStream;
 
+@Ignore // This test is random and won't always be successful
 @RunWith(Theories.class)
-public class BetaTest {
+public class RandomBetaTest {
 
   private static Random rand = new Random();
 
-  @Ignore // This test is random and won't always be successful
   @Theory
   public void summaryStatisticsTest(@TestDoubles({1, 10, 16}) double alpha) {
     Beta dist = Beta.with(alpha, alpha);
