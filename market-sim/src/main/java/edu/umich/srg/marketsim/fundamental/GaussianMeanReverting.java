@@ -132,8 +132,8 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       }
 
       @Override
-      protected double finalFromMean(long time, double mean) {
-        return mean;
+      protected double finalFromMean(long time, double current) {
+        return current;
       }
 
       @Override
@@ -213,9 +213,9 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       }
 
       @Override
-      protected double finalFromMean(long time, double mean) {
+      protected double finalFromMean(long time, double current) {
         double kappacToPower = Math.pow(kappac, finalTime - time);
-        return (1 - kappacToPower) * mean + kappacToPower * mean;
+        return (1 - kappacToPower) * mean + kappacToPower * current;
       }
 
       @Override
@@ -265,7 +265,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       }
     }
 
-    protected abstract double finalFromMean(long time, double mean);
+    protected abstract double finalFromMean(long time, double current);
 
     protected abstract GaussianEstimator generateEstimator();
 
