@@ -1,7 +1,8 @@
 package edu.umich.srg.marketsim.market;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
+import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.Maps;
@@ -10,7 +11,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.umich.srg.fourheap.MatchedOrders;
+import edu.umich.srg.fourheap.PrioritySelector;
 import edu.umich.srg.marketsim.Price;
+import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.Market.MarketView;
@@ -23,6 +26,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+// TODO Switch to long sentinel version of assertQuote
 public class AbstractMarketTest {
   private MockSim sim;
   private MockMarket market;
@@ -32,7 +36,7 @@ public class AbstractMarketTest {
   @Before
   public void setup() {
     sim = new MockSim();
-    market = new MockMarket();
+    market = new MockMarket(sim);
     agent = new MockAgent();
     view = market.getView(agent, TimeStamp.ZERO);
   }
@@ -41,7 +45,7 @@ public class AbstractMarketTest {
   public void addBid() {
     view.submitOrder(BUY, Price.of(1), 1);
     market.updateQuote();
-    MarketAsserts.assertQuote(view.getQuote(), Price.of(1), null);
+    MarketAsserts.assertQuote(view.getQuote(), 1, ABSENT);
   }
 
   @Test
@@ -61,8 +65,8 @@ public class AbstractMarketTest {
 
     assertEquals(2, agent.transactions);
     MarketAsserts.assertQuote(view.getQuote(), null, null);
-    assertEquals(0, buy.getQuantity());
-    assertEquals(0, sell.getQuantity());
+    assertEquals(0, view.getQuantity(buy));
+    assertEquals(0, view.getQuantity(sell));
   }
 
   @Test
@@ -75,8 +79,8 @@ public class AbstractMarketTest {
 
     assertEquals(2, agent.transactions);
     MarketAsserts.assertQuote(view.getQuote(), null, null);
-    assertEquals(0, buy.getQuantity());
-    assertEquals(0, sell.getQuantity());
+    assertEquals(0, view.getQuantity(buy));
+    assertEquals(0, view.getQuantity(sell));
   }
 
   /** Several bids with one clear have proper transaction */
@@ -92,11 +96,11 @@ public class AbstractMarketTest {
 
     // Testing the market for the correct transactions
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), Price.of(100), Price.of(180));
-    assertEquals(0, buyTrans.getQuantity());
-    assertEquals(0, sellTrans.getQuantity());
-    assertEquals(1, buy.getQuantity());
-    assertEquals(1, sell.getQuantity());
+    MarketAsserts.assertQuote(view.getQuote(), 100, 180);
+    assertEquals(0, view.getQuantity(buyTrans));
+    assertEquals(0, view.getQuantity(sellTrans));
+    assertEquals(1, view.getQuantity(buy));
+    assertEquals(1, view.getQuantity(sell));
   }
 
   /** Two sets of bids overlap before clear */
@@ -112,10 +116,10 @@ public class AbstractMarketTest {
 
     assertEquals(4, agent.transactions);
     MarketAsserts.assertQuote(view.getQuote(), null, null);
-    assertEquals(0, buy1.getQuantity());
-    assertEquals(0, sell1.getQuantity());
-    assertEquals(0, buy2.getQuantity());
-    assertEquals(0, sell2.getQuantity());
+    assertEquals(0, view.getQuantity(buy1));
+    assertEquals(0, view.getQuantity(sell1));
+    assertEquals(0, view.getQuantity(buy2));
+    assertEquals(0, view.getQuantity(sell2));
 
   }
 
@@ -133,75 +137,10 @@ public class AbstractMarketTest {
 
     assertEquals(2, agent.transactions);
     MarketAsserts.assertQuote(view.getQuote(), Price.of(110), Price.of(130));
-    assertEquals(0, buyTrans.getQuantity());
-    assertEquals(0, sellTrans.getQuantity());
-    assertEquals(1, buy.getQuantity());
-    assertEquals(1, sell.getQuantity());
-  }
-
-  /**
-   * Test clearing when there are ties in price. Should match at uniform price. Also checks
-   * tie-breaking by time.
-   */
-  @Test
-  public void priceTimeTest() {
-    OrderRecord order1 = view.submitOrder(SELL, Price.of(100), 1);
-    OrderRecord order2 = view.submitOrder(SELL, Price.of(100), 1);
-    OrderRecord order3 = view.submitOrder(BUY, Price.of(150), 1);
-
-    market.clear();
-
-    // Check that earlier order (order1) is trading with order3
-    // Testing the market for the correct transactions
-    assertEquals(2, agent.transactions);
-    assertEquals(0, order1.getQuantity());
-    assertEquals(0, order3.getQuantity());
-
-    // Existing order2 S1@100
-    view.submitOrder(SELL, Price.of(100), 1);
-    view.submitOrder(SELL, Price.of(100), 1);
-    view.submitOrder(SELL, Price.of(100), 1);
-
-    market.clear();
-
-    OrderRecord order5 = view.submitOrder(BUY, Price.of(130), 1);
-
-    market.clear();
-
-    // Check that the first submitted order2 S1@100 transacts
-    assertEquals(4, agent.transactions);
-    assertEquals(0, order2.getQuantity());
-    assertEquals(0, order5.getQuantity());
-
-    // Let's try populating the market with random orders
-    // 3 S1@100 remain
-    order5 = view.submitOrder(SELL, Price.of(90), 1);
-    view.submitOrder(SELL, Price.of(100), 1);
-    view.submitOrder(SELL, Price.of(110), 1);
-    view.submitOrder(SELL, Price.of(120), 1);
-    view.submitOrder(BUY, Price.of(80), 1);
-    view.submitOrder(BUY, Price.of(70), 1);
-    view.submitOrder(BUY, Price.of(60), 1);
-
-    market.clear();
-
-    assertEquals(4, agent.transactions); // no change
-
-    // Check basic overlap - between order5 (@90) and next order (order2)
-    order2 = view.submitOrder(BUY, Price.of(130), 1);
-
-    market.clear();
-
-    assertEquals(6, agent.transactions);
-    assertEquals(0, order2.getQuantity());
-    assertEquals(0, order5.getQuantity());
-
-    // Check additional overlapping orders
-    view.submitOrder(BUY, Price.of(110), 4);
-
-    market.clear();
-
-    assertEquals(14, agent.transactions);
+    assertEquals(0, view.getQuantity(buyTrans));
+    assertEquals(0, view.getQuantity(sellTrans));
+    assertEquals(1, view.getQuantity(buy));
+    assertEquals(1, view.getQuantity(sell));
   }
 
   @Test
@@ -216,8 +155,8 @@ public class AbstractMarketTest {
     assertEquals(2, agent.transactions);
     assertEquals(4, agent.transactedUnits);
     MarketAsserts.assertQuote(view.getQuote(), Price.of(150), null);
-    assertEquals(0, sell.getQuantity());
-    assertEquals(3, buy.getQuantity());
+    assertEquals(0, view.getQuantity(sell));
+    assertEquals(3, view.getQuantity(buy));
   }
 
   @Test
@@ -236,9 +175,9 @@ public class AbstractMarketTest {
 
     assertEquals(4, agent.transactions);
     MarketAsserts.assertQuote(view.getQuote(), null, null);
-    assertEquals(0, sell1.getQuantity());
-    assertEquals(0, sell2.getQuantity());
-    assertEquals(0, buy.getQuantity());
+    assertEquals(0, view.getQuantity(sell1));
+    assertEquals(0, view.getQuantity(sell2));
+    assertEquals(0, view.getQuantity(buy));
   }
 
   @Test
@@ -252,7 +191,7 @@ public class AbstractMarketTest {
     MarketAsserts.assertQuote(view.getQuote(), null, Price.of(100));
 
     // Withdraw order
-    view.withdrawOrder(order, order.quantity);
+    view.withdrawOrder(order, view.getQuantity(order));
 
     market.updateQuote();
 
@@ -314,33 +253,7 @@ public class AbstractMarketTest {
   // timeline.executeUntil(TimeStamp.of(100));
   // assertQuote(fast.getQuote(), null, 0, Price.of(100), 1);
   // }
-
-  /** Verify that earlier orders transact */
-  @Test
-  public void timePriorityBuy() {
-    OrderRecord first = view.submitOrder(BUY, Price.of(100), 1);
-    OrderRecord second = view.submitOrder(BUY, Price.of(100), 1);
-    view.submitOrder(SELL, Price.of(100), 1);
-
-    market.clear();
-
-    assertEquals(0, first.getQuantity());
-    assertEquals(1, second.getQuantity());
-  }
-
-  /** Verify that earlier orders transact */
-  @Test
-  public void timePrioritySell() {
-    OrderRecord first = view.submitOrder(SELL, Price.of(100), 1);
-    OrderRecord second = view.submitOrder(SELL, Price.of(100), 1);
-    view.submitOrder(BUY, Price.of(100), 1);
-
-    market.clear();
-
-    assertEquals(0, first.getQuantity());
-    assertEquals(1, second.getQuantity());
-  }
-
+  //
   // @Test
   // public void updateQuoteLatency() {
   // EventQueue timeline = latencySetup(TimeStamp.of(100));
@@ -652,29 +565,28 @@ public class AbstractMarketTest {
   // return order;
   // }
 
-  private static Iterable<Entry<MatchedOrders<Price>, Price>> mockPricing(
-      Collection<MatchedOrders<Price>> matches) {
-    Iterator<MatchedOrders<Price>> it = matches.iterator();
-    return () -> new Iterator<Entry<MatchedOrders<Price>, Price>>() {
+  private static class MockMarket extends AbstractMarket {
 
-      @Override
-      public boolean hasNext() {
-        return it.hasNext();
-      }
+    private MockMarket(Sim sim) {
+      super(sim, ConstantFundamental.create(0), MockMarket::mockPricing, PrioritySelector.create());
+    }
 
-      @Override
-      public Entry<MatchedOrders<Price>, Price> next() {
-        return Maps.immutableEntry(it.next(), Price.ZERO);
-      }
+    private static Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>> mockPricing(
+        Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches) {
+      Iterator<MatchedOrders<Price, Long, AbstractMarketOrder>> it = matches.iterator();
+      return () -> new Iterator<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>>() {
 
-    };
-  }
+        @Override
+        public boolean hasNext() {
+          return it.hasNext();
+        }
 
-  private class MockMarket extends AbstractMarket {
+        @Override
+        public Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price> next() {
+          return Maps.immutableEntry(it.next(), Price.ZERO);
+        }
 
-    private MockMarket() {
-      super(AbstractMarketTest.this.sim, ConstantFundamental.create(0),
-          AbstractMarketTest::mockPricing);
+      };
     }
 
     private static final long serialVersionUID = 971056535454290161L;

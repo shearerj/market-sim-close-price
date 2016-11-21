@@ -2,10 +2,10 @@ package edu.umich.srg.marketsim.testing;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Optional;
-
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.market.Quote;
+
+import java.util.Optional;
 
 public interface MarketAsserts {
 
@@ -14,8 +14,8 @@ public interface MarketAsserts {
 
   /** Prices are null for absent prices for convenience */
   static void assertQuote(Quote quote, Price bid, Price ask) {
-    assertEquals("Incorrect bid", Optional.fromNullable(bid), quote.getBidPrice());
-    assertEquals("Incorrect ask", Optional.fromNullable(ask), quote.getAskPrice());
+    assertEquals("Incorrect bid", Optional.ofNullable(bid), quote.getBidPrice());
+    assertEquals("Incorrect ask", Optional.ofNullable(ask), quote.getAskPrice());
   }
 
   /** Use the ABSENT sentinel for missing bids or asks */
@@ -24,8 +24,8 @@ public interface MarketAsserts {
   }
 
   static void assertQuote(Quote quote, Price bid, int bidDepth, Price ask, int askDepth) {
-    assertEquals("Incorrect bid", Optional.fromNullable(bid), quote.getBidPrice());
-    assertEquals("Incorrect ask", Optional.fromNullable(ask), quote.getAskPrice());
+    assertEquals("Incorrect bid", Optional.ofNullable(bid), quote.getBidPrice());
+    assertEquals("Incorrect ask", Optional.ofNullable(ask), quote.getAskPrice());
     assertEquals("Incorrect bid depth", bidDepth, quote.getBidDepth());
     assertEquals("Incorrect ask depth", askDepth, quote.getAskDepth());
   }

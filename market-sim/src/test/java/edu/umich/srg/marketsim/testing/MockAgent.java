@@ -2,7 +2,7 @@ package edu.umich.srg.marketsim.testing;
 
 import com.google.gson.JsonObject;
 
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.market.Market.MarketView;
@@ -13,18 +13,20 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 public class MockAgent implements Agent {
 
   public final PrivateValue privateValue;
+  public final int id;
   public int transactions;
   public int transactedUnits;
   public Price lastTransactionPrice;
 
-  private MockAgent(PrivateValue privateValue) {
+  private MockAgent(int id, PrivateValue privateValue) {
     this.privateValue = privateValue;
+    this.id = id;
     this.transactions = 0;
     this.lastTransactionPrice = null;
   }
 
   public MockAgent() {
-    this(PrivateValues.noPrivateValue());
+    this(0, PrivateValues.noPrivateValue());
   }
 
   public static MockAgent create() {
@@ -41,6 +43,16 @@ public class MockAgent implements Agent {
   @Override
   public JsonObject getFeatures() {
     return new JsonObject();
+  }
+
+  @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
+  public String toString() {
+    return "MOCK " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
   @Override
@@ -70,9 +82,11 @@ public class MockAgent implements Agent {
   public static class MockAgentBuilder {
 
     private PrivateValue privateValue;
+    private int id;
 
     private MockAgentBuilder() {
-      privateValue = PrivateValues.noPrivateValue();
+      this.privateValue = PrivateValues.noPrivateValue();
+      this.id = 0;
     }
 
     public MockAgentBuilder privateValue(PrivateValue privateValue) {
@@ -80,8 +94,13 @@ public class MockAgent implements Agent {
       return this;
     }
 
+    public MockAgentBuilder id(int id) {
+      this.id = id;
+      return this;
+    }
+
     public MockAgent build() {
-      return new MockAgent(privateValue);
+      return new MockAgent(id, privateValue);
     }
 
   }

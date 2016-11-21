@@ -12,7 +12,7 @@ import edu.umich.srg.egtaonline.spec.ParsableValue.LongValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.StringsValue;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.ValueHelp;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.agent.StandardMarketAgent.OrderStyle;
 
 /**

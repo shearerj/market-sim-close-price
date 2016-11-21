@@ -2,6 +2,7 @@ package edu.umich.srg.marketsim;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Command(name = "market-sim", description = "Run the market simulator")
 public class CommandLineInterface extends CommandLineOptions {
@@ -73,8 +75,8 @@ public class CommandLineInterface extends CommandLineOptions {
         configuration.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, new Random(rand.nextLong()));
 
-    List<Market> markets =
-        addMarkets(sim, fundamental, spec.configuration.get(Markets.class), configuration);
+    List<Market> markets = addMarkets(sim, fundamental, spec.configuration.get(Markets.class),
+        configuration, rand.nextLong());
     List<PlayerInfo> playerInfo =
         addPlayers(sim, fundamental, spec.assignment, markets, configuration, rand.nextLong());
 
@@ -104,17 +106,47 @@ public class CommandLineInterface extends CommandLineOptions {
   }
 
   private static List<Market> addMarkets(MarketSimulator sim, Fundamental fundamental,
-      Iterable<String> marketSpecs, Spec configuration) {
-    ImmutableList.Builder<Market> marketBuilder = ImmutableList.builder();
-    for (String stringSpec : marketSpecs) {
-      MarketCreator creator = EntityBuilder.getMarketCreator(getType(stringSpec));
-      Spec marketSpec = getSpec(stringSpec).withDefault(configuration);
+      Iterable<String> marketSpecs, Spec configuration, long baseSeed) {
+    Random orderRand = new Random(baseSeed);
+    PositionalSeed seed = PositionalSeed.with(baseSeed);
+    List<MarketOrder> markets = HashMultiset.create(marketSpecs).entrySet().stream().sequential()
+        .map(e -> new MarketOrder(orderRand.nextDouble(), e.getElement(), e.getCount()))
+        .collect(Collectors.toList());
+    Collections.sort(markets);
 
-      Market market = creator.createMarket(sim, fundamental, marketSpec);
-      sim.addMarket(market);
-      marketBuilder.add(market);
+    ImmutableList.Builder<Market> marketBuilder = ImmutableList.builder();
+    for (MarketOrder spec : markets) {
+      MarketCreator creator = EntityBuilder.getMarketCreator(getType(spec.stringSpec));
+      Spec marketSpec = getSpec(spec.stringSpec).withDefault(configuration);
+      Random rand = new Random(seed.getSeed(spec.stringSpec.hashCode()));
+      for (int i = 0; i < spec.num; ++i) {
+        Market market =
+            creator.createMarket(sim, fundamental, marketSpec, new Random(rand.nextLong()));
+        sim.addMarket(market);
+        marketBuilder.add(market);
+      }
     }
     return marketBuilder.build();
+  }
+
+  private static class MarketOrder implements Comparable<MarketOrder> {
+
+    private final double order;
+    private final String stringSpec;
+    private final int num;
+
+    private MarketOrder(double order, String stringSpec, int num) {
+      this.order = order;
+      this.stringSpec = stringSpec;
+      this.num = num;
+    }
+
+    @Override
+    public int compareTo(MarketOrder that) {
+      return ComparisonChain.start().compare(this.order, that.order)
+          .compare(this.stringSpec, that.stringSpec).compare(this.num, that.num).result();
+    }
+
   }
 
   /**

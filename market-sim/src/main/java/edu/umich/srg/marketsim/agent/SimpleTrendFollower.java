@@ -1,12 +1,11 @@
 package edu.umich.srg.marketsim.agent;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.BUY;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.Expiration;
 import edu.umich.srg.marketsim.Keys.ProfitDemanded;
 import edu.umich.srg.marketsim.Keys.TrendLength;
@@ -20,6 +19,7 @@ import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.market.Quote;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Function;
 
@@ -41,6 +41,7 @@ import java.util.function.Function;
 public class SimpleTrendFollower implements Agent {
 
   private final Sim sim;
+  private final int id;
   private final MarketView market;
   private final int trendLength;
   private final int profitDemanded;
@@ -52,8 +53,9 @@ public class SimpleTrendFollower implements Agent {
   private Price lastPrice;
 
   /** Basic constructor of a simple trend follower. */
-  public SimpleTrendFollower(Sim sim, Market market, Spec spec) {
+  public SimpleTrendFollower(int id, Sim sim, Market market, Spec spec) {
     this.sim = sim;
+    this.id = id;
     this.market = market.getView(this, TimeStamp.ZERO);
     this.trendLength = spec.get(TrendLength.class);
     this.profitDemanded = spec.get(ProfitDemanded.class);
@@ -67,7 +69,7 @@ public class SimpleTrendFollower implements Agent {
 
   public static SimpleTrendFollower createFromSpec(Sim sim, Fundamental fundamental,
       Collection<Market> markets, Market market, Spec spec, Random rand) {
-    return new SimpleTrendFollower(sim, market, spec);
+    return new SimpleTrendFollower(rand.nextInt(), sim, market, spec);
   }
 
   private void strategy() {
@@ -83,8 +85,8 @@ public class SimpleTrendFollower implements Agent {
       market.submitOrder(direction, old, 1);
       // Make find next highest order on that side
       quote = market.getQuote();
-      long nextPrice = getQuotePrice.apply(quote).transform(p -> p.longValue() * direction.sign())
-          .or(Long.MAX_VALUE);
+      long nextPrice = getQuotePrice.apply(quote).map(p -> p.longValue() * direction.sign())
+          .orElse(Long.MAX_VALUE);
       // Find the limiting price so that we're still front running, make sure profit is positive
       long limit = Math.max(direction.sign() * old.longValue(), nextPrice - 1);
       // Go a step up from the previous price, but keep under limit
@@ -105,8 +107,13 @@ public class SimpleTrendFollower implements Agent {
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public String toString() {
-    return "STF " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return "STF " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
   @Override

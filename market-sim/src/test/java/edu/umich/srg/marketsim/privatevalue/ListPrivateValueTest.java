@@ -1,7 +1,7 @@
 package edu.umich.srg.marketsim.privatevalue;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

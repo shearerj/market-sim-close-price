@@ -1,11 +1,13 @@
 package edu.umich.srg.marketsim.market;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.assertQuote;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 
 import edu.umich.srg.marketsim.MarketSimulator;
@@ -17,11 +19,17 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class CallMarketTest {
+
+  @Rule
+  public RepeatRule repeatRule = new RepeatRule();
 
   private static final Random rand = new Random();
   private static final Fundamental fund = ConstantFundamental.create(0);
@@ -30,7 +38,7 @@ public class CallMarketTest {
   @Test
   public void normalPricingPolicyTest() {
     MockSim sim = new MockSim();
-    CallMarket market = CallMarket.create(sim, fund, 100);
+    CallMarket market = CallMarket.create(sim, fund, 100, rand);
     AtomicInteger transacted = new AtomicInteger(0);
     Agent agent = new MockAgent() {
 
@@ -55,7 +63,7 @@ public class CallMarketTest {
   @Test
   public void abnormalPricingPolicyTest() {
     MockSim sim = new MockSim();
-    CallMarket market = CallMarket.create(sim, fund, 0.2, 100);
+    CallMarket market = CallMarket.create(sim, fund, 0.2, 100, rand);
     AtomicInteger transacted = new AtomicInteger(0);
     Agent agent = new MockAgent() {
 
@@ -80,7 +88,7 @@ public class CallMarketTest {
   @Test
   public void clearActivityInsertion() {
     MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(1000), rand);
-    CallMarket market = CallMarket.create(sim, fund, 100);
+    CallMarket market = CallMarket.create(sim, fund, 100, rand);
     AtomicInteger numQuotes = new AtomicInteger(0);
     Agent agent = new MockAgent() {
 
@@ -136,6 +144,53 @@ public class CallMarketTest {
     sim.executeUntil(TimeStamp.of(500));
     Assert.assertEquals(3, numQuotes.get());
     assertQuote(view.getQuote(), 100, 125);
+  }
+
+  @Repeat(100)
+  @Test
+  public void consistentRandomTest() {
+    long seed = rand.nextLong();
+
+    // Test that all have the same results
+    assertEquals(1, IntStream.range(0, 3).map(i -> {
+      MockSim sim = new MockSim();
+      CallMarket market = CallMarket.create(sim, fund, 100, new Random(seed));
+      MockAgent agent1 = MockAgent.builder().id(0).build();
+      MockAgent agent2 = MockAgent.builder().id(1).build();
+      MarketView view1 = market.getView(agent1, TimeStamp.ZERO);
+      MarketView view2 = market.getView(agent2, TimeStamp.ZERO);
+
+      view1.submitOrder(BUY, Price.of(200), 1);
+      // Either of these could transact
+      view1.submitOrder(SELL, Price.of(100), 1);
+      view2.submitOrder(SELL, Price.of(100), 1);
+      market.clear();
+
+      // Will be 0 or 1, but with constant random seed it should always be the same
+      return agent2.transactedUnits;
+    }).distinct().count());
+  }
+
+  @Test
+  public void inconsistentRandomTest() {
+    // Test that at least two have different results
+    assertEquals(2, IntStream.range(0, 100).parallel().map(i -> {
+      MockSim sim = new MockSim();
+      CallMarket market = CallMarket.create(sim, fund, 100, rand);
+      MockAgent agent1 = MockAgent.builder().id(0).build();
+      MockAgent agent2 = MockAgent.builder().id(1).build();
+      MarketView view1 = market.getView(agent1, TimeStamp.ZERO);
+      MarketView view2 = market.getView(agent2, TimeStamp.ZERO);
+
+      view1.submitOrder(BUY, Price.of(200), 1);
+      // Either of these could transact
+      view1.submitOrder(SELL, Price.of(100), 1);
+      view2.submitOrder(SELL, Price.of(100), 1);
+      market.clear();
+
+      // Will be 0 or 1, but with constant random seed it should always be the same
+      return agent2.transactedUnits;
+    }).distinct().count());
   }
 
 }

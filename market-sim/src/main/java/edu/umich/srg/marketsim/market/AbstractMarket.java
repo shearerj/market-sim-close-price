@@ -1,9 +1,15 @@
 package edu.umich.srg.marketsim.market;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.BiMap;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multisets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -13,7 +19,8 @@ import edu.umich.srg.collect.SparseArrayList;
 import edu.umich.srg.fourheap.FourHeap;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.Order;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
+import edu.umich.srg.fourheap.Selector;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -25,12 +32,9 @@ import edu.umich.srg.util.SummStats;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.LinkedList;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.Queue;
 import java.util.function.Function;
 
 /**
@@ -42,57 +46,57 @@ import java.util.function.Function;
 abstract class AbstractMarket implements Market, Serializable {
 
   final Sim sim;
-  private final FourHeap<Price> orderbook;
+  private final FourHeap<Price, Long, AbstractMarketOrder> orderbook;
   private final PricingRule pricing;
+  private long marketTime;
 
   // Bookkeeping
   private final FundamentalView fundView;
   private final Collection<AbstractMarketView> views;
-  private final Map<Order<Price>, AbstractMarketView> orderOwners;
   private final Sparse<Double> prices;
   private final SummStats rmsd;
 
-  AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing) {
+  AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing,
+      Selector<AbstractMarketOrder> selector) {
     this.sim = sim;
-    this.orderbook = new FourHeap<>();
+    this.orderbook = FourHeap.create(selector);
     this.pricing = pricing;
+    this.marketTime = 0;
 
     this.fundView = fundamental.getView(sim);
     this.views = new ArrayList<>();
-    this.orderOwners = new HashMap<>();
     this.prices = SparseArrayList.empty();
     this.rmsd = SummStats.empty();
   }
 
-  Order<Price> submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
+  AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
       int quantity) {
-    Order<Price> order = orderbook.submit(buyOrSell, price, quantity);
-    orderOwners.put(order, submitter);
+    AbstractMarketOrder order =
+        new AbstractMarketOrder(submitter, buyOrSell, price, marketTime, sim.getCurrentTime());
+    orderbook.submit(order, quantity);
     return order;
   }
 
-  void withdrawOrder(Order<Price> order, int quantity) {
+  void withdrawOrder(AbstractMarketOrder order, int quantity) {
     orderbook.withdraw(order, quantity);
-    if (order.getQuantity() == 0) {
-      orderOwners.remove(order);
-    }
   }
 
   void clear() {
-    Collection<MatchedOrders<Price>> matches = orderbook.clear();
-    for (Entry<MatchedOrders<Price>, Price> pricedTrade : pricing.apply(matches)) {
+    Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches = orderbook.clear();
+    for (Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price> pricedTrade : pricing
+        .apply(matches)) {
 
-      MatchedOrders<Price> matched = pricedTrade.getKey();
+      MatchedOrders<Price, Long, AbstractMarketOrder> matched = pricedTrade.getKey();
       Price price = pricedTrade.getValue();
 
       // Notify buyer
-      Order<Price> buy = matched.getBuy();
-      orderOwners.get(buy).transacted(buy, price, matched.getQuantity());
+      AbstractMarketOrder buy = matched.getBuy();
+      buy.submitter.transacted(buy, price, matched.getQuantity());
 
 
       // Notify seller
-      Order<Price> sell = matched.getSell();
-      orderOwners.get(sell).transacted(sell, price, matched.getQuantity());
+      AbstractMarketOrder sell = matched.getSell();
+      sell.submitter.transacted(sell, price, matched.getQuantity());
 
       // Notify all agents of transaction
       for (AbstractMarketView view : views) {
@@ -107,11 +111,15 @@ abstract class AbstractMarket implements Market, Serializable {
   }
 
   void updateQuote() {
-    Quote quote = new Quote(orderbook.bidQuote(), orderbook.getBidDepth(), orderbook.askQuote(),
-        orderbook.getAskDepth());
+    Quote quote = new Quote(orderbook.getBidQuote(), orderbook.getBidDepth(),
+        orderbook.getAskQuote(), orderbook.getAskDepth());
     for (AbstractMarketView view : views) {
       view.setQuote(quote);
     }
+  }
+
+  protected void incrementMarketTime() {
+    marketTime++;
   }
 
   @Override
@@ -152,28 +160,26 @@ abstract class AbstractMarket implements Market, Serializable {
 
   @Override
   public String toString() {
-    return Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return Integer.toUnsignedString(System.identityHashCode(this), 36).toUpperCase();
   }
 
-  abstract class AbstractMarketView implements MarketView, Serializable {
+  interface AbstractMarketView extends MarketView {
 
-    abstract void setQuote(Quote quote);
+    void setQuote(Quote quote);
 
-    abstract void transacted(Order<Price> order, Price price, int quantity);
+    void transacted(AbstractMarketOrder order, Price price, int quantity);
 
-    abstract void transaction(Price price, int quantity);
+    void transaction(Price price, int quantity);
 
-    abstract Agent getAgent();
+    Agent getAgent();
 
-    abstract double getTrueProfit();
+    double getTrueProfit();
 
-    abstract int getTrueHoldings();
-
-    private static final long serialVersionUID = 1730831537473428295L;
+    int getTrueHoldings();
 
   }
 
-  class AbstractLatentMarketView extends AbstractMarketView {
+  class AbstractLatentMarketView implements AbstractMarketView {
     private final TimeStamp latency;
     private Quote quote;
     private final Agent agent;
@@ -182,8 +188,8 @@ abstract class AbstractMarket implements Market, Serializable {
     private int holdings;
     private int submissions;
     private int observedHoldings;
-    private Set<OrderRecord> observedOrders;
-    private final BiMap<OrderRecord, Order<Price>> recordMap;
+    private Multiset<OrderRecord> orders;
+    private final BiMap<OrderRecord, AbstractMarketOrder> recordMap;
 
     AbstractLatentMarketView(Agent agent, TimeStamp latency) {
       this.latency = latency;
@@ -194,22 +200,21 @@ abstract class AbstractMarket implements Market, Serializable {
       this.holdings = 0;
       this.submissions = 0;
       this.observedHoldings = 0;
-      this.observedOrders = new HashSet<>();
+      this.orders = HashMultiset.create();
       this.recordMap = HashBiMap.create();
     }
 
     @Override
-    void setQuote(Quote quote) {
-      AbstractMarket.this.sim.scheduleIn(latency, () -> {
+    public void setQuote(Quote quote) {
+      sim.scheduleIn(latency, () -> {
         this.quote = quote;
         agent.notifyQuoteUpdated(this);
       });
     }
 
     @Override
-    void transaction(Price price, int quantity) {
-      AbstractMarket.this.sim.scheduleIn(latency,
-          () -> agent.notifyTransaction(this, price, quantity));
+    public void transaction(Price price, int quantity) {
+      sim.scheduleIn(latency, () -> agent.notifyTransaction(this, price, quantity));
     }
 
     @Override
@@ -219,15 +224,18 @@ abstract class AbstractMarket implements Market, Serializable {
 
     @Override
     public OrderRecord submitOrder(OrderType buyOrSell, Price price, int quantity) {
-      OrderRecord record = new OrderRecord(this, buyOrSell, price, quantity);
-      observedOrders.add(record);
+      OrderRecord record = new Rec(buyOrSell, price);
+      orders.add(record, quantity);
 
-      AbstractMarket.this.sim.scheduleIn(latency, () -> {
-        Order<Price> order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
+      sim.scheduleIn(latency, () -> {
+        AbstractMarketOrder order =
+            AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
         submissions += quantity;
-        recordMap.put(record, order);
 
-        AbstractMarket.this.sim.scheduleIn(latency, () -> agent.notifyOrderSubmitted(record));
+        sim.scheduleIn(latency, () -> {
+          recordMap.put(record, order);
+          agent.notifyOrderSubmitted(record);
+        });
       });
 
       return record;
@@ -235,29 +243,23 @@ abstract class AbstractMarket implements Market, Serializable {
 
     @Override
     public void withdrawOrder(OrderRecord record, int quantity) {
-      record.quantity -= quantity;
+      orders.remove(record, quantity);
+      AbstractMarketOrder order = recordMap.get(record);
+      if (order == null) {
+        return; // This will happen if the order transacted, but that information hasn't reached the
+                // agent yet
+      }
 
-      AbstractMarket.this.sim.scheduleIn(latency, () -> {
-        Order<Price> order = recordMap.get(record);
-        if (order == null) {
-          return; // This will happen if the order transacted, but hasn't reached the agent yet
-        }
-
-        // Min because some of the order may have transacted already, in which case we want to
-        // withdraw the rest
-        AbstractMarket.this.withdrawOrder(order, Math.min(quantity, order.getQuantity()));
-
-        if (order.getQuantity() == 0) {
+      sim.scheduleIn(latency, () -> {
+        AbstractMarket.this.withdrawOrder(order, quantity);
+        if (!orderbook.contains(order)) {
           recordMap.remove(record);
         }
 
-        AbstractMarket.this.sim.scheduleIn(latency,
-            () -> agent.notifyOrderWithrawn(record, quantity));
+        sim.scheduleIn(latency, () -> {
+          agent.notifyOrderWithrawn(record, quantity);
+        });
       });
-
-      if (record.quantity == 0) {
-        observedOrders.remove(record);
-      }
 
     }
 
@@ -272,7 +274,7 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    double getTrueProfit() {
+    public double getTrueProfit() {
       return profit;
     }
 
@@ -282,7 +284,7 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    int getTrueHoldings() {
+    public int getTrueHoldings() {
       return holdings;
     }
 
@@ -292,39 +294,63 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    public Set<OrderRecord> getActiveOrders() {
-      return Collections.unmodifiableSet(observedOrders);
+    public Multiset<OrderRecord> getActiveOrders() {
+      return Multisets.unmodifiableMultiset(orders);
+    }
+
+
+    @Override
+    public int getQuantity(OrderRecord record) {
+      return orders.count(record);
     }
 
     @Override
-    void transacted(Order<Price> order, Price price, int quantity) {
+    public void transacted(AbstractMarketOrder order, Price price, int quantity) {
       OrderRecord record = recordMap.inverse().get(order);
-      double profitChange = -order.getOrderType().sign() * price.doubleValue() * quantity;
-      int holdingsChange = order.getOrderType().sign() * quantity;
+      double profitChange = -order.getType().sign() * price.doubleValue() * quantity;
+      int holdingsChange = order.getType().sign() * quantity;
 
       profit += profitChange;
       holdings += holdingsChange;
 
-      AbstractMarket.this.sim.scheduleIn(latency, () -> {
-        record.quantity -= quantity;
+      if (!orderbook.contains(order)) {
+        recordMap.remove(record);
+      }
+
+      sim.scheduleIn(latency, () -> {
         observedProfit += profitChange;
         observedHoldings += holdingsChange;
-
-        if (record.quantity == 0) {
-          observedOrders.remove(record);
-        }
+        orders.remove(record, quantity);
 
         agent.notifyOrderTransacted(record, price, quantity);
       });
-
-      if (order.getQuantity() == 0) {
-        recordMap.remove(record);
-      }
     }
 
     @Override
-    Agent getAgent() {
+    public Agent getAgent() {
       return agent;
+    }
+
+    private class Rec implements OrderRecord {
+
+      private final Price price;
+      private final OrderType type;
+
+      private Rec(OrderType type, Price price) {
+        this.type = type;
+        this.price = price;
+      }
+
+      @Override
+      public OrderType getType() {
+        return type;
+      }
+
+      @Override
+      public Price getPrice() {
+        return price;
+      }
+
     }
 
     @Override
@@ -332,20 +358,19 @@ abstract class AbstractMarket implements Market, Serializable {
       return AbstractMarket.this + "*";
     }
 
-    private static final long serialVersionUID = 7349920586918545462L;
-
   }
 
   /** A market view when there is no latency between market access. */
-  class AbstractImmediateMarketView extends AbstractMarketView {
+  class AbstractImmediateMarketView implements AbstractMarketView {
     private Quote quote;
     private final Agent agent;
     private int holdings;
     private int submissions;
     private double profit;
-    private final BiMap<OrderRecord, Order<Price>> recordMap;
+    private final Multiset<AbstractMarketOrder> orders;
 
-    private OrderRecord submittedOrder;
+    private boolean inSubmission;
+    private final Queue<QueuedTransaction> queuedTransactions;
 
     AbstractImmediateMarketView(Agent agent) {
       this.quote = Quote.empty();
@@ -353,18 +378,20 @@ abstract class AbstractMarket implements Market, Serializable {
       this.holdings = 0;
       this.submissions = 0;
       this.profit = 0;
-      this.recordMap = HashBiMap.create();
-      this.submittedOrder = null;
+      this.orders = HashMultiset.create();
+
+      this.inSubmission = false;
+      this.queuedTransactions = new LinkedList<>();
     }
 
     @Override
-    void setQuote(Quote quote) {
+    public void setQuote(Quote quote) {
       this.quote = quote;
       agent.notifyQuoteUpdated(this);
     }
 
     @Override
-    void transaction(Price price, int quantity) {
+    public void transaction(Price price, int quantity) {
       this.agent.notifyTransaction(this, price, quantity);
     }
 
@@ -375,36 +402,26 @@ abstract class AbstractMarket implements Market, Serializable {
 
     @Override
     public OrderRecord submitOrder(OrderType buyOrSell, Price price, int quantity) {
-      OrderRecord record = new OrderRecord(this, buyOrSell, price, quantity);
-
-      submittedOrder = record; // In case we transact before we get the order
-      agent.notifyOrderSubmitted(record);
-      Order<Price> order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
-      submittedOrder = null;
-
+      inSubmission = true;
+      AbstractMarketOrder order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
       submissions += quantity;
-      if (order.getQuantity() != 0) {
-        recordMap.put(record, order);
+      orders.add(order, quantity);
+      agent.notifyOrderSubmitted(order);
+      inSubmission = false;
+
+      while (!queuedTransactions.isEmpty()) {
+        QueuedTransaction trans = queuedTransactions.poll();
+        transacted(trans.transactedOrder, trans.transactedPrice, trans.transactedQuantity);
       }
 
-      return record;
+      return order;
     }
 
     @Override
-    public void withdrawOrder(OrderRecord record, int quantity) {
-      Order<Price> order = recordMap.get(record);
-      if (order == null) {
-        return; // order already removed
-      }
-
-      AbstractMarket.this.withdrawOrder(order, quantity);
-      record.quantity = order.getQuantity();
-
-      if (record.quantity == 0) {
-        recordMap.remove(record);
-      }
-
-      agent.notifyOrderWithrawn(record, quantity);
+    public void withdrawOrder(OrderRecord order, int quantity) {
+      orders.remove(order, quantity);
+      AbstractMarket.this.withdrawOrder((AbstractMarketOrder) order, quantity);
+      agent.notifyOrderWithrawn(order, quantity);
     }
 
     @Override
@@ -418,7 +435,7 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    double getTrueProfit() {
+    public double getTrueProfit() {
       return profit;
     }
 
@@ -428,7 +445,7 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    int getTrueHoldings() {
+    public int getTrueHoldings() {
       return holdings;
     }
 
@@ -438,26 +455,29 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    public Set<OrderRecord> getActiveOrders() {
-      return Collections.unmodifiableSet(recordMap.keySet());
+    public Multiset<OrderRecord> getActiveOrders() {
+      return Multisets.unmodifiableMultiset(orders);
     }
 
     @Override
-    void transacted(Order<Price> order, Price price, int quantity) {
-      OrderRecord record = recordMap.inverse().getOrDefault(order, submittedOrder);
-      record.quantity -= quantity;
-      profit -= order.getOrderType().sign() * price.doubleValue() * quantity;
-      holdings += order.getOrderType().sign() * quantity;
+    public int getQuantity(OrderRecord record) {
+      return orders.count(record);
+    }
 
-      if (record.quantity == 0) {
-        recordMap.remove(record);
+    @Override
+    public void transacted(AbstractMarketOrder order, Price price, int quantity) {
+      if (inSubmission) {
+        queuedTransactions.offer(new QueuedTransaction(order, price, quantity));
+      } else {
+        profit -= order.getType().sign() * price.doubleValue() * quantity;
+        holdings += order.getType().sign() * quantity;
+        orders.remove(order, quantity);
+        agent.notifyOrderTransacted(order, price, quantity);
       }
-
-      agent.notifyOrderTransacted(record, price, quantity);
     }
 
     @Override
-    Agent getAgent() {
+    public Agent getAgent() {
       return agent;
     }
 
@@ -466,12 +486,83 @@ abstract class AbstractMarket implements Market, Serializable {
       return AbstractMarket.this + "*";
     }
 
-    private static final long serialVersionUID = -1206172976823244457L;
+    private class QueuedTransaction {
+
+      private final AbstractMarketOrder transactedOrder;
+      private final Price transactedPrice;
+      private final int transactedQuantity;
+
+      private QueuedTransaction(AbstractMarketOrder transactedOrder, Price transactedPrice,
+          int transactedQuantity) {
+        this.transactedOrder = transactedOrder;
+        this.transactedPrice = transactedPrice;
+        this.transactedQuantity = transactedQuantity;
+      }
+
+    }
 
   }
 
-  public interface PricingRule extends
-      Function<Collection<MatchedOrders<Price>>, Iterable<Entry<MatchedOrders<Price>, Price>>> {
+  protected static class AbstractMarketOrder
+      implements Order<Price, Long>, OrderRecord, Comparable<AbstractMarketOrder> {
+
+    private final Price price;
+    private final long time;
+    private final TimeStamp submitTime;
+    private final OrderType type;
+    private final AbstractMarketView submitter;
+
+    AbstractMarketOrder(AbstractMarketView submiter, OrderType type, Price price, long time,
+        TimeStamp submitTime) {
+      this.submitter = checkNotNull(submiter);
+      this.price = checkNotNull(price);
+      this.time = time;
+      this.submitTime = checkNotNull(submitTime);
+      this.type = checkNotNull(type);
+    }
+
+    @Override
+    public Price getPrice() {
+      return price;
+    }
+
+    @Override
+    public Long getTime() {
+      return time;
+    }
+
+    @Override
+    public OrderType getType() {
+      return type;
+    }
+
+    public TimeStamp getSubmitTime() {
+      return submitTime;
+    }
+
+    /*
+     * XXX This is necessary for consistent random selection of orders that tie, but since agent ids
+     * are not guaranteed to be unique, this is not completely deterministic, but for it to fail,
+     * two orders need to be submitted at the same: price, market time, simulation time, side, and
+     * from agents that had an id collision, so it's exceedingly unlikely. We could make ids unique,
+     * but we would probably loose some stability.
+     */
+    @Override
+    public int compareTo(AbstractMarketOrder that) {
+      return ComparisonChain.start().compare(this.submitTime, that.submitTime)
+          .compare(this.submitter.getAgent().getId(), that.submitter.getAgent().getId()).result();
+    }
+
+    @Override
+    public String toString() {
+      return "(" + type + " @ " + price + ")";
+    }
+
+  }
+
+  public interface PricingRule
+      extends Function<Collection<MatchedOrders<Price, Long, AbstractMarketOrder>>, //
+          Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>>> {
   }
 
   private static final long serialVersionUID = 8806298743451593261L;

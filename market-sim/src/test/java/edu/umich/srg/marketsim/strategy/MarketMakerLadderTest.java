@@ -1,7 +1,7 @@
 package edu.umich.srg.marketsim.strategy;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.testing.Asserts.assertSetEquals;
 import static org.junit.Assert.fail;
 

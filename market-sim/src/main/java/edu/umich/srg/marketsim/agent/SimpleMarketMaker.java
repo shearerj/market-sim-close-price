@@ -1,12 +1,11 @@
 package edu.umich.srg.marketsim.agent;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 import edu.umich.srg.distributions.Distribution.LongDistribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.NumRungs;
 import edu.umich.srg.marketsim.Keys.RungSep;
@@ -19,11 +18,11 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
-import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.market.Quote;
 import edu.umich.srg.marketsim.strategy.MarketMakerLadder;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Random;
 
 public class SimpleMarketMaker implements Agent {
@@ -32,6 +31,7 @@ public class SimpleMarketMaker implements Agent {
   private Optional<Price> lastAsk;
 
   private final Random rand;
+  private final int id;
   private final Sim sim;
   private final MarketView market;
   private final LongDistribution arrivalDistribution;
@@ -41,12 +41,13 @@ public class SimpleMarketMaker implements Agent {
   /** Basic constructor for a simple market maker. */
   public SimpleMarketMaker(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
+    this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
     this.rungThickness = spec.get(RungThickness.class);
     this.strategy = new MarketMakerLadder(spec.get(RungSep.class), spec.get(NumRungs.class),
         spec.get(TickImprovement.class), spec.get(TickOutside.class));
-    this.lastBid = this.lastAsk = Optional.absent();
+    this.lastBid = this.lastAsk = Optional.empty();
     this.rand = rand;
   }
 
@@ -61,9 +62,7 @@ public class SimpleMarketMaker implements Agent {
 
   private void strategy() {
     updateQuote();
-    for (OrderRecord o : ImmutableList.copyOf(market.getActiveOrders())) {
-      market.withdrawOrder(o);
-    }
+    ImmutableList.copyOf(market.getActiveOrders().entrySet()).forEach(market::withdrawOrder);
     updateQuote();
 
     if (lastBid.isPresent() && lastAsk.isPresent()) {
@@ -77,8 +76,8 @@ public class SimpleMarketMaker implements Agent {
 
   private void updateQuote() {
     Quote quote = market.getQuote();
-    this.lastBid = quote.getBidPrice().or(lastBid);
-    this.lastAsk = quote.getAskPrice().or(lastAsk);
+    this.lastBid = quote.getBidPrice().map(Optional::of).orElse(lastBid);
+    this.lastAsk = quote.getAskPrice().map(Optional::of).orElse(lastAsk);
   }
 
   @Override
@@ -93,8 +92,13 @@ public class SimpleMarketMaker implements Agent {
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public String toString() {
-    return "SMM " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return "SMM " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
 }

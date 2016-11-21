@@ -1,6 +1,6 @@
 package edu.umich.srg.marketsim.strategy;
 
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Price;
 
 import java.util.Objects;

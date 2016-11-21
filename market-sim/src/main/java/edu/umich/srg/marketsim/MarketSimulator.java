@@ -1,12 +1,12 @@
 package edu.umich.srg.marketsim;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.event.EventQueue;
 import edu.umich.srg.marketsim.fundamental.Fundamental;

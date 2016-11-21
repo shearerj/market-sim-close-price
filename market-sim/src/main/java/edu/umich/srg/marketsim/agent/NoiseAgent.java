@@ -10,7 +10,7 @@ import edu.umich.srg.distributions.Multinomial.IntMultinomial;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
@@ -35,6 +35,7 @@ public class NoiseAgent implements Agent {
   private static final IntMultinomial quantityDistribution = Multinomial.withWeights(0.5, 0.3, 0.2);
 
   private final Sim sim;
+  private final int id;
   private final MarketView market;
   private final Random rand;
   private final Geometric arrivalDistribution;
@@ -45,6 +46,7 @@ public class NoiseAgent implements Agent {
   /** Generic constructor. This can be called from java. */
   public NoiseAgent(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
+    this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
     this.rand = rand;
@@ -105,13 +107,18 @@ public class NoiseAgent implements Agent {
     return features;
   }
 
+  @Override
+  public int getId() {
+    return id;
+  }
+
   /**
    * Since agents are unique, we use our hashcode to produce a concise id to identify this agent in
    * logs, etc.
    */
   @Override
   public String toString() {
-    return "NoiseAgent " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return "NoiseAgent " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
   // Notifications

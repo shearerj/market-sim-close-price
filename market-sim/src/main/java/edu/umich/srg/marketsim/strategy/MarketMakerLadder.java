@@ -1,8 +1,8 @@
 package edu.umich.srg.marketsim.strategy;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 
 import edu.umich.srg.marketsim.Price;
 

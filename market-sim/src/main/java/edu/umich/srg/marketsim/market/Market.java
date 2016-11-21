@@ -1,15 +1,15 @@
 package edu.umich.srg.marketsim.market;
 
+import com.google.common.collect.Multiset;
 import com.google.gson.JsonObject;
 
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public interface Market {
 
@@ -33,12 +33,18 @@ public interface Market {
     void withdrawOrder(OrderRecord record, int quantity);
 
     default void withdrawOrder(OrderRecord record) {
-      withdrawOrder(record, record.getQuantity());
+      withdrawOrder(record, getQuantity(record));
+    }
+
+    default void withdrawOrder(Multiset.Entry<OrderRecord> entry) {
+      withdrawOrder(entry.getElement(), entry.getCount());
     }
 
     Quote getQuote();
 
-    Set<OrderRecord> getActiveOrders();
+    Multiset<OrderRecord> getActiveOrders();
+
+    int getQuantity(OrderRecord record);
 
     double getProfit();
 

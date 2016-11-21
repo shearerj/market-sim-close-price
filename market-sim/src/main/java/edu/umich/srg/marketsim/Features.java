@@ -1,14 +1,14 @@
 package edu.umich.srg.marketsim;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.collect.Sparse;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
@@ -62,8 +62,10 @@ class Features {
     CompEqResults compEq = calcCompetitiveEquilibrium(results);
 
     // Assert results are consistent
-    assert Math.abs(compEq.maxSurplus - compEq.imSurplusLoss - compEq.emSurplusLoss
-        - surplus) < 1e-6 : "surplus losses didn't sum properly";
+    assert Math.abs(
+        compEq.maxSurplus - compEq.imSurplusLoss - compEq.emSurplusLoss - surplus) < 1e-5 : String
+            .format("surplus losses didn't sum properly (%f)",
+                compEq.maxSurplus - compEq.imSurplusLoss - compEq.emSurplusLoss - surplus);
 
     // Record features
     features.addProperty("total_surplus", surplus);

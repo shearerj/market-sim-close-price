@@ -8,7 +8,7 @@ import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
@@ -41,6 +41,7 @@ public abstract class StandardMarketAgent implements Agent {
   private static final Set<OrderType> allOrders = EnumSet.allOf(OrderType.class);
 
   protected final Sim sim;
+  private final int id;
   private final MarketView market;
   private final int maxPosition;
   private final SurplusThreshold threshold;
@@ -54,6 +55,7 @@ public abstract class StandardMarketAgent implements Agent {
   /** Standard constructor for ZIR agent. */
   public StandardMarketAgent(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
+    this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
     this.maxPosition = spec.get(MaxPosition.class);
     this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
@@ -84,7 +86,7 @@ public abstract class StandardMarketAgent implements Agent {
   }
 
   protected void strategy() {
-    ImmutableList.copyOf(market.getActiveOrders()).forEach(market::withdrawOrder);
+    ImmutableList.copyOf(market.getActiveOrders().entrySet()).forEach(market::withdrawOrder);
 
     Set<OrderType> sides = side.get();
     double finalEstimate = getFinalFundamentalEstiamte();
@@ -121,8 +123,13 @@ public abstract class StandardMarketAgent implements Agent {
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public String toString() {
-    return name() + " " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return name() + " " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
 }

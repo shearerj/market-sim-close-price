@@ -1,41 +1,30 @@
 package edu.umich.srg.fourheap;
 
-import java.io.Serializable;
+public class MatchedOrders<P, T, O extends Order<P, T>> {
 
-public class MatchedOrders<P extends Comparable<? super P>> implements Serializable {
+  private final O buy;
+  private final O sell;
+  private final int quantity;
 
-  private static final long serialVersionUID = -6073835626927361670L;
+  MatchedOrders(O buy, O sell, int quantity) {
+    assert buy.getType() == OrderType.BUY;
+    assert sell.getType() == OrderType.SELL;
 
-  protected final Order<P> buy;
-  protected final Order<P> sell;
-  protected final int quantity;
-
-  protected MatchedOrders(Order<P> buy, Order<P> sell, int quantity) {
     this.buy = buy;
     this.sell = sell;
     this.quantity = quantity;
   }
 
-  public Order<P> getBuy() {
+  public O getBuy() {
     return buy;
   }
 
-  public Order<P> getSell() {
+  public O getSell() {
     return sell;
   }
 
   public int getQuantity() {
     return quantity;
-  }
-
-  @Override
-  public final int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public final boolean equals(Object obj) {
-    return super.equals(obj);
   }
 
   @Override

@@ -1,7 +1,7 @@
 package edu.umich.srg.marketsim.agent;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.assertQuote;
 
@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys;
 import edu.umich.srg.marketsim.Keys.Expiration;
 import edu.umich.srg.marketsim.Keys.ProfitDemanded;
@@ -48,7 +48,7 @@ public class SimpleTrendFollowerTest {
   /** No order is submitted if there's nothing to take first. */
   @Test
   public void buyNullAskTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addTransaction(10);
@@ -60,7 +60,7 @@ public class SimpleTrendFollowerTest {
 
   @Test
   public void sellNullBidTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addTransaction(90);
@@ -73,7 +73,7 @@ public class SimpleTrendFollowerTest {
   /** Something to take, but only one quote in market, so unbounded range for rebid. */
   @Test
   public void buyNullFollowupAskTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 40);
@@ -86,7 +86,7 @@ public class SimpleTrendFollowerTest {
 
   @Test
   public void sellNullFollowupBidTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(BUY, 60);
@@ -100,7 +100,7 @@ public class SimpleTrendFollowerTest {
   /** Equal prices still keep trend alive. */
   @Test
   public void buyEqualAskTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 40);
@@ -117,7 +117,7 @@ public class SimpleTrendFollowerTest {
 
   @Test
   public void sellEqualBidTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(BUY, 60);
@@ -135,7 +135,7 @@ public class SimpleTrendFollowerTest {
   /** Another order in the market, but it won't affect the price. */
   @Test
   public void buyUnboundedFollowupAskTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 40);
@@ -149,7 +149,7 @@ public class SimpleTrendFollowerTest {
 
   @Test
   public void sellUnboundedFollowupBidTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(BUY, 20);
@@ -164,7 +164,7 @@ public class SimpleTrendFollowerTest {
   /** Another order in the market, and we undercut them. */
   @Test
   public void buyBoundedFollowupAskTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 40);
@@ -178,7 +178,7 @@ public class SimpleTrendFollowerTest {
 
   @Test
   public void sellBoundedFollowupBidTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(BUY, 39);
@@ -193,7 +193,7 @@ public class SimpleTrendFollowerTest {
   /** Another order in the market at the same price, we can't undercut. */
   @Test
   public void buyUnconsumedAskTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 40);
@@ -207,7 +207,7 @@ public class SimpleTrendFollowerTest {
 
   @Test
   public void sellUnconsumedBidTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(BUY, 60);
@@ -222,7 +222,7 @@ public class SimpleTrendFollowerTest {
   /** Go almost to a trend, but then change direction. */
   @Test
   public void untriggeredSwitchTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 80);
@@ -238,7 +238,7 @@ public class SimpleTrendFollowerTest {
   /** Get a trend, then change direction. */
   @Test
   public void triggeredSwitchTest() {
-    new SimpleTrendFollower(sim, market, spec);
+    new SimpleTrendFollower(0, sim, market, spec);
     sim.initialize();
 
     addOrder(SELL, 90);

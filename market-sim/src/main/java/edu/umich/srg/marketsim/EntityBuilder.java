@@ -62,7 +62,7 @@ final class EntityBuilder {
 
   interface MarketCreator {
 
-    Market createMarket(Sim sim, Fundamental fundamental, Spec spec);
+    Market createMarket(Sim sim, Fundamental fundamental, Spec spec, Random rand);
 
   }
 

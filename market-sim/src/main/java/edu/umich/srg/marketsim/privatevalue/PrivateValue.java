@@ -1,6 +1,6 @@
 package edu.umich.srg.marketsim.privatevalue;
 
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 
 public interface PrivateValue {
 

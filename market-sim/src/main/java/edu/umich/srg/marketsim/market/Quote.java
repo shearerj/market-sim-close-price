@@ -1,25 +1,26 @@
 package edu.umich.srg.marketsim.market;
 
-import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import edu.umich.srg.marketsim.Price;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 
 /** Container for Quote data. */
 public class Quote implements Serializable {
 
-  private static final Quote empty = new Quote(null, 0, null, 0);
+  private static final Quote empty = new Quote(Optional.empty(), 0, Optional.empty(), 0);
 
   private final Optional<Price> ask;
   private final Optional<Price> bid;
   private final int bidDepth;
   private final int askDepth;
 
-  Quote(Price bid, int bidDepth, Price ask, int askDepth) {
-    this.ask = Optional.fromNullable(ask);
-    this.bid = Optional.fromNullable(bid);
+  Quote(Optional<Price> bid, int bidDepth, Optional<Price> ask, int askDepth) {
+    this.ask = checkNotNull(ask);
+    this.bid = checkNotNull(bid);
     this.bidDepth = bidDepth;
     this.askDepth = askDepth;
   }

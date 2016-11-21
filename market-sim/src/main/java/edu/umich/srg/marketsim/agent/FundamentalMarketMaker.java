@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import edu.umich.srg.distributions.Distribution.LongDistribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.NumRungs;
 import edu.umich.srg.marketsim.Keys.RungSep;
@@ -28,6 +28,7 @@ public class FundamentalMarketMaker implements Agent {
   // TODO Add truncation
 
   private final Random rand;
+  private final int id;
   private final Sim sim;
   private final MarketView market;
   private final LongDistribution arrivalDistribution;
@@ -42,6 +43,7 @@ public class FundamentalMarketMaker implements Agent {
   public FundamentalMarketMaker(Sim sim, Market market, Fundamental fundamental, Spec spec,
       Random rand) {
     this.sim = sim;
+    this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
     this.fundamental = fundamental.getView(sim);
@@ -88,8 +90,13 @@ public class FundamentalMarketMaker implements Agent {
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public String toString() {
-    return "FMM " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return "FMM " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
 }

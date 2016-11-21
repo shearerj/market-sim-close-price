@@ -1,11 +1,11 @@
 package edu.umich.srg.marketsim.agent;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.BUY;
 
 import com.google.common.math.DoubleMath;
 
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.NumShockOrders;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.TimeToLiquidate;
@@ -28,6 +28,7 @@ import java.util.function.IntSupplier;
 public class ShockAgent implements Agent {
 
   private final Sim sim;
+  private final int id;
   private final MarketView market;
   private final OrderType type;
   private final Price orderPrice;
@@ -41,8 +42,9 @@ public class ShockAgent implements Agent {
   private boolean waitingToSubmit;
 
   /** Standard constructor. */
-  public ShockAgent(Sim sim, Market market, Spec spec) {
+  public ShockAgent(int id, Sim sim, Market market, Spec spec) {
     this.sim = sim;
+    this.id = id;
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalTime = spec.get(SimLength.class) / 2;
     this.timeToLiquidate = spec.get(TimeToLiquidate.class);
@@ -57,7 +59,7 @@ public class ShockAgent implements Agent {
 
   public static ShockAgent createFromSpec(Sim sim, Fundamental fundamental,
       Collection<Market> markets, Market market, Spec spec, Random rand) {
-    return new ShockAgent(sim, market, spec);
+    return new ShockAgent(rand.nextInt(), sim, market, spec);
   }
 
   private void strategy() {
@@ -89,6 +91,16 @@ public class ShockAgent implements Agent {
   @Override
   public double payoffForExchange(int position, OrderType type) {
     return 0;
+  }
+
+  @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
+  public String toString() {
+    return "SHOCK " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
 
   @Override

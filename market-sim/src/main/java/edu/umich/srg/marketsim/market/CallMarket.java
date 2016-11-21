@@ -6,9 +6,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.egtaonline.spec.Spec;
+import edu.umich.srg.fourheap.ConsistentRandomSelector;
 import edu.umich.srg.fourheap.MatchedOrders;
-import edu.umich.srg.fourheap.Order;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ClearInterval;
 import edu.umich.srg.marketsim.Keys.Pricing;
 import edu.umich.srg.marketsim.Price;
@@ -19,6 +19,7 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Random;
 
 /**
  * Pricing of 0 prices at the lowest bid, 1 at the highest ask, and 0.5, the average between them.
@@ -28,23 +29,26 @@ public class CallMarket extends AbstractMarket {
   private final long clearInterval;
   private boolean nextClearScheduled;
 
-  private CallMarket(Sim sim, Fundamental fundamental, CallPricing pricing, long clearInterval) {
-    super(sim, fundamental, pricing);
+  private CallMarket(Sim sim, Fundamental fundamental, CallPricing pricing, long clearInterval,
+      Random rand) {
+    super(sim, fundamental, pricing, ConsistentRandomSelector.create(rand));
     this.clearInterval = clearInterval;
     this.nextClearScheduled = false;
   }
 
   public static CallMarket create(Sim sim, Fundamental fundamental, double pricing,
-      long clearInterval) {
-    return new CallMarket(sim, fundamental, new CallPricing(pricing), clearInterval);
+      long clearInterval, Random rand) {
+    return new CallMarket(sim, fundamental, new CallPricing(pricing), clearInterval, rand);
   }
 
-  public static CallMarket create(Sim sim, Fundamental fundamental, long clearInterval) {
-    return create(sim, fundamental, 0.5, clearInterval);
+  public static CallMarket create(Sim sim, Fundamental fundamental, long clearInterval,
+      Random rand) {
+    return create(sim, fundamental, 0.5, clearInterval, rand);
   }
 
-  public static CallMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec) {
-    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class));
+  public static CallMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec,
+      Random rand) {
+    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class), rand);
   }
 
   /*
@@ -68,14 +72,14 @@ public class CallMarket extends AbstractMarket {
   }
 
   @Override
-  Order<Price> submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
+  AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
       int quantity) {
     scheduleClear();
     return super.submitOrder(submitter, buyOrSell, price, quantity);
   }
 
   @Override
-  void withdrawOrder(Order<Price> order, int quantity) {
+  void withdrawOrder(AbstractMarketOrder order, int quantity) {
     scheduleClear();
     super.withdrawOrder(order, quantity);
   }
@@ -85,6 +89,7 @@ public class CallMarket extends AbstractMarket {
     this.nextClearScheduled = false;
     super.clear();
     updateQuote();
+    incrementMarketTime();
   }
 
   @Override
@@ -110,8 +115,8 @@ public class CallMarket extends AbstractMarket {
     }
 
     @Override
-    public Iterable<Entry<MatchedOrders<Price>, Price>> apply(
-        Collection<MatchedOrders<Price>> matches) {
+    public Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>> apply(
+        Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches) {
       double sell =
           matches.stream().mapToDouble(m -> m.getSell().getPrice().doubleValue()).max().orElse(0);
       double buy =
@@ -119,8 +124,9 @@ public class CallMarket extends AbstractMarket {
       Price price = Price.of(pricing * sell + (1 - pricing) * buy);
 
       return () -> matches.stream()
-          .<Entry<MatchedOrders<Price>, Price>>map(
-              m -> new AbstractMap.SimpleImmutableEntry<MatchedOrders<Price>, Price>(m, price))
+          .<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>>map(
+              m -> new AbstractMap.SimpleImmutableEntry<//
+                  MatchedOrders<Price, Long, AbstractMarketOrder>, Price>(m, price))
           .iterator();
     }
 

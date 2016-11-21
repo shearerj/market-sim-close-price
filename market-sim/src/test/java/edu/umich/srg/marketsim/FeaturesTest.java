@@ -1,7 +1,7 @@
 package edu.umich.srg.marketsim;
 
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.testing.Asserts.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +16,7 @@ import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 public class FeaturesTest {
 
   private static final Random rand = new Random();
-  private static final double tol = 1e-6;
+  private static final double tol = 1e-5;
   private static final Spec spec = Spec.builder().putAll(Keys.DEFAULT_KEYS) //
       .put(ArrivalRate.class, 0.5) //
       .put(MaxPosition.class, 10) //

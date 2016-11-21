@@ -1,10 +1,10 @@
 package edu.umich.srg.marketsim.privatevalue;
 
-import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static java.util.Objects.requireNonNull;
 
 import edu.umich.srg.distributions.Distribution.DoubleDistribution;
-import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.fourheap.OrderType;
 
 import java.util.Arrays;
 import java.util.Random;
