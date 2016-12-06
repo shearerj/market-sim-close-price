@@ -4,6 +4,7 @@ import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.Maps;
 
@@ -23,10 +24,8 @@ import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map.Entry;
 
-// TODO Switch to long sentinel version of assertQuote
 public class AbstractMarketTest {
   private MockSim sim;
   private MockMarket market;
@@ -52,7 +51,7 @@ public class AbstractMarketTest {
   public void addAsk() {
     view.submitOrder(SELL, Price.of(1), 1);
     market.updateQuote();
-    MarketAsserts.assertQuote(view.getQuote(), null, Price.of(1));
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, 1);
   }
 
   @Test
@@ -64,7 +63,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(buy));
     assertEquals(0, view.getQuantity(sell));
   }
@@ -78,7 +77,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(buy));
     assertEquals(0, view.getQuantity(sell));
   }
@@ -115,7 +114,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     assertEquals(4, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(buy1));
     assertEquals(0, view.getQuantity(sell1));
     assertEquals(0, view.getQuantity(buy2));
@@ -136,7 +135,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), Price.of(110), Price.of(130));
+    MarketAsserts.assertQuote(view.getQuote(), 110, 130);
     assertEquals(0, view.getQuantity(buyTrans));
     assertEquals(0, view.getQuantity(sellTrans));
     assertEquals(1, view.getQuantity(buy));
@@ -154,7 +153,7 @@ public class AbstractMarketTest {
     // Check that two units transact and that post-trade BID is correct (3 buy units at 150)
     assertEquals(2, agent.transactions);
     assertEquals(4, agent.transactedUnits);
-    MarketAsserts.assertQuote(view.getQuote(), Price.of(150), null);
+    MarketAsserts.assertQuote(view.getQuote(), 150, ABSENT);
     assertEquals(0, view.getQuantity(sell));
     assertEquals(3, view.getQuantity(buy));
   }
@@ -174,7 +173,7 @@ public class AbstractMarketTest {
     market.clear();
 
     assertEquals(4, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(sell1));
     assertEquals(0, view.getQuantity(sell2));
     assertEquals(0, view.getQuantity(buy));
@@ -188,7 +187,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     // Check that quotes are correct (no bid, ask @100)
-    MarketAsserts.assertQuote(view.getQuote(), null, Price.of(100));
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, 100);
 
     // Withdraw order
     view.withdrawOrder(order, view.getQuantity(order));
@@ -196,7 +195,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     // Check that quotes are correct (no bid, no ask)
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
 
     // Check that no transaction, because order withdrawn
     order = view.submitOrder(BUY, Price.of(125), 1);
@@ -214,7 +213,7 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
   }
 
   @Test
@@ -234,7 +233,30 @@ public class AbstractMarketTest {
     market.updateQuote();
 
     assertEquals(4, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), Price.of(160), null);
+    MarketAsserts.assertQuote(view.getQuote(), 160, ABSENT);
+  }
+
+  @Test
+  public void rmsdTest() {
+    double rmsd;
+
+    // Empty
+    rmsd = market.getFeatures().get("rmsd").getAsDouble();
+    assertTrue(Double.isNaN(rmsd));
+
+    // diff = 0 -> rmsd = 0
+    view.submitOrder(BUY, Price.of(100), 3);
+    view.submitOrder(SELL, Price.of(100), 3);
+    market.clear();
+    rmsd = market.getFeatures().get("rmsd").getAsDouble();
+    assertEquals(0, rmsd, 1e-7);
+
+    // diff^2 = 400 -> average diff = 100 -> rmsd = 10
+    view.submitOrder(BUY, Price.of(120), 1);
+    view.submitOrder(SELL, Price.of(120), 1);
+    market.clear();
+    rmsd = market.getFeatures().get("rmsd").getAsDouble();
+    assertEquals(10, rmsd, 1e-7);
   }
 
   // /** Information propagates at proper times */
@@ -568,26 +590,15 @@ public class AbstractMarketTest {
   private static class MockMarket extends AbstractMarket {
 
     private MockMarket(Sim sim) {
-      super(sim, ConstantFundamental.create(0, 100), MockMarket::mockPricing,
+      super(sim, ConstantFundamental.create(100, 100), MockMarket::mockPricing,
           PrioritySelector.create());
     }
 
     private static Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>> mockPricing(
         Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches) {
-      Iterator<MatchedOrders<Price, Long, AbstractMarketOrder>> it = matches.iterator();
-      return () -> new Iterator<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>>() {
-
-        @Override
-        public boolean hasNext() {
-          return it.hasNext();
-        }
-
-        @Override
-        public Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price> next() {
-          return Maps.immutableEntry(it.next(), Price.ZERO);
-        }
-
-      };
+      // Awlays matches on buy price
+      return () -> matches.stream().map(m -> Maps.immutableEntry(m, m.getBuy().getPrice()))
+          .iterator();
     }
 
     private static final long serialVersionUID = 971056535454290161L;
