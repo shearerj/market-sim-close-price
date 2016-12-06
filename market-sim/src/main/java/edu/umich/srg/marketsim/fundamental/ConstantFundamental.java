@@ -1,7 +1,9 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import edu.umich.srg.collect.Sparse;
-import edu.umich.srg.collect.Sparse.Entry;
+import com.google.common.collect.Multiset.Entry;
+import com.google.common.collect.Multisets;
+import com.google.common.primitives.Ints;
+
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 
@@ -12,15 +14,17 @@ import java.util.Random;
 public class ConstantFundamental implements Fundamental, Serializable {
 
   private final double constant;
+  private final long finalTime;
   private final GaussianFundamentalView view;
 
-  private ConstantFundamental(double constant) {
+  private ConstantFundamental(double constant, long finalTime) {
     this.constant = constant;
+    this.finalTime = finalTime;
     this.view = new ConstantView();
   }
 
-  public static ConstantFundamental create(double constant) {
-    return new ConstantFundamental(constant);
+  public static ConstantFundamental create(double constant, long finalTime) {
+    return new ConstantFundamental(constant, finalTime);
   }
 
   @Override
@@ -30,7 +34,9 @@ public class ConstantFundamental implements Fundamental, Serializable {
 
   @Override
   public Iterable<Entry<Double>> getFundamentalValues() {
-    return Collections.singleton(Sparse.immutableEntry(0, constant));
+    // TODO set this so that multiple intmaxes are used in event of overflow
+    return Collections
+        .singleton(Multisets.immutableEntry(constant, Ints.checkedCast(finalTime + 1)));
   }
 
   @Override

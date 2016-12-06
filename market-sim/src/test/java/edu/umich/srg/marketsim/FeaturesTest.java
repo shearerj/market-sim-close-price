@@ -114,7 +114,7 @@ public class FeaturesTest {
     PrivateValue pv = PrivateValues.fromMarginalBuys(new double[] {10, 3});
 
     // First create simulation with only "background" agents
-    Fundamental fundamental = ConstantFundamental.create(0);
+    Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     CdaMarket market = CdaMarket.create(sim, fundamental);
     sim.addMarket(market);
@@ -130,7 +130,7 @@ public class FeaturesTest {
     assertEquals(0, maxSurplus, tol);
 
     // Now add an intermediary (no private value)
-    sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
+    sim = MarketSimulator.create(ConstantFundamental.create(0, 100), rand);
     market = CdaMarket.create(sim, fundamental);
     sim.addMarket(market);
     for (int i = 0; i < numAgents; ++i) {
@@ -155,7 +155,7 @@ public class FeaturesTest {
    */
   @Test
   public void multipleTradeTest() throws ExecutionException, InterruptedException {
-    Fundamental fundamental = ConstantFundamental.create(0);
+    Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     CdaMarket market = CdaMarket.create(sim, fundamental);
     sim.addMarket(market);
@@ -179,7 +179,7 @@ public class FeaturesTest {
   /** Test that submissions is accurately counted. */
   @Test
   public void submissionsTest() {
-    Fundamental fundamental = ConstantFundamental.create(0);
+    Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
@@ -223,7 +223,7 @@ public class FeaturesTest {
 
   @Test
   public void noTradeTest() {
-    Fundamental fundamental = ConstantFundamental.create(0);
+    Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 

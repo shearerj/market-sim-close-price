@@ -1,6 +1,7 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import edu.umich.srg.collect.Sparse.Entry;
+import com.google.common.collect.Multiset.Entry;
+
 import edu.umich.srg.marketsim.Sim;
 
 /**
@@ -9,8 +10,10 @@ import edu.umich.srg.marketsim.Sim;
  */
 public interface Fundamental {
 
+  /** Gets the fundamental value at the specific time. */
   double getValueAt(long time);
 
+  /** Returns a compact representation of the fundamental. */
   Iterable<Entry<Double>> getFundamentalValues();
 
   FundamentalView getView(Sim sim);

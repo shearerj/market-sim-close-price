@@ -2,7 +2,11 @@ package edu.umich.srg.marketsim.fundamental;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import edu.umich.srg.collect.Sparse;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multisets;
+import com.google.common.primitives.Ints;
+
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
@@ -10,7 +14,9 @@ import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -38,7 +44,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
   public static Fundamental create(Random rand, long finalTime, double mean, double meanReversion,
       double shockVar) {
     if (shockVar == 0) {
-      return ConstantFundamental.create(mean);
+      return ConstantFundamental.create(mean, finalTime);
     } else if (meanReversion == 0) {
       return new RandomWalk(rand, finalTime, mean, shockVar);
     } else {
@@ -87,9 +93,35 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
   }
 
   @Override
-  public Iterable<Sparse.Entry<Double>> getFundamentalValues() {
-    return () -> fundamental.entrySet().stream()
-        .map(e -> Sparse.immutableEntry(e.getKey(), e.getValue().doubleValue())).iterator();
+  public Iterable<Multiset.Entry<Double>> getFundamentalValues() {
+    return () -> getIteratorFundamentalValues();
+  }
+
+  /** Iterator helper for getFundamentalValues. */
+  public Iterator<Multiset.Entry<Double>> getIteratorFundamentalValues() {
+    Entry<Long, Double> sentinel =
+        new AbstractMap.SimpleImmutableEntry<>(fundamental.lastKey() + 1, null);
+    Iterator<Entry<Long, Double>> first = fundamental.entrySet().iterator();
+    Iterator<Entry<Long, Double>> second =
+        Iterables.concat(fundamental.entrySet(), Collections.singleton(sentinel)).iterator();
+    second.next();
+
+    return new Iterator<Multiset.Entry<Double>>() {
+
+      @Override
+      public boolean hasNext() {
+        return first.hasNext();
+      }
+
+      @Override
+      public Multiset.Entry<Double> next() {
+        Entry<Long, Double> fst = first.next();
+        Entry<Long, Double> snd = second.next();
+        return Multisets.immutableEntry(fst.getValue(),
+            Ints.checkedCast(snd.getKey() - fst.getKey()));
+      }
+
+    };
   }
 
   protected abstract double getIntermediateValue(long time, double priceBefore, long timeBefore,

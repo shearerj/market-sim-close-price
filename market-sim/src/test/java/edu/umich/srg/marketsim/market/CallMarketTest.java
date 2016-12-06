@@ -32,7 +32,7 @@ public class CallMarketTest {
   public RepeatRule repeatRule = new RepeatRule();
 
   private static final Random rand = new Random();
-  private static final Fundamental fund = ConstantFundamental.create(0);
+  private static final Fundamental fund = ConstantFundamental.create(0, 100);
 
   /** Test normal pricing policy */
   @Test
@@ -87,7 +87,7 @@ public class CallMarketTest {
   /** Test that market clears at intervals */
   @Test
   public void clearActivityInsertion() {
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(1000), rand);
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(1000, 100), rand);
     CallMarket market = CallMarket.create(sim, fund, 100, rand);
     AtomicInteger numQuotes = new AtomicInteger(0);
     Agent agent = new MockAgent() {

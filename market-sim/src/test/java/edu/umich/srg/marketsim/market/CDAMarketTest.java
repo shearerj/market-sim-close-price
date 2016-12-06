@@ -28,7 +28,7 @@ public class CDAMarketTest {
   @Before
   public void setup() {
     sim = new MockSim();
-    fund = ConstantFundamental.create(0);
+    fund = ConstantFundamental.create(0, 100);
     market = CdaMarket.create(sim, fund);
     agent = new MockAgent();
     view = market.getView(agent, TimeStamp.ZERO);

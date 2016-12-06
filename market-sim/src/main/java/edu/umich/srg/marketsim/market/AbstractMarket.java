@@ -14,8 +14,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import edu.umich.srg.collect.Sparse;
-import edu.umich.srg.collect.SparseArrayList;
 import edu.umich.srg.fourheap.FourHeap;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.Order;
@@ -30,9 +28,11 @@ import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
 import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.function.Function;
@@ -53,7 +53,7 @@ abstract class AbstractMarket implements Market, Serializable {
   // Bookkeeping
   private final FundamentalView fundView;
   private final Collection<AbstractMarketView> views;
-  private final Sparse<Double> prices;
+  private final List<Entry<TimeStamp, Price>> prices;
   private final SummStats rmsd;
 
   AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing,
@@ -65,7 +65,7 @@ abstract class AbstractMarket implements Market, Serializable {
 
     this.fundView = fundamental.getView(sim);
     this.views = new ArrayList<>();
-    this.prices = SparseArrayList.empty();
+    this.prices = new ArrayList<>();
     this.rmsd = SummStats.empty();
   }
 
@@ -104,7 +104,10 @@ abstract class AbstractMarket implements Market, Serializable {
       }
 
       // Bookkeeping
-      prices.add(sim.getCurrentTime().get(), price.doubleValue());
+      if (!prices.isEmpty() && Iterables.getLast(prices).getKey().equals(sim.getCurrentTime())) {
+        prices.remove(prices.size() - 1);
+      }
+      prices.add(new AbstractMap.SimpleImmutableEntry<>(sim.getCurrentTime(), price));
       double diff = price.doubleValue() - fundView.getEstimatedFinalFundamental();
       rmsd.acceptNTimes(diff * diff, matched.getQuantity());
     }
@@ -139,23 +142,18 @@ abstract class AbstractMarket implements Market, Serializable {
   @Override
   public JsonObject getFeatures() {
     JsonObject features = new JsonObject();
-
-    features.add("prices", convertSparseData(prices));
     features.add("rmsd", new JsonPrimitive(Math.sqrt(rmsd.getAverage())));
 
-    return features;
-  }
-
-  private static JsonArray convertSparseData(
-      Iterable<? extends Sparse.Entry<? extends Number>> data) {
-    JsonArray json = new JsonArray();
-    for (Sparse.Entry<? extends Number> obs : data) {
+    JsonArray jprices = new JsonArray();
+    for (Entry<TimeStamp, Price> obs : prices) {
       JsonArray point = new JsonArray();
-      point.add(new JsonPrimitive(obs.getIndex()));
-      point.add(new JsonPrimitive(obs.getElement().doubleValue()));
-      json.add(point);
+      point.add(new JsonPrimitive(obs.getKey().get()));
+      point.add(new JsonPrimitive(obs.getValue()));
+      jprices.add(point);
     }
-    return json;
+    features.add("prices", jprices);
+
+    return features;
   }
 
   @Override

@@ -1,8 +1,9 @@
 package edu.umich.srg.marketsim.fundamental;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Multiset.Entry;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,8 +18,11 @@ import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestDoubles;
+import edu.umich.srg.testing.TestInts;
 
 import java.util.Random;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 @RunWith(Theories.class)
 public class GaussianMeanRevertingTest {
@@ -53,6 +57,20 @@ public class GaussianMeanRevertingTest {
     assertEquals("Second prices were not equal", p12, p22, 0);
   }
 
+  @Repeat(10)
+  @Theory
+  public void fundLengthTest(@TestDoubles({100}) double shockVar,
+      @TestDoubles({0, 0.3, 1}) double kappa, @TestInts({100, 1000}) int finalTime) {
+
+    Fundamental fund = GaussianMeanReverting.create(rand, finalTime, mean, kappa, shockVar);
+    // Sample fundamental at random points
+    IntStream.generate(() -> rand.nextInt(finalTime)).limit(10)
+        .forEach(time -> fund.getValueAt(time));
+    long length = StreamSupport.stream(fund.getFundamentalValues().spliterator(), true)
+        .mapToLong(Entry::getCount).sum();
+    assertEquals(finalTime + 1, length);
+  }
+
   /**
    * Tests that it can generate a large fundamental value reasonble quickly. This only really works
    * if there are always jumps, as hypergeometrics are hard to sample from.
@@ -60,9 +78,10 @@ public class GaussianMeanRevertingTest {
   @Test
   public void longFundamentalTest() {
     long time = 1000000000000L;
+    long start = System.currentTimeMillis();
     Fundamental fundamental = GaussianMeanReverting.create(rand, time, mean, 0.5, 100);
     fundamental.getValueAt(time - 1);
-    assertEquals(42, Iterables.size(fundamental.getFundamentalValues()));
+    assertTrue(System.currentTimeMillis() < start + 1000);
   }
 
 
@@ -71,7 +90,7 @@ public class GaussianMeanRevertingTest {
   public void infiniteObservationVarianceTest(@TestDoubles({0, 0.2, 1}) double meanReversion,
       @TestDoubles({0, 100}) double shockVariance) {
     MockSim sim = new MockSim();
-    Fundamental fund = ConstantFundamental.create(mean);
+    Fundamental fund = ConstantFundamental.create(mean, 100);
     GaussianFundamentalView estimator = ((GaussableView) fund.getView(sim)).addNoise(rand, 0);
     double estimate = estimator.getEstimatedFinalFundamental();
     assertEquals(mean, estimate, 0);

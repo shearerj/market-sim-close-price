@@ -40,10 +40,10 @@ public class MarkovAgentTest {
   @Test
   public void fundamentalConstructionTest() {
     Sim sim = new MockSim();
-    Market market = CdaMarket.create(sim, ConstantFundamental.create(0));
+    Market market = CdaMarket.create(sim, ConstantFundamental.create(0, 100));
 
     // Constant
-    new MarkovAgent(sim, market, ConstantFundamental.create(0), spec, rand);
+    new MarkovAgent(sim, market, ConstantFundamental.create(0, 100), spec, rand);
     new MarkovAgent(sim, market, GaussianMeanReverting.create(rand, 1000, 0, 0, 0), spec, rand);
     new MarkovAgent(sim, market, GaussianJump.create(rand, 100, 0, 0, .5), spec, rand);
     new MarkovAgent(sim, market, GaussianJump.create(rand, 100, 0, 100, 0), spec, rand);

@@ -568,7 +568,8 @@ public class AbstractMarketTest {
   private static class MockMarket extends AbstractMarket {
 
     private MockMarket(Sim sim) {
-      super(sim, ConstantFundamental.create(0), MockMarket::mockPricing, PrioritySelector.create());
+      super(sim, ConstantFundamental.create(0, 100), MockMarket::mockPricing,
+          PrioritySelector.create());
     }
 
     private static Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>> mockPricing(

@@ -29,7 +29,8 @@ public class SimpleMarketMakerTest {
 
   @Test
   public void basicIntegrationTransactionTest() {
-    Fundamental fundamental = ConstantFundamental.create(500);
+    long length = 20;
+    Fundamental fundamental = ConstantFundamental.create(500, length);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
@@ -56,7 +57,7 @@ public class SimpleMarketMakerTest {
 
     // Run
     sim.initialize();
-    sim.executeUntil(TimeStamp.of(20));
+    sim.executeUntil(TimeStamp.of(length));
 
     assertTrue("MarketMaker didn't transact", transacted.get());
   }

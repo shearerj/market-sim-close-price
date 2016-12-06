@@ -2,9 +2,11 @@ package edu.umich.srg.marketsim.fundamental;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multisets;
 import com.google.common.primitives.Ints;
 
-import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Binomial;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Hypergeometric;
@@ -13,7 +15,9 @@ import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -37,7 +41,7 @@ public class GaussianJump implements Fundamental, Serializable {
   public static Fundamental create(Random rand, long finalTime, double mean, double shockVar,
       double shockProb) {
     if (shockProb == 0 || shockVar == 0) {
-      return ConstantFundamental.create(mean);
+      return ConstantFundamental.create(mean, finalTime);
     } else if (shockProb == 1) {
       return GaussianMeanReverting.create(rand, finalTime, mean, 0, shockVar);
     } else {
@@ -98,9 +102,35 @@ public class GaussianJump implements Fundamental, Serializable {
   }
 
   @Override
-  public Iterable<Sparse.Entry<Double>> getFundamentalValues() {
-    return () -> fundamental.entrySet().stream()
-        .map(e -> Sparse.immutableEntry(e.getKey(), e.getValue().price)).iterator();
+  public Iterable<Multiset.Entry<Double>> getFundamentalValues() {
+    return () -> getIteratorFundamentalValues();
+  }
+
+  /** Iterator helper for getFundamentalValues. */
+  public Iterator<Multiset.Entry<Double>> getIteratorFundamentalValues() {
+    Entry<Long, FundObs> sentinel =
+        new AbstractMap.SimpleImmutableEntry<>(fundamental.lastKey() + 1, null);
+    Iterator<Entry<Long, FundObs>> first = fundamental.entrySet().iterator();
+    Iterator<Entry<Long, FundObs>> second =
+        Iterables.concat(fundamental.entrySet(), Collections.singleton(sentinel)).iterator();
+    second.next();
+
+    return new Iterator<Multiset.Entry<Double>>() {
+
+      @Override
+      public boolean hasNext() {
+        return first.hasNext();
+      }
+
+      @Override
+      public Multiset.Entry<Double> next() {
+        Entry<Long, FundObs> fst = first.next();
+        Entry<Long, FundObs> snd = second.next();
+        return Multisets.immutableEntry(fst.getValue().price,
+            Ints.checkedCast(snd.getKey() - fst.getKey()));
+      }
+
+    };
   }
 
   private FundObs observeIntermediate(Entry<Long, FundObs> before, Entry<Long, FundObs> after,

@@ -40,10 +40,11 @@ public class StandardMarketAgentTest {
   /** Test that both sides submits an order to both sides. */
   @Test
   public void bothSidesTest() {
-    Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
+    Spec spec = Spec.fromDefaultPairs(base, Sides.class, OrderStyle.BOTH);
+    Fundamental fundamental =
+        ConstantFundamental.create(fundamentalMean, spec.get(SimLength.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
-    Spec spec = Spec.fromDefaultPairs(base, Sides.class, OrderStyle.BOTH);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
       @Override
@@ -75,10 +76,11 @@ public class StandardMarketAgentTest {
   /** Test that setting submit depth works. */
   @Test
   public void multiOrderTest() {
-    Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
+    Spec spec = Spec.fromDefaultPairs(base, SubmitDepth.class, 2);
+    Fundamental fundamental =
+        ConstantFundamental.create(fundamentalMean, spec.get(SimLength.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
-    Spec spec = Spec.fromDefaultPairs(base, SubmitDepth.class, 2);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
       @Override
@@ -109,10 +111,11 @@ public class StandardMarketAgentTest {
   /** Test that both sides and submit depth submits multiple orders to both sides. */
   @Test
   public void bothSidesAndSubmitDepthTest() {
-    Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
+    Spec spec = Spec.fromDefaultPairs(base, Sides.class, OrderStyle.BOTH, SubmitDepth.class, 3);
+    Fundamental fundamental =
+        ConstantFundamental.create(fundamentalMean, spec.get(SimLength.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
-    Spec spec = Spec.fromDefaultPairs(base, Sides.class, OrderStyle.BOTH, SubmitDepth.class, 3);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
       @Override
@@ -144,10 +147,11 @@ public class StandardMarketAgentTest {
   /** Test that setting submit depth works, but is clipped if max position would be exceeded. */
   @Test
   public void clippedMultiOrderTest() {
-    Fundamental fundamental = ConstantFundamental.create(fundamentalMean);
+    Spec spec = Spec.fromDefaultPairs(base, SubmitDepth.class, 3, MaxPosition.class, 2);
+    Fundamental fundamental =
+        ConstantFundamental.create(fundamentalMean, spec.get(SimLength.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
-    Spec spec = Spec.fromDefaultPairs(base, SubmitDepth.class, 3, MaxPosition.class, 2);
 
     StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
       @Override

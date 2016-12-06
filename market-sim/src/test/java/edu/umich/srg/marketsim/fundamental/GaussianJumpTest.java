@@ -3,6 +3,7 @@ package edu.umich.srg.marketsim.fundamental;
 import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multiset.Entry;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,8 +14,11 @@ import org.junit.runner.RunWith;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestDoubles;
+import edu.umich.srg.testing.TestInts;
 
 import java.util.Random;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 @RunWith(Theories.class)
 public class GaussianJumpTest {
@@ -45,6 +49,20 @@ public class GaussianJumpTest {
 
     assertEquals("First prices were not equal", p11, p21, 0);
     assertEquals("Second prices were not equal", p12, p22, 0);
+  }
+
+  @Repeat(10)
+  @Theory
+  public void fundLengthTest(@TestDoubles({100}) double shockVar,
+      @TestDoubles({0, 0.2, 0.8, 1}) double shockProb, @TestInts({100, 1000}) int finalTime) {
+
+    Fundamental fund = GaussianJump.create(rand, finalTime, mean, shockVar, shockProb);
+    // Sample fundamental at random points
+    IntStream.generate(() -> rand.nextInt(finalTime)).limit(10)
+        .forEach(time -> fund.getValueAt(time));
+    long length = StreamSupport.stream(fund.getFundamentalValues().spliterator(), true)
+        .mapToLong(Entry::getCount).sum();
+    assertEquals(finalTime + 1, length);
   }
 
   /**

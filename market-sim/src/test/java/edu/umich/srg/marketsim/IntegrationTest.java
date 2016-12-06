@@ -76,7 +76,7 @@ public class IntegrationTest {
   public void simpleMinimalTest() {
     int numAgents = 10;
 
-    Fundamental fundamental = ConstantFundamental.create(0);
+    Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     for (int i = 0; i < numAgents; ++i)

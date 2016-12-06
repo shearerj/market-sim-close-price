@@ -3,11 +3,11 @@ package edu.umich.srg.marketsim;
 import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
 
+import com.google.common.collect.Multiset;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -28,7 +28,15 @@ class Features {
 
     // Fundamental features
     Fundamental fundamental = simulator.getFundamental();
-    features.add("fundamental", convertSparseData(fundamental.getFundamentalValues()));
+    JsonArray jfund = new JsonArray();
+    long time = 0;
+    for (Multiset.Entry<Double> ent : fundamental.getFundamentalValues()) {
+      JsonArray point = new JsonArray();
+      point.add(new JsonPrimitive(time));
+      point.add(new JsonPrimitive(ent.getElement()));
+      time += ent.getCount();
+    }
+    features.add("fundamental", jfund);
 
     // Market features
     JsonArray marketFeatures = new JsonArray();
@@ -41,18 +49,6 @@ class Features {
     surplusFeatures(simulator.getAgentPayoffs(), features);
 
     return features;
-  }
-
-  private static JsonArray convertSparseData(
-      Iterable<? extends Sparse.Entry<? extends Number>> data) {
-    JsonArray json = new JsonArray();
-    for (Sparse.Entry<? extends Number> obs : data) {
-      JsonArray point = new JsonArray();
-      point.add(new JsonPrimitive(obs.getIndex()));
-      point.add(new JsonPrimitive(obs.getElement().doubleValue()));
-      json.add(point);
-    }
-    return json;
   }
 
   private static void surplusFeatures(Map<Agent, ? extends AgentInfo> results,
