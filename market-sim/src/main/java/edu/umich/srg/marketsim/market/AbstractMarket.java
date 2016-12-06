@@ -55,6 +55,7 @@ abstract class AbstractMarket implements Market, Serializable {
   private final Collection<AbstractMarketView> views;
   private final List<Entry<TimeStamp, Price>> prices;
   private final SummStats rmsd;
+  private double maxDiff;
 
   AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing,
       Selector<AbstractMarketOrder> selector) {
@@ -67,6 +68,7 @@ abstract class AbstractMarket implements Market, Serializable {
     this.views = new ArrayList<>();
     this.prices = new ArrayList<>();
     this.rmsd = SummStats.empty();
+    this.maxDiff = 0;
   }
 
   AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
@@ -110,6 +112,7 @@ abstract class AbstractMarket implements Market, Serializable {
       prices.add(new AbstractMap.SimpleImmutableEntry<>(sim.getCurrentTime(), price));
       double diff = price.doubleValue() - fundView.getEstimatedFinalFundamental();
       rmsd.acceptNTimes(diff * diff, matched.getQuantity());
+      maxDiff = Double.max(maxDiff, Math.abs(diff));
     }
   }
 
@@ -143,6 +146,7 @@ abstract class AbstractMarket implements Market, Serializable {
   public JsonObject getFeatures() {
     JsonObject features = new JsonObject();
     features.add("rmsd", new JsonPrimitive(Math.sqrt(rmsd.getAverage())));
+    features.add("max_diff", new JsonPrimitive(maxDiff));
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {

@@ -259,6 +259,36 @@ public class AbstractMarketTest {
     assertEquals(10, rmsd, 1e-7);
   }
 
+  @Test
+  public void maxDiffTest() {
+    double diff;
+
+    // Empty
+    diff = market.getFeatures().get("max_diff").getAsDouble();
+    assertEquals(0, diff, 1e-7);
+
+    // diff = 20
+    view.submitOrder(BUY, Price.of(120), 1);
+    view.submitOrder(SELL, Price.of(120), 1);
+    market.clear();
+    diff = market.getFeatures().get("max_diff").getAsDouble();
+    assertEquals(20, diff, 1e-7);
+
+    // diff = 10
+    view.submitOrder(BUY, Price.of(90), 1);
+    view.submitOrder(SELL, Price.of(90), 1);
+    market.clear();
+    diff = market.getFeatures().get("max_diff").getAsDouble();
+    assertEquals(20, diff, 1e-7);
+
+    // diff = 30
+    view.submitOrder(BUY, Price.of(70), 1);
+    view.submitOrder(SELL, Price.of(70), 1);
+    market.clear();
+    diff = market.getFeatures().get("max_diff").getAsDouble();
+    assertEquals(30, diff, 1e-7);
+  }
+
   // /** Information propagates at proper times */
   // @Test
   // public void latencyTest() {
