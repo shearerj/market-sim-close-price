@@ -61,6 +61,10 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
     max = Math.max(max, value);
   }
 
+  public void accept(Number value) {
+    accept(value.doubleValue());
+  }
+
   @Override
   public void accept(Entry<? extends Number> entry) {
     acceptNTimes(entry.getElement().doubleValue(), entry.getCount());
@@ -86,6 +90,10 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
     if (times > 0) {
       combine(new SummStats(times, value, 0, value, value));
     }
+  }
+
+  public void acceptNTimes(Number value, long times) {
+    acceptNTimes(value.doubleValue(), times);
   }
 
   /** Return the mean of all data added so far. */

@@ -12,7 +12,6 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.fourheap.FourHeap;
 import edu.umich.srg.fourheap.MatchedOrders;
@@ -56,6 +55,7 @@ abstract class AbstractMarket implements Market, Serializable {
   private final List<Entry<TimeStamp, Price>> prices;
   private final SummStats rmsd;
   private double maxDiff;
+  private final SummStats transPrice;
 
   AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing,
       Selector<AbstractMarketOrder> selector) {
@@ -69,6 +69,7 @@ abstract class AbstractMarket implements Market, Serializable {
     this.prices = new ArrayList<>();
     this.rmsd = SummStats.empty();
     this.maxDiff = 0;
+    this.transPrice = SummStats.empty();
   }
 
   AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
@@ -113,6 +114,7 @@ abstract class AbstractMarket implements Market, Serializable {
       double diff = price.doubleValue() - fundView.getEstimatedFinalFundamental();
       rmsd.acceptNTimes(diff * diff, matched.getQuantity());
       maxDiff = Double.max(maxDiff, Math.abs(diff));
+      transPrice.acceptNTimes(price, matched.getQuantity());
     }
   }
 
@@ -145,14 +147,16 @@ abstract class AbstractMarket implements Market, Serializable {
   @Override
   public JsonObject getFeatures() {
     JsonObject features = new JsonObject();
-    features.add("rmsd", new JsonPrimitive(Math.sqrt(rmsd.getAverage())));
-    features.add("max_diff", new JsonPrimitive(maxDiff));
+
+    features.addProperty("rmsd", Math.sqrt(rmsd.getAverage()));
+    features.addProperty("max_diff", maxDiff);
+    features.addProperty("trans_vol", transPrice.getStandardDeviation());
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {
       JsonArray point = new JsonArray();
-      point.add(new JsonPrimitive(obs.getKey().get()));
-      point.add(new JsonPrimitive(obs.getValue()));
+      point.add(obs.getKey().get());
+      point.add(obs.getValue());
       jprices.add(point);
     }
     features.add("prices", jprices);
