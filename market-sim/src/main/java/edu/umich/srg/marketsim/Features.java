@@ -6,7 +6,6 @@ import static edu.umich.srg.fourheap.OrderType.SELL;
 import com.google.common.collect.Multiset;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.agent.Agent;
@@ -32,8 +31,9 @@ class Features {
     long time = 0;
     for (Multiset.Entry<Double> ent : fundamental.getFundamentalValues()) {
       JsonArray point = new JsonArray();
-      point.add(new JsonPrimitive(time));
-      point.add(new JsonPrimitive(ent.getElement()));
+      point.add(time);
+      point.add(ent.getElement());
+      jfund.add(point);
       time += ent.getCount();
     }
     features.add("fundamental", jfund);

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import org.junit.Rule;
@@ -275,6 +276,27 @@ public class FeaturesTest {
     // Verify that max surplus is 0
     assertEquals(0, maxSurplus, tol);
     assertEquals(surplus, maxSurplus - imSurplusLoss - emSurplusLoss, tol);
+  }
+
+
+  @Test
+  public void fundmanetalTest() {
+    Fundamental fundamental = GaussianMeanReverting.create(rand, 100, 100, 0.01, 2);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
+    Agent agent = new MockAgent();
+    sim.addAgent(agent);
+    MarketView view = cda.getView(agent, TimeStamp.ZERO);
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(1));
+
+    view.submitOrder(BUY, Price.of(200), 2);
+    view.submitOrder(SELL, Price.of(100), 1);
+
+    sim.executeUntil(TimeStamp.of(2));
+
+    JsonArray fund = sim.computeFeatures().get("fundamental").getAsJsonArray();
+    assertTrue(fund.size() > 0);
   }
 
 }
