@@ -156,7 +156,7 @@ abstract class AbstractMarket implements Market, Serializable {
     for (Entry<TimeStamp, Price> obs : prices) {
       JsonArray point = new JsonArray();
       point.add(obs.getKey().get());
-      point.add(obs.getValue());
+      point.add(obs.getValue().doubleValue());
       jprices.add(point);
     }
     features.add("prices", jprices);
