@@ -2,14 +2,18 @@ package edu.umich.srg.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
+import com.google.common.collect.Ordering;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.PrimitiveIterator.OfDouble;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 /**
@@ -43,8 +47,14 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
     return stream.collect(SummStats::empty, SummStats::accept, SummStats::combine);
   }
 
-  public static SummStats over(Collection<? extends Entry<? extends Number>> data) {
-    return data.stream().collect(SummStats::empty, SummStats::accept, SummStats::combine);
+  /** Compute summary stats over a collection. */
+  public static SummStats over(Collection<? extends Number> data) {
+    if (data instanceof Multiset<?>) {
+      return ((Multiset<? extends Number>) data).entrySet().stream().collect(SummStats::empty,
+          SummStats::accept, SummStats::combine);
+    } else {
+      return data.stream().collect(SummStats::empty, SummStats::accept, SummStats::combine);
+    }
   }
 
   public static SummStats over(double... data) {
@@ -158,6 +168,52 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
   @Override
   public String toString() {
     return "<n: " + count + ", mean: " + average + ">";
+  }
+
+  // This could be made O(n) but isn't out of laziness and complexity
+  /**
+   * Compute median over a collection. O(n log n). Factor is in terms of distinct elements if
+   * collection is a multiset.
+   */
+  public static double median(Collection<? extends Number> data) {
+    if (data.isEmpty()) {
+      return Double.NaN;
+    } else if (data instanceof Multiset<?>) {
+      List<Entry<? extends Number>> entries = ((Multiset<? extends Number>) data).entrySet()
+          .stream().sorted(Ordering.natural().onResultOf(e -> e.getElement().doubleValue()))
+          .collect(Collectors.toList());
+      long[] sums = entries.stream().mapToLong(Entry::getCount).toArray();
+      double[] values =
+          entries.stream().map(Entry::getElement).mapToDouble(Number::doubleValue).toArray();
+
+      // Cumsum
+      long total = -1;
+      for (int i = 0; i < sums.length; ++i) {
+        total += sums[i];
+        sums[i] = total;
+      }
+
+      // Find midpoint
+      int index = Arrays.binarySearch(sums, (total + 1) / 2);
+      if (index < 0) {
+        index = -index - 1;
+      }
+
+      // Even and not on the line
+      if (total % 2 == 1 && index > 0 && sums[index - 1] == (total - 1) / 2) {
+        return (values[index - 1] + values[index]) / 2;
+      } else {
+        return values[index];
+      }
+    } else {
+      // TODO This is inefficient, could be O(n)
+      double[] sorted = data.stream().mapToDouble(Number::doubleValue).sorted().toArray();
+      if (sorted.length % 2 == 0) {
+        return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+      } else {
+        return sorted[sorted.length / 2];
+      }
+    }
   }
 
 }
