@@ -16,7 +16,7 @@ import com.google.common.collect.Ordering;
 import edu.umich.srg.collect.SetViews;
 import edu.umich.srg.util.Optionals;
 
-import java.util.Arrays;
+import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,7 +36,8 @@ import java.util.stream.Stream;
  * not the quantity of objects i.e. adding more orders at the same price doesn't increase the
  * complexity.
  */
-public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
+public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
+    implements Multiset<O> {
 
   // Orders for unmatched priority where lower is better
   private final Ordering<Key> buyPrice;
@@ -144,12 +145,6 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
   }
 
   @Override
-  public boolean addAll(Collection<? extends O> c) {
-    c.stream().forEach(this::add);
-    return true;
-  }
-
-  @Override
   public boolean remove(Object order) {
     return remove(order, 1) > 0;
   }
@@ -162,7 +157,7 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
   @Override
   public int remove(Object order, int quantity) {
     checkArgument(quantity >= 0, "Quantity must be nonnegative");
-    if (!(order instanceof Order<?, ?>)) {
+    if (order == null || !(order instanceof Order<?, ?>)) {
       return 0;
     } else if (quantity == 0) {
       // Do nothing
@@ -228,8 +223,10 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
       sellUnmatched.offer(key, unmatched);
     }
 
-    Iterator<Multiset.Entry<O>> buys = Iterables.concat(buy.entrySet(), buyMatched).iterator();
-    Iterator<Multiset.Entry<O>> sells = Iterables.concat(sell.entrySet(), sellMatched).iterator();
+    Iterator<Multiset.Entry<O>> buys =
+        Iterables.concat(buy.entrySet(), buyMatched.entrySet()).iterator();
+    Iterator<Multiset.Entry<O>> sells =
+        Iterables.concat(sell.entrySet(), sellMatched.entrySet()).iterator();
 
     O buyOrder = null;
     O sellOrder = null;
@@ -291,57 +288,30 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
     return Stream.of(buyUnmatched, buyMatched, sellUnmatched, sellMatched);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public boolean contains(Object order) {
-    return order instanceof Order<?, ?> && queueStream().anyMatch(q -> q.contains((O) order));
+    return queueStream().anyMatch(q -> q.contains(order));
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public int count(Object obj) {
-    if (obj instanceof Order<?, ?>) {
-      O order = (O) obj;
-      return queueStream().mapToInt(q -> q.count(order)).sum();
-    } else {
-      return 0;
-    }
+  public int count(Object order) {
+    return queueStream().mapToInt(q -> q.count(order)).sum();
   }
 
   /** Removes all orders from the fourheap. Does not perform a `marketClear`. */
   @Override
   public void clear() {
-    queueStream().forEach(OrderQueue::clear);
+    queueStream().forEach(Collection::clear);
   }
 
   @Override
   public Stream<O> stream() {
-    return queueStream().flatMap(OrderQueue::elementStream);
+    return queueStream().flatMap(Collection::stream);
   }
 
   @Override
   public Iterator<O> iterator() {
     return stream().iterator();
-  }
-
-  @Override
-  public Object[] toArray() {
-    return stream().toArray();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <E> E[] toArray(E[] a) {
-    int size = size();
-    if (size > a.length) {
-      a = Arrays.copyOf(a, size);
-    }
-    int i = 0;
-    for (O order : this) {
-      a[i++] = (E) order;
-    }
-    Arrays.fill(a, size, a.length, null);
-    return a;
   }
 
   /*
@@ -365,39 +335,23 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
   @Override
   public Set<O> elementSet() {
     return SetViews
-        .distinctUnion(queueStream().map(OrderQueue::elementSet).collect(Collectors.toList()));
+        .distinctUnion(queueStream().map(Multiset::elementSet).collect(Collectors.toList()));
   }
 
   @Override
   public Set<Entry<O>> entrySet() {
     return SetViews
-        .distinctUnion(queueStream().map(OrderQueue::entrySet).collect(Collectors.toList()));
-  }
-
-  @Override
-  public boolean containsAll(Collection<?> elements) {
-    return elements.stream().allMatch(this::contains);
-  }
-
-  /*
-   * There's no reason this couldn't be implemented but it wouldn't be used, and would be difficult
-   * to write. A simple solution that would be very slow would be to simply copy the counts of all
-   * in collection, then clear and re-add, but it'd obviously be faster to retain in each order
-   * queue and then fix bad matches.
-   */
-  @Override
-  public boolean retainAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
+        .distinctUnion(queueStream().map(Multiset::entrySet).collect(Collectors.toList()));
   }
 
   @Override
   public boolean isEmpty() {
-    return queueStream().allMatch(OrderQueue::isEmpty);
+    return queueStream().allMatch(Collection::isEmpty);
   }
 
   @Override
   public int size() {
-    return queueStream().mapToInt(OrderQueue::size).sum();
+    return queueStream().mapToInt(Collection::size).sum();
   }
 
   public int getBidDepth() {
@@ -436,22 +390,25 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
         // Bid and ask depth didn't equal size
         && size() == getBidDepth() + getAskDepth()
         // Buys not all buys
-        && buyMatched.stream().allMatch(e -> e.getElement().getType() == BUY)
+        && buyMatched.elementSet().stream().allMatch(e -> e.getType() == BUY)
         // Buys not all buys
-        && buyUnmatched.stream().allMatch(e -> e.getElement().getType() == BUY)
+        && buyUnmatched.elementSet().stream().allMatch(e -> e.getType() == BUY)
         // Sells not all sells
-        && sellMatched.stream().allMatch(e -> e.getElement().getType() == SELL)
+        && sellMatched.elementSet().stream().allMatch(e -> e.getType() == SELL)
         // Sells not all sells
-        && sellUnmatched.stream().allMatch(e -> e.getElement().getType() == SELL);
+        && sellUnmatched.elementSet().stream().allMatch(e -> e.getType() == SELL);
   }
 
   @Override
   public String toString() {
-    String bm = buyMatched.stream().map(Object::toString).collect(Collectors.joining(", "));
-    String bu =
-        buyUnmatched.reverseStream().map(Object::toString).collect(Collectors.joining(", "));
-    String sm = sellMatched.reverseStream().map(Object::toString).collect(Collectors.joining(", "));
-    String su = sellUnmatched.stream().map(Object::toString).collect(Collectors.joining(", "));
+    String bm =
+        buyMatched.entrySet().stream().map(Object::toString).collect(Collectors.joining(", "));
+    String bu = buyUnmatched.descendingEntrySet().stream().map(Object::toString)
+        .collect(Collectors.joining(", "));
+    String sm = sellMatched.descendingEntrySet().stream().map(Object::toString)
+        .collect(Collectors.joining(", "));
+    String su =
+        sellUnmatched.entrySet().stream().map(Object::toString).collect(Collectors.joining(", "));
     return '{' + bu + " | " + bm + " || " + sm + " | " + su + '}';
   }
 
@@ -466,6 +423,11 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
 
     private Key(Order<P, T> order) {
       this(order.getPrice(), order.getTime());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(price, time);
     }
 
     @Override
@@ -487,8 +449,7 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
 
   }
 
-  // FIXME implements multiset?
-  private class OrderQueue implements Iterable<Multiset.Entry<O>> {
+  private class OrderQueue extends AbstractCollection<O> implements Multiset<O> {
 
     private final NavigableMap<Key, Multiset<O>> queue;
     private int size;
@@ -528,6 +489,13 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
       to.offer(entry.getKey(), entry.getValue());
     }
 
+    @Override
+    public boolean add(O order) {
+      add(order, 1);
+      return true;
+    }
+
+    @Override
     public int add(O order, int quantity) {
       Key key = new Key(order);
       int countBefore = queue.computeIfAbsent(key, k -> HashMultiset.create()).add(order, quantity);
@@ -535,76 +503,126 @@ public class FourHeap<P, T, O extends Order<P, T>> implements Multiset<O> {
       return countBefore;
     }
 
-    /**
-     * Remove quantity of an order from the fourheap.
-     * 
-     * @return The quantity before removal
-     */
-    public int remove(O order, int quantity) {
-      Key key = new Key(order);
-      Multiset<O> set = queue.get(key);
-      if (set == null) {
-        return 0;
-      }
-      int result = set.remove(order, quantity);
-      if (set.isEmpty()) {
-        queue.remove(key);
-      }
-      size -= Math.min(result, quantity);
-      return result;
+    @Override
+    public boolean remove(Object obj) {
+      return remove(obj, 1) > 0;
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public int remove(Object obj, int quantity) {
+      if (obj != null && obj instanceof Order<?, ?>) {
+        O order = (O) obj;
+        Key key = new Key(order);
+        Multiset<O> set = queue.get(key);
+        if (set == null) {
+          return 0;
+        }
+        int result = set.remove(order, quantity);
+        if (set.isEmpty()) {
+          queue.remove(key);
+        }
+        size -= Math.min(result, quantity);
+        return result;
+      } else {
+        return 0;
+      }
+    }
+
+    @Override
     public void clear() {
       queue.clear();
       size = 0;
     }
 
+    @Override
     public boolean isEmpty() {
       return queue.isEmpty();
     }
 
+    @Override
     public int size() {
       return size;
     }
 
-    public boolean contains(O order) {
-      Key key = new Key(order);
-      return Optional.ofNullable(queue.get(key)).map(ms -> ms.contains(order)).orElse(false);
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean contains(Object obj) {
+      if (obj != null && obj instanceof Order<?, ?>) {
+        O order = (O) obj;
+        Key key = new Key(order);
+        return Optional.ofNullable(queue.get(key)).map(ms -> ms.contains(order)).orElse(false);
+      } else {
+        return false;
+      }
     }
 
-    public int count(O order) {
-      Key key = new Key(order);
-      return Optional.ofNullable(queue.get(key)).map(ms -> ms.count(order)).orElse(0);
+    @SuppressWarnings("unchecked")
+    @Override
+    public int count(Object obj) {
+      if (obj != null && obj instanceof Order<?, ?>) {
+        O order = (O) obj;
+        Key key = new Key(order);
+        return Optional.ofNullable(queue.get(key)).map(ms -> ms.count(order)).orElse(0);
+      } else {
+        return 0;
+      }
     }
 
     @Override
-    public Iterator<Multiset.Entry<O>> iterator() {
+    public Stream<O> stream() {
+      return queue.values().stream().flatMap(Collection::stream);
+    }
+
+    @Override
+    public Iterator<O> iterator() {
       return stream().iterator();
     }
 
-    public Stream<O> elementStream() {
-      return queue.values().stream().flatMap(Multiset::stream);
-    }
-
+    @Override
     public Set<O> elementSet() {
       return SetViews.distinctUnion(Collections2.transform(queue.values(), Multiset::elementSet));
     }
 
+    @Override
     public Set<Multiset.Entry<O>> entrySet() {
       return SetViews.distinctUnion(Collections2.transform(queue.values(), Multiset::entrySet));
     }
 
-    public Stream<Multiset.Entry<O>> stream() {
-      return queue.values().stream().map(Multiset::entrySet).flatMap(Set::stream);
-    }
-
-    public Stream<Multiset.Entry<O>> reverseStream() {
-      return queue.descendingMap().values().stream().map(Multiset::entrySet).flatMap(Set::stream);
+    public Set<Multiset.Entry<O>> descendingEntrySet() {
+      return SetViews.distinctUnion(
+          Collections2.transform(queue.descendingMap().values(), Multiset::entrySet));
     }
 
     @Override
     public String toString() {
       return '{' + stream().map(Object::toString).collect(Collectors.joining(", ")) + '}';
+    }
+
+    @Override
+    public int setCount(O order, int count) {
+      Key key = new Key(order);
+      Multiset<O> atKey = queue.computeIfAbsent(key, k -> HashMultiset.create());
+      int countBefore = atKey.setCount(order, count);
+      if (atKey.isEmpty()) {
+        queue.remove(atKey);
+      }
+      size += count - countBefore;
+      return countBefore;
+    }
+
+    @Override
+    public boolean setCount(O order, int oldCount, int newCount) {
+      Key key = new Key(order);
+      Multiset<O> atKey = queue.computeIfAbsent(key, k -> HashMultiset.create());
+      boolean changed = atKey.setCount(order, oldCount, newCount);
+      if (changed) {
+        size += newCount - oldCount;
+        if (atKey.isEmpty()) {
+          queue.remove(atKey);
+        }
+      }
+      return changed;
     }
 
   }
