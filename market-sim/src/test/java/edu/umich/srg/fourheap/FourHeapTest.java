@@ -43,7 +43,7 @@ public class FourHeapTest {
 
   @Test
   public void insertOneBuyTest() {
-    fh.submit(new Ord(BUY, 5), 3);
+    fh.add(new Ord(BUY, 5), 3);
 
     assertEquals(5, (int) fh.getBidQuote().get());
     assertFalse(fh.getAskQuote().isPresent());
@@ -54,7 +54,7 @@ public class FourHeapTest {
 
   @Test
   public void insertOneSellTest() {
-    fh.submit(new Ord(SELL, 5), 3);
+    fh.add(new Ord(SELL, 5), 3);
 
     assertFalse(fh.getBidQuote().isPresent());
     assertEquals(5, (int) fh.getAskQuote().get());
@@ -66,8 +66,8 @@ public class FourHeapTest {
 
   @Test
   public void matchTest1() {
-    fh.submit(new Ord(BUY, 7), 3);
-    fh.submit(new Ord(SELL, 5), 3);
+    fh.add(new Ord(BUY, 7), 3);
+    fh.add(new Ord(SELL, 5), 3);
 
     assertEquals(5, (int) fh.getBidQuote().get());
     assertEquals(7, (int) fh.getAskQuote().get());
@@ -78,8 +78,8 @@ public class FourHeapTest {
 
   @Test
   public void matchTest2() {
-    fh.submit(new Ord(BUY, 7), 3);
-    fh.submit(new Ord(SELL, 5), 5);
+    fh.add(new Ord(BUY, 7), 3);
+    fh.add(new Ord(SELL, 5), 5);
 
     assertEquals(5, (int) fh.getBidQuote().get());
     assertEquals(5, (int) fh.getAskQuote().get());
@@ -90,8 +90,8 @@ public class FourHeapTest {
 
   @Test
   public void matchTest3() {
-    fh.submit(new Ord(BUY, 7), 5);
-    fh.submit(new Ord(SELL, 5), 3);
+    fh.add(new Ord(BUY, 7), 5);
+    fh.add(new Ord(SELL, 5), 3);
 
     assertEquals(7, (int) fh.getBidQuote().get());
     assertEquals(7, (int) fh.getAskQuote().get());
@@ -102,22 +102,22 @@ public class FourHeapTest {
 
   @Test
   public void oustTest() {
-    fh.submit(new Ord(BUY, 3), 2);
-    fh.submit(new Ord(BUY, 5), 1);
-    fh.submit(new Ord(BUY, 6), 1);
-    fh.submit(new Ord(BUY, 7), 1);
+    fh.add(new Ord(BUY, 3), 2);
+    fh.add(new Ord(BUY, 5), 1);
+    fh.add(new Ord(BUY, 6), 1);
+    fh.add(new Ord(BUY, 7), 1);
 
-    fh.submit(new Ord(SELL, 4), 1);
-    fh.submit(new Ord(SELL, 2), 2);
+    fh.add(new Ord(SELL, 4), 1);
+    fh.add(new Ord(SELL, 2), 2);
 
-    fh.submit(new Ord(SELL, 1), 2);
+    fh.add(new Ord(SELL, 1), 2);
   }
 
   @Test
   public void nomatchTest1() {
-    fh.submit(new Ord(SELL, 3), 1);
-    fh.submit(new Ord(BUY, 10), 1);
-    fh.submit(new Ord(BUY, 5), 1); // Shouldn't match
+    fh.add(new Ord(SELL, 3), 1);
+    fh.add(new Ord(BUY, 10), 1);
+    fh.add(new Ord(BUY, 5), 1); // Shouldn't match
 
     assertEquals(10, (int) fh.getAskQuote().get());
     assertEquals(5, (int) fh.getBidQuote().get());
@@ -125,19 +125,19 @@ public class FourHeapTest {
 
   @Test
   public void nomatchTest3() {
-    fh.submit(new Ord(SELL, 3), 1);
-    fh.submit(new Ord(BUY, 10), 1); // These match
-    fh.submit(new Ord(SELL, 5), 1); // This doesn't because there's not enough quantity
-    fh.submit(new Ord(BUY, 5), 1); // This would match with
+    fh.add(new Ord(SELL, 3), 1);
+    fh.add(new Ord(BUY, 10), 1); // These match
+    fh.add(new Ord(SELL, 5), 1); // This doesn't because there's not enough quantity
+    fh.add(new Ord(BUY, 5), 1); // This would match with
 
-    assertEquals(2, fh.clear().size());
+    assertEquals(2, fh.marketClear().size());
   }
 
   @Test
   public void insertMatchedTest1() {
-    fh.submit(new Ord(SELL, 5), 3);
-    fh.submit(new Ord(BUY, 7), 3);
-    fh.submit(new Ord(BUY, 4), 1);
+    fh.add(new Ord(SELL, 5), 3);
+    fh.add(new Ord(BUY, 7), 3);
+    fh.add(new Ord(BUY, 4), 1);
 
     assertEquals(5, (int) fh.getBidQuote().get());
     assertEquals(7, (int) fh.getAskQuote().get());
@@ -148,9 +148,9 @@ public class FourHeapTest {
 
   @Test
   public void insertMatchedTest2() {
-    fh.submit(new Ord(SELL, 5), 3);
-    fh.submit(new Ord(BUY, 7), 3);
-    fh.submit(new Ord(BUY, 6), 1);
+    fh.add(new Ord(SELL, 5), 3);
+    fh.add(new Ord(BUY, 7), 3);
+    fh.add(new Ord(BUY, 6), 1);
 
     assertEquals(6, (int) fh.getBidQuote().get());
     assertEquals(7, (int) fh.getAskQuote().get());
@@ -161,9 +161,9 @@ public class FourHeapTest {
 
   @Test
   public void insertMatchedTest3() {
-    fh.submit(new Ord(SELL, 5), 3);
-    fh.submit(new Ord(BUY, 7), 3);
-    fh.submit(new Ord(BUY, 8), 1);
+    fh.add(new Ord(SELL, 5), 3);
+    fh.add(new Ord(BUY, 7), 3);
+    fh.add(new Ord(BUY, 8), 1);
 
     assertEquals(7, (int) fh.getBidQuote().get());
     assertEquals(7, (int) fh.getAskQuote().get());
@@ -175,8 +175,8 @@ public class FourHeapTest {
   @Test
   public void withdrawOneBuyTest() {
     Ord o = new Ord(BUY, 5);
-    fh.submit(o, 3);
-    fh.withdraw(o, 2);
+    fh.add(o, 3);
+    fh.remove(o, 2);
 
     assertTrue(fh.contains(o));
     assertEquals(5, (int) fh.getBidQuote().get());
@@ -185,7 +185,7 @@ public class FourHeapTest {
     assertEquals(1, fh.getBidDepth());
     assertEquals(0, fh.getAskDepth());
 
-    fh.withdraw(o, 1);
+    fh.remove(o, 1);
 
     assertFalse(fh.contains(o));
     assertFalse(fh.getBidQuote().isPresent());
@@ -199,8 +199,8 @@ public class FourHeapTest {
   @Test
   public void withdrawOneSellTest() {
     Ord o = new Ord(SELL, 5);
-    fh.submit(o, 3);
-    fh.withdraw(o, 2);
+    fh.add(o, 3);
+    fh.remove(o, 2);
 
     assertTrue(fh.contains(o));
     assertFalse(fh.getBidQuote().isPresent());
@@ -209,7 +209,7 @@ public class FourHeapTest {
     assertEquals(0, fh.getBidDepth());
     assertEquals(1, fh.getAskDepth());
 
-    fh.withdraw(o, 1);
+    fh.remove(o, 1);
 
     assertFalse(fh.contains(o));
     assertFalse(fh.getBidQuote().isPresent());
@@ -223,9 +223,9 @@ public class FourHeapTest {
   public void withdrawMatchTest1() {
     Ord os = new Ord(SELL, 5);
     Ord ob = new Ord(BUY, 7);
-    fh.submit(os, 3);
-    fh.submit(ob, 3);
-    fh.withdraw(ob, 2);
+    fh.add(os, 3);
+    fh.add(ob, 3);
+    fh.remove(ob, 2);
 
     assertEquals(5, (int) fh.getBidQuote().get());
     assertEquals(5, (int) fh.getAskQuote().get());
@@ -233,7 +233,7 @@ public class FourHeapTest {
     assertEquals(1, fh.getBidDepth());
     assertEquals(3, fh.getAskDepth());
 
-    fh.withdraw(os, 3);
+    fh.remove(os, 3);
 
     assertEquals(7, (int) fh.getBidQuote().get());
     assertFalse(fh.getAskQuote().isPresent());
@@ -246,9 +246,9 @@ public class FourHeapTest {
   public void withdrawMatchTest2() {
     Ord ob = new Ord(BUY, 7);
     Ord os = new Ord(SELL, 5);
-    fh.submit(ob, 3);
-    fh.submit(os, 5);
-    fh.withdraw(os, 3);
+    fh.add(ob, 3);
+    fh.add(os, 5);
+    fh.remove(os, 3);
 
     assertEquals(7, (int) fh.getBidQuote().get());
     assertEquals(7, (int) fh.getAskQuote().get());
@@ -256,7 +256,7 @@ public class FourHeapTest {
     assertEquals(3, fh.getBidDepth());
     assertEquals(2, fh.getAskDepth());
 
-    fh.withdraw(ob, 3);
+    fh.remove(ob, 3);
 
     assertFalse(fh.getBidQuote().isPresent());
     assertEquals(5, (int) fh.getAskQuote().get());
@@ -267,10 +267,10 @@ public class FourHeapTest {
 
   @Test
   public void withdrawMatchTest3() {
-    fh.submit(new Ord(SELL, 5), 3);
+    fh.add(new Ord(SELL, 5), 3);
     Ord ob = new Ord(BUY, 7);
-    fh.submit(ob, 5);
-    fh.withdraw(ob, 4);
+    fh.add(ob, 5);
+    fh.remove(ob, 4);
 
     assertEquals(5, (int) fh.getBidQuote().get());
     assertEquals(5, (int) fh.getAskQuote().get());
@@ -283,59 +283,59 @@ public class FourHeapTest {
   @Test
   public void withdrawWithWaitingOrders1() {
     Ord o = new Ord(BUY, 4);
-    fh.submit(o, 3);
-    fh.submit(new Ord(SELL, 1), 3);
-    fh.submit(new Ord(SELL, 2), 2);
-    fh.submit(new Ord(BUY, 3), 4);
-    fh.withdraw(o, 1);
-    fh.clear();
+    fh.add(o, 3);
+    fh.add(new Ord(SELL, 1), 3);
+    fh.add(new Ord(SELL, 2), 2);
+    fh.add(new Ord(BUY, 3), 4);
+    fh.remove(o, 1);
+    fh.marketClear();
   }
 
   @Test
   public void withdrawWithWaitingOrders2() {
     Ord o = new Ord(SELL, 1);
-    fh.submit(o, 3);
-    fh.submit(new Ord(BUY, 4), 3);
-    fh.submit(new Ord(BUY, 3), 2);
-    fh.submit(new Ord(SELL, 2), 4);
-    fh.withdraw(o, 3);
-    fh.clear();
+    fh.add(o, 3);
+    fh.add(new Ord(BUY, 4), 3);
+    fh.add(new Ord(BUY, 3), 2);
+    fh.add(new Ord(SELL, 2), 4);
+    fh.remove(o, 3);
+    fh.marketClear();
   }
 
   /** Test a strange edge case with withdrawing orders, where quantity may get misinterpreted. */
   @Test
   public void strangeWithdrawEdgeCase1() {
-    fh.submit(new Ord(BUY, 4), 3);
+    fh.add(new Ord(BUY, 4), 3);
     Ord o = new Ord(SELL, 1);
-    fh.submit(o, 3);
-    fh.submit(new Ord(SELL, 2), 2);
-    fh.submit(new Ord(BUY, 3), 4);
-    fh.withdraw(o, 3);
-    fh.clear();
+    fh.add(o, 3);
+    fh.add(new Ord(SELL, 2), 2);
+    fh.add(new Ord(BUY, 3), 4);
+    fh.remove(o, 3);
+    fh.marketClear();
   }
 
   @Test
   public void strangeWithdrawEdgeCase2() {
-    fh.submit(new Ord(SELL, 1), 3);
+    fh.add(new Ord(SELL, 1), 3);
     Ord o = new Ord(BUY, 4);
-    fh.submit(o, 3);
-    fh.submit(new Ord(BUY, 3), 2);
-    fh.submit(new Ord(SELL, 2), 4);
-    fh.withdraw(o, 3);
-    fh.clear();
+    fh.add(o, 3);
+    fh.add(new Ord(BUY, 3), 2);
+    fh.add(new Ord(SELL, 2), 4);
+    fh.remove(o, 3);
+    fh.marketClear();
   }
 
   @Test
   public void withdrawTest3() {
-    fh.submit(new Ord(SELL, 3), 3);
+    fh.add(new Ord(SELL, 3), 3);
     Ord o = new Ord(BUY, 10);
-    fh.submit(o, 3);
-    fh.submit(new Ord(BUY, 5), 2);
+    fh.add(o, 3);
+    fh.add(new Ord(BUY, 5), 2);
 
     assertEquals(10, (int) fh.getAskQuote().get());
     assertEquals(5, (int) fh.getBidQuote().get());
 
-    fh.withdraw(o, 1);
+    fh.remove(o, 1);
 
     assertEquals(5, (int) fh.getAskQuote().get());
     assertEquals(5, (int) fh.getBidQuote().get());
@@ -343,12 +343,12 @@ public class FourHeapTest {
 
   @Test
   public void withdrawTest4() {
-    fh.submit(new Ord(SELL, 3), 1);
-    fh.submit(new Ord(SELL, 4), 1);
-    fh.submit(new Ord(BUY, 5), 1);
+    fh.add(new Ord(SELL, 3), 1);
+    fh.add(new Ord(SELL, 4), 1);
+    fh.add(new Ord(BUY, 5), 1);
     Ord o = new Ord(BUY, 4);
-    fh.submit(o, 1);
-    fh.withdraw(o, 1);
+    fh.add(o, 1);
+    fh.remove(o, 1);
 
     assertEquals(4, (int) fh.getAskQuote().get());
     assertEquals(3, (int) fh.getBidQuote().get());
@@ -356,11 +356,11 @@ public class FourHeapTest {
 
   @Test
   public void withdrawTest5() {
-    fh.submit(new Ord(SELL, 3), 2);
-    fh.submit(new Ord(BUY, 2), 1);
+    fh.add(new Ord(SELL, 3), 2);
+    fh.add(new Ord(BUY, 2), 1);
     Ord o = new Ord(BUY, 4);
-    fh.submit(o, 1);
-    fh.withdraw(o, 1);
+    fh.add(o, 1);
+    fh.remove(o, 1);
 
     assertEquals(3, (int) fh.getAskQuote().get());
     assertEquals(2, (int) fh.getBidQuote().get());
@@ -368,9 +368,9 @@ public class FourHeapTest {
 
   @Test
   public void emptyClearTest() {
-    fh.submit(new Ord(SELL, 7), 3);
-    fh.submit(new Ord(BUY, 5), 3);
-    assertTrue(fh.clear().isEmpty());
+    fh.add(new Ord(SELL, 7), 3);
+    fh.add(new Ord(BUY, 5), 3);
+    assertTrue(fh.marketClear().isEmpty());
   }
 
   @Test
@@ -378,9 +378,9 @@ public class FourHeapTest {
     Ord os = new Ord(SELL, 5);
     Ord ob = new Ord(BUY, 7);
 
-    fh.submit(os, 2);
-    fh.submit(ob, 3);
-    Collection<MatchedOrders<Integer, Integer, Ord>> transactions = fh.clear();
+    fh.add(os, 2);
+    fh.add(ob, 3);
+    Collection<MatchedOrders<Integer, Integer, Ord>> transactions = fh.marketClear();
 
     assertEquals(1, transactions.size());
     MatchedOrders<Integer, Integer, Ord> trans = Iterables.getOnlyElement(transactions);
@@ -398,11 +398,11 @@ public class FourHeapTest {
   @Test
   public void multiOrderClearTest() {
     Ord os = new Ord(SELL, 5);
-    fh.submit(os, 3);
-    fh.submit(new Ord(SELL, 6), 2);
+    fh.add(os, 3);
+    fh.add(new Ord(SELL, 6), 2);
     Ord ob = new Ord(BUY, 7);
-    fh.submit(ob, 4);
-    Collection<MatchedOrders<Integer, Integer, Ord>> transactions = fh.clear();
+    fh.add(ob, 4);
+    Collection<MatchedOrders<Integer, Integer, Ord>> transactions = fh.marketClear();
 
     assertEquals(2, transactions.size());
     assertEquals(1, fh.size());
@@ -435,13 +435,13 @@ public class FourHeapTest {
   @Test
   public void containsTest() {
     Ord ob = new Ord(BUY, 5);
-    fh.submit(ob, 1);
+    fh.add(ob, 1);
     assertTrue(fh.contains(ob));
     Ord os = new Ord(SELL, 6);
-    fh.submit(os, 1);
+    fh.add(os, 1);
     assertTrue(fh.contains(os));
     os = new Ord(SELL, 4);
-    fh.submit(os, 1); // Verify that sell order @ 4 which has matched is still in FH
+    fh.add(os, 1); // Verify that sell order @ 4 which has matched is still in FH
     assertTrue(fh.contains(os));
     assertTrue(fh.contains(ob));
   }
@@ -449,8 +449,8 @@ public class FourHeapTest {
   @Test
   public void matchedQuoteTest() {
     // Test when only matched orders in order book
-    fh.submit(new Ord(BUY, 10), 1);
-    fh.submit(new Ord(SELL, 5), 1);
+    fh.add(new Ord(BUY, 10), 1);
+    fh.add(new Ord(SELL, 5), 1);
     // BID=max{max(matched sells), max(unmatched buys)}
     // ASK=min{min(matched buys), min(unmatched sells)}
     assertEquals(5, (int) fh.getBidQuote().get());
@@ -463,21 +463,21 @@ public class FourHeapTest {
     assertFalse(fh.getAskQuote().isPresent());
 
     // Test when no matched orders
-    fh.submit(new Ord(SELL, 10), 1);
+    fh.add(new Ord(SELL, 10), 1);
     assertEquals(10, (int) fh.getAskQuote().get());
     assertFalse(fh.getBidQuote().isPresent());
-    fh.submit(new Ord(BUY, 5), 1);
+    fh.add(new Ord(BUY, 5), 1);
     assertEquals(5, (int) fh.getBidQuote().get());
 
     // Test when some orders matched
     // BID=max{max(matched sells), max(unmatched buys)} -> max(10, 5)
     // ASK=min{min(matched buys), min(unmatched sells)} -> min(15, -)
-    fh.submit(new Ord(BUY, 15), 1);
+    fh.add(new Ord(BUY, 15), 1);
     assertEquals(15, (int) fh.getAskQuote().get()); // the matched buy at 15
     assertEquals(10, (int) fh.getBidQuote().get());
 
     // Now orders in each container in FH
-    fh.submit(new Ord(SELL, 20), 1);
+    fh.add(new Ord(SELL, 20), 1);
     assertEquals(10, (int) fh.getBidQuote().get()); // max(10, 5)
     assertEquals(15, (int) fh.getAskQuote().get()); // min(15, 20)
   }
@@ -488,57 +488,57 @@ public class FourHeapTest {
     assertFalse(fh.getAskQuote().isPresent());
 
     // Test when no matched orders
-    fh.submit(new Ord(BUY, 15), 1);
+    fh.add(new Ord(BUY, 15), 1);
     assertEquals(15, (int) fh.getBidQuote().get());
     assertFalse(fh.getAskQuote().isPresent());
-    fh.submit(new Ord(SELL, 20), 1);
+    fh.add(new Ord(SELL, 20), 1);
     assertEquals(20, (int) fh.getAskQuote().get());
 
     // Test when some orders matched
     // BID=max{max(matched sells), max(unmatched buys)} -> max(10, -)
     // ASK=min{min(matched buys), min(unmatched sells)} -> min(15, 20)
-    fh.submit(new Ord(SELL, 10), 1);
+    fh.add(new Ord(SELL, 10), 1);
     assertEquals(10, (int) fh.getBidQuote().get()); // the matched sell at 10
     assertEquals(15, (int) fh.getAskQuote().get());
 
     // Now orders in each container in FH
-    fh.submit(new Ord(BUY, 5), 1);
+    fh.add(new Ord(BUY, 5), 1);
     assertEquals(10, (int) fh.getBidQuote().get()); // max(10, 5)
     assertEquals(15, (int) fh.getAskQuote().get()); // min(15, 20)
   }
 
   @Test
   public void clearQuoteTest() {
-    fh.submit(new Ord(BUY, 2), 1);
-    fh.submit(new Ord(SELL, 1), 1);
-    fh.clear();
+    fh.add(new Ord(BUY, 2), 1);
+    fh.add(new Ord(SELL, 1), 1);
+    fh.marketClear();
     assertFalse(fh.getBidQuote().isPresent());
     assertFalse(fh.getAskQuote().isPresent());
   }
 
   @Test
   public void specificInvariantTest1() {
-    fh.submit(new Ord(BUY, 2), 1);
-    fh.submit(new Ord(SELL, 1), 1);
-    fh.submit(new Ord(SELL, 4), 1);
-    fh.submit(new Ord(BUY, 3), 1);
-    fh.submit(new Ord(BUY, 5), 1);
+    fh.add(new Ord(BUY, 2), 1);
+    fh.add(new Ord(SELL, 1), 1);
+    fh.add(new Ord(SELL, 4), 1);
+    fh.add(new Ord(BUY, 3), 1);
+    fh.add(new Ord(BUY, 5), 1);
   }
 
   @Test
   public void specificInvariantTest2() {
-    fh.submit(new Ord(SELL, 4), 1);
-    fh.submit(new Ord(BUY, 5), 1);
-    fh.submit(new Ord(BUY, 2), 1);
-    fh.submit(new Ord(SELL, 3), 1);
-    fh.submit(new Ord(SELL, 1), 1);
+    fh.add(new Ord(SELL, 4), 1);
+    fh.add(new Ord(BUY, 5), 1);
+    fh.add(new Ord(BUY, 2), 1);
+    fh.add(new Ord(SELL, 3), 1);
+    fh.add(new Ord(SELL, 1), 1);
   }
 
   @Theory
   @Repeat(100)
   public void quoteInvariantTest(@TestInts({20}) int time) {
     for (; time > 0; time--) {
-      fh.submit(new Ord(rand.nextBoolean() ? BUY : SELL, rand.nextInt(20) + 1), 1);
+      fh.add(new Ord(rand.nextBoolean() ? BUY : SELL, rand.nextInt(20) + 1), 1);
     }
   }
 
@@ -550,22 +550,22 @@ public class FourHeapTest {
     for (; time > 0; time--) {
       int pos = rand.nextInt(num);
       if (ords[pos] != null) {
-        fh.withdraw(ords[pos], maxQuant);
+        fh.remove(ords[pos], maxQuant);
       }
       ords[pos] = new Ord(rand.nextBoolean() ? BUY : SELL, rand.nextInt(20) + 1);
       int quant = rand.nextInt(maxQuant) + 1;
-      fh.submit(ords[pos], quant);
+      fh.add(ords[pos], quant);
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void negativeQuantitySubmitTest() {
-    fh.submit(new Ord(BUY, 3), 0);
+    fh.add(new Ord(BUY, 3), 0);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void negativeQuantityWithdrawTest() {
-    fh.withdraw(new Ord(BUY, 3), -1);
+    fh.remove(new Ord(BUY, 3), -1);
   }
 
   private static class Ord implements Order<Integer, Integer> {
