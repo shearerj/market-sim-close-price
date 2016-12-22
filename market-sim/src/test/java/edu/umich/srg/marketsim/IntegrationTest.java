@@ -1,17 +1,17 @@
 package edu.umich.srg.marketsim;
 
 
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.testing.Asserts.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultiset;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
@@ -33,6 +33,7 @@ import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.Value;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
+import edu.umich.srg.marketsim.Keys.ClearInterval;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
@@ -46,15 +47,19 @@ import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.market.CallMarket;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
+import edu.umich.srg.marketsim.market.Market.MarketView;
+import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.testing.TestInts;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.DoubleSummaryStatistics;
 import java.util.Iterator;
 import java.util.List;
@@ -68,7 +73,6 @@ public class IntegrationTest {
 
   private static final Random rand = new Random();
   private static final Gson gson = new Gson();
-  private static final Joiner stratJoiner = Joiner.on('_');
   private static final Package keyPackage = Keys.class.getPackage();
   private static final double tol = 1e-8;
 
@@ -83,6 +87,7 @@ public class IntegrationTest {
       sim.addAgent(new NoiseAgent(sim, cda, Spec.fromPairs(ArrivalRate.class, 0.5), rand));
     sim.initialize();
     sim.executeUntil(TimeStamp.of(10));
+    sim.after();
 
     Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     assertEquals(numAgents, payoffs.size());
@@ -103,11 +108,9 @@ public class IntegrationTest {
 
     Observation obs = CommandLineInterface.simulate(spec, 0);
 
-    Iterable<? extends Player> players = obs.getPlayers();
-    assertEquals(numAgents, Iterables.size(players));
-    assertEquals(0,
-        StreamSupport.stream(players.spliterator(), false).mapToDouble(p -> p.getPayoff()).sum(),
-        tol);
+    Collection<? extends Player> players = obs.getPlayers();
+    assertEquals(numAgents, players.size());
+    assertEquals(0, players.stream().mapToDouble(p -> p.getPayoff()).sum(), tol);
   }
 
   @Test
@@ -491,11 +494,96 @@ public class IntegrationTest {
     Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPackage);
   }
 
+  @Test
+  public void longCallMarketTest() {
+    Fundamental fundamental = ConstantFundamental.create(0, 100);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market call = sim.addMarket(CallMarket.create(sim, fundamental, 0.5, 1000, rand));
+    sim.addAgent(new MockAgent() {
+      @Override
+      public void initilaize() {
+        MarketView view = call.getView(this);
+        sim.scheduleIn(TimeStamp.ZERO, () -> {
+          view.submitOrder(BUY, Price.of(1000), 1);
+        });
+      }
+    });
+    sim.addAgent(new MockAgent() {
+      @Override
+      public void initilaize() {
+        MarketView view = call.getView(this);
+        sim.scheduleIn(TimeStamp.ZERO, () -> {
+          view.submitOrder(SELL, Price.of(1000), 1);
+        });
+      }
+    });
+
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(10));
+    sim.after();
+
+    assertTrue(sim.getAgentPayoffs().values().stream().allMatch(p -> p.getHoldings() != 0));
+  }
+
+  // There's a small chance this will fail, but it's 2^-99
+  @Test
+  public void longCallSpecTest() {
+    int numAgents = 100;
+    Spec configuration = Spec.builder() //
+        .put(SimLength.class, 10L) //
+        .put(Markets.class, ImmutableList.of("call")) //
+        .put(FundamentalMeanReversion.class, 0d) //
+        .put(FundamentalShockVar.class, 0d) //
+        .put(ArrivalRate.class, 0.5) //
+        .put(ClearInterval.class, 11L) //
+        .build();
+
+    Multiset<RoleStrat> assignment = HashMultiset.create(1);
+    assignment.add(RoleStrat.of("role", "noise"), numAgents);
+    SimSpec spec = SimSpec.create(assignment, configuration);
+
+    Observation obs = CommandLineInterface.simulate(spec, 0);
+
+    Collection<? extends Player> players = obs.getPlayers();
+    assertEquals(numAgents, players.size());
+    assertTrue(players.stream().anyMatch(p -> p.getPayoff() != 0));
+  }
+
+  @Theory
+  public void medianSpreadTest(@TestInts({2}) int simLength) {
+    Fundamental fundamental = ConstantFundamental.create(0, simLength);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market call = sim.addMarket(CdaMarket.create(sim, fundamental));
+    sim.addAgent(new MockAgent() {
+      @Override
+      public void initilaize() {
+        MarketView view = call.getView(this);
+        sim.scheduleIn(TimeStamp.of(simLength / 2), () -> {
+          view.submitOrder(BUY, Price.of(8), 1);
+        });
+      }
+    });
+    sim.addAgent(new MockAgent() {
+      @Override
+      public void initilaize() {
+        MarketView view = call.getView(this);
+        sim.scheduleIn(TimeStamp.of(simLength / 2), () -> {
+          view.submitOrder(SELL, Price.of(12), 1);
+        });
+      }
+    });
+
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(simLength));
+    sim.after();
+
+    assertEquals(4, sim.getFeatures().get("markets").getAsJsonArray().get(0).getAsJsonObject()
+        .get("median_spread").getAsDouble(), 1e-7);
+  }
+
   private static String toStratString(String name, Spec spec) {
-    StringBuilder strat = new StringBuilder(name).append(':');
-    stratJoiner.appendTo(strat, spec.entrySet().stream()
-        .map(e -> e.getKey().getSimpleName() + '_' + e.getValue()).iterator());
-    return strat.toString();
+    return name + ':' + spec.entrySet().stream()
+        .map(e -> e.getKey().getSimpleName() + '_' + e.getValue()).collect(Collectors.joining("_"));
   }
 
   private static Reader toReader(SimSpec spec) {

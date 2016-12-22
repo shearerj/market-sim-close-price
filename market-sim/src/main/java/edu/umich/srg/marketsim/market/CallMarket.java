@@ -85,7 +85,7 @@ public class CallMarket extends AbstractMarket {
   }
 
   @Override
-  void clear() {
+  public void clear() {
     this.nextClearScheduled = false;
     super.clear();
     updateQuote();

@@ -3,6 +3,7 @@ package edu.umich.srg.marketsim.market;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import edu.umich.srg.marketsim.Price;
+import edu.umich.srg.util.Optionals;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -52,22 +53,14 @@ public class Quote implements Serializable {
 
   /** bid-ask spread of the quote. */
   public double getSpread() {
-    // FIXME Are these the best way to handle these cases?
-    if (!ask.isPresent() || !bid.isPresent()) {
-      return Double.POSITIVE_INFINITY;
-    } else {
-      return ask.get().doubleValue() - bid.get().doubleValue();
-    }
+    return Optionals.apply((aq, bq) -> aq.doubleValue() - bq.doubleValue(), ask, bid)
+        .orElse(Double.POSITIVE_INFINITY);
   }
 
   /** Return the midquote. */
   public double getMidquote() {
-    // FIXME Are these the best way to handle these cases?
-    if (!ask.isPresent() || !bid.isPresent()) {
-      return Double.NaN;
-    } else {
-      return (ask.get().doubleValue() + bid.get().doubleValue()) / 2;
-    }
+    return Optionals.apply((aq, bq) -> (aq.doubleValue() + bq.doubleValue()) / 2, ask, bid)
+        .orElse(Double.NaN);
   }
 
   @Override

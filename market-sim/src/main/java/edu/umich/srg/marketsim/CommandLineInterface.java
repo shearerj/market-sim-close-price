@@ -75,13 +75,14 @@ public class CommandLineInterface extends CommandLineOptions {
         configuration.get(FundamentalShockVar.class));
     MarketSimulator sim = MarketSimulator.create(fundamental, new Random(rand.nextLong()));
 
-    List<Market> markets = addMarkets(sim, fundamental, spec.configuration.get(Markets.class),
+    final List<Market> markets = addMarkets(sim, fundamental, spec.configuration.get(Markets.class),
         configuration, rand.nextLong());
-    List<PlayerInfo> playerInfo =
+    final List<PlayerInfo> playerInfo =
         addPlayers(sim, fundamental, spec.assignment, markets, configuration, rand.nextLong());
 
     sim.initialize();
     sim.executeUntil(TimeStamp.of(configuration.get(SimLength.class)));
+    sim.after();
 
     // Update player observations
     Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
@@ -99,7 +100,7 @@ public class CommandLineInterface extends CommandLineOptions {
 
       @Override
       public JsonObject getFeatures() {
-        return sim.computeFeatures();
+        return sim.getFeatures();
       }
 
     };

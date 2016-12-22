@@ -10,6 +10,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
+import com.google.common.primitives.Ints;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -56,6 +57,9 @@ abstract class AbstractMarket implements Market, Serializable {
   private final SummStats rmsd;
   private double maxDiff;
   private final SummStats transPrice;
+  private long lastSpreadUpdate;
+  private double lastSpread;
+  private final Multiset<Double> spreads;
 
   AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing,
       Selector<AbstractMarketOrder> selector) {
@@ -70,22 +74,26 @@ abstract class AbstractMarket implements Market, Serializable {
     this.rmsd = SummStats.empty();
     this.maxDiff = 0;
     this.transPrice = SummStats.empty();
+    this.lastSpreadUpdate = 0;
+    this.lastSpread = Double.POSITIVE_INFINITY;
+    this.spreads = HashMultiset.create();
   }
 
   AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
       int quantity) {
     AbstractMarketOrder order =
         new AbstractMarketOrder(submitter, buyOrSell, price, marketTime, sim.getCurrentTime());
-    orderbook.submit(order, quantity);
+    orderbook.add(order, quantity);
     return order;
   }
 
   void withdrawOrder(AbstractMarketOrder order, int quantity) {
-    orderbook.withdraw(order, quantity);
+    orderbook.remove(order, quantity);
   }
 
-  void clear() {
-    Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches = orderbook.clear();
+  @Override
+  public void clear() {
+    Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches = orderbook.marketClear();
     for (Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price> pricedTrade : pricing
         .apply(matches)) {
 
@@ -119,8 +127,16 @@ abstract class AbstractMarket implements Market, Serializable {
   }
 
   void updateQuote() {
-    Quote quote = new Quote(orderbook.getBidQuote(), orderbook.getBidDepth(),
+    final Quote quote = new Quote(orderbook.getBidQuote(), orderbook.getBidDepth(),
         orderbook.getAskQuote(), orderbook.getAskDepth());
+
+    long currentTime = sim.getCurrentTime().get();
+    spreads.remove(lastSpread);
+    spreads.add(lastSpread, Ints.checkedCast(currentTime - lastSpreadUpdate));
+    lastSpreadUpdate = currentTime;
+    lastSpread = quote.getSpread();
+    spreads.add(lastSpread);
+
     for (AbstractMarketView view : views) {
       view.setQuote(quote);
     }
@@ -151,6 +167,7 @@ abstract class AbstractMarket implements Market, Serializable {
     features.addProperty("rmsd", Math.sqrt(rmsd.getAverage()));
     features.addProperty("max_diff", maxDiff);
     features.addProperty("trans_vol", transPrice.getStandardDeviation());
+    features.addProperty("median_spread", SummStats.median(spreads));
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {

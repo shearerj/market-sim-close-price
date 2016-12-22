@@ -20,6 +20,8 @@ public interface Market {
     return getView(agent, TimeStamp.ZERO);
   }
 
+  void clear();
+
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
 
   JsonObject getFeatures();

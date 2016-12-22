@@ -54,6 +54,13 @@ public class MarketSimulator implements Sim {
     }
   }
 
+  /** Execute after the simulation is over for "cleanup". */
+  public void after() {
+    for (Market market : markets) {
+      market.clear();
+    }
+  }
+
   public void executeUntil(TimeStamp finalTime) {
     eventQueue.executeUntil(finalTime);
   }
@@ -67,7 +74,7 @@ public class MarketSimulator implements Sim {
     agents.add(agent);
   }
 
-  public JsonObject computeFeatures() {
+  public JsonObject getFeatures() {
     return Features.computeFeatures(this);
   }
 

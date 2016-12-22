@@ -69,7 +69,7 @@ public class CdaMarket extends AbstractMarket {
   }
 
   @Override
-  void clear() {
+  public void clear() {
     super.clear();
     updateQuote();
   }

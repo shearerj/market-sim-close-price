@@ -135,24 +135,26 @@ public class SummStatsTest {
     assertEquals(truth.getVariance(), test.getVariance(), eps);
     assertEquals(truth.getStandardDeviation(), test.getStandardDeviation(), eps);
   }
-  
+
   @Test
   public void medianTest() {
     // Array
     assertEquals(2, SummStats.median(Arrays.asList(1, 2, 3)), 0);
     assertEquals(2, SummStats.median(Arrays.asList(1, 2, 3, 2)), 0);
     assertEquals(2.5, SummStats.median(Arrays.asList(1, 2, 3, 4)), 1e-7);
-    
+
     // Multiset
     assertEquals(1, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 2))), 0);
     assertEquals(1, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 1, 2))), 0);
     assertEquals(2, SummStats.median(HashMultiset.create(Arrays.asList(1, 2, 2, 3))), 0);
     assertEquals(1.5, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 2, 2))), 1e-7);
-    
+
     // Corner cases
     assertTrue(Double.isNaN(SummStats.median(Arrays.asList())));
-    assertTrue(Double.isInfinite(SummStats.median(Arrays.asList(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0))));
-    assertTrue(Double.isInfinite(SummStats.median(Arrays.asList(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, 0))));
+    assertTrue(Double.isInfinite(
+        SummStats.median(Arrays.asList(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0))));
+    assertTrue(Double.isInfinite(
+        SummStats.median(Arrays.asList(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, 0))));
   }
 
   private static class BigStat implements DoubleConsumer {

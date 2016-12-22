@@ -90,7 +90,7 @@ public class FeaturesTest {
     }
     sim.initialize();
     sim.executeUntil(TimeStamp.of(spec.get(SimLength.class)));
-    JsonObject features = sim.computeFeatures();
+    JsonObject features = sim.getFeatures();
 
     double surplus = features.get("total_surplus").getAsDouble();
     double maxSurplus = features.get("max_surplus").getAsDouble();
@@ -127,7 +127,7 @@ public class FeaturesTest {
 
     // Verify that surplus is 0 because they won't trade
     sim.initialize();
-    double maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
+    double maxSurplus = sim.getFeatures().get("max_surplus").getAsDouble();
     assertEquals(0, maxSurplus, tol);
 
     // Now add an intermediary (no private value)
@@ -145,7 +145,7 @@ public class FeaturesTest {
 
     // Assert that each agent trades with intermediary for 3 surplus
     sim.initialize();
-    maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
+    maxSurplus = sim.getFeatures().get("max_surplus").getAsDouble();
     assertEquals(3 * numAgents, maxSurplus, tol);
   }
 
@@ -173,7 +173,7 @@ public class FeaturesTest {
 
     // Verify correct surplus is calculated
     sim.initialize();
-    double maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
+    double maxSurplus = sim.getFeatures().get("max_surplus").getAsDouble();
     assertEquals(2, maxSurplus, tol);
   }
 
@@ -267,7 +267,7 @@ public class FeaturesTest {
     sim.initialize();
     sim.executeUntil(TimeStamp.of(2));
 
-    JsonObject features = sim.computeFeatures();
+    JsonObject features = sim.getFeatures();
     double surplus = features.get("total_surplus").getAsDouble();
     double maxSurplus = features.get("max_surplus").getAsDouble();
     double imSurplusLoss = features.get("im_surplus_loss").getAsDouble();
@@ -295,7 +295,7 @@ public class FeaturesTest {
 
     sim.executeUntil(TimeStamp.of(2));
 
-    JsonArray fund = sim.computeFeatures().get("fundamental").getAsJsonArray();
+    JsonArray fund = sim.getFeatures().get("fundamental").getAsJsonArray();
     assertTrue(fund.size() > 0);
   }
 
