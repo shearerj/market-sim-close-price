@@ -32,6 +32,7 @@ import java.util.stream.Stream;
  * not the quantity of objects i.e. adding more orders at the same price doesn't increase the
  * complexity.
  */
+// FIXME Make this class implement Multiset
 public class FourHeap<P, T, O extends Order<P, T>> {
 
   // Orders for unmatched priority where lower is better
@@ -113,17 +114,15 @@ public class FourHeap<P, T, O extends Order<P, T>> {
       ordMatched.add(order, quantity);
 
       // Fix Order books
-      // Note: Normally these would need to check that !ordMatched.isEmpty(), but that's impossible
-      // given that we just decided to match an order.
-      // Move opposite sets to matched if there's room and they match
-      while (!oppUnmatched.isEmpty()
-          && pord.compare(ordMatched.peekKey().get(), oppUnmatched.peekKey().get()) <= 0
-          && ordMatched.size() > oppMatched.size()) {
-        oppMatched.offer(oppUnmatched.poll());
-      }
-      // Move order sets to unmatched if there's not enough opps to match
-      while (ordMatched.size() - ordMatched.peekSize() >= oppMatched.size()) {
-        ordUnmatched.offer(ordMatched.poll());
+      while (ordMatched.size() > oppMatched.size()) {
+        if (!oppUnmatched.isEmpty()
+            && pord.compare(ordMatched.peekKey().get(), oppUnmatched.peekKey().get()) <= 0) {
+          oppMatched.offer(oppUnmatched.poll());
+        } else if (ordMatched.size() - ordMatched.peekSize() >= oppMatched.size()) {
+          ordUnmatched.offer(ordMatched.poll());
+        } else {
+          break;
+        }
       }
 
     } else {
@@ -132,6 +131,7 @@ public class FourHeap<P, T, O extends Order<P, T>> {
     assert invariantsHold();
   }
 
+  // FIXME Fix withdraw to return number in previously like mutliset?
   /**
    * Withdraws a specific quantity from an order in the fourheap. Behavior is undefined if the order
    * isn't already in the fourheap. Complexity: O(log n).
@@ -151,24 +151,22 @@ public class FourHeap<P, T, O extends Order<P, T>> {
   private void withdraw(O order, int quantity, OrderQueue ordUnmatched, OrderQueue ordMatched,
       OrderQueue oppUnmatched, OrderQueue oppMatched, Comparator<Key> pord) {
     // Remove from unmatched, easy
-    int before = ordUnmatched.remove(order, quantity);
-    if (before == 0) { // Order wasn't in unmatched
-      before = ordMatched.remove(order, quantity);
+    if (ordUnmatched.remove(order, quantity) == 0) { // Order wasn't in unmatched
+      ordMatched.remove(order, quantity);
 
       // Fix order books
-      // Move ord sets to matched if there's room and they match
-      while (!ordUnmatched.isEmpty()
-          && pord.compare(ordUnmatched.peekKey().get(), oppMatched.peekKey().get()) <= 0
-          && oppMatched.size() > ordMatched.size()) {
-        ordMatched.offer(ordUnmatched.poll());
+      while (oppMatched.size() > ordMatched.size()) {
+        if (!ordUnmatched.isEmpty()
+            && pord.compare(ordUnmatched.peekKey().get(), oppMatched.peekKey().get()) <= 0) {
+          ordMatched.offer(ordUnmatched.poll());
+        } else if (oppMatched.size() - oppMatched.peekSize() >= ordMatched.size()) {
+          oppUnmatched.offer(oppMatched.poll());
+        } else {
+          break;
+        }
       }
-      // Move opp sets to unmatched if there's not enough ords to match
-      while (!oppMatched.isEmpty()
-          && oppMatched.size() - oppMatched.peekSize() >= ordMatched.size()) {
-        oppUnmatched.offer(oppMatched.poll());
-      }
-
     }
+    assert invariantsHold();
   }
 
   public boolean contains(O order) {
@@ -278,36 +276,45 @@ public class FourHeap<P, T, O extends Order<P, T>> {
     Optional<Key> si = sellMatched.peekKey();
     Optional<Key> so = sellUnmatched.peekKey();
 
-    assert Optionals.apply(buyKey::compare, bi, bo).map(x -> x <= 0)
-        .orElse(true) : "unmatched buy had better ranking";
-    assert Optionals.apply(buyPrice::compare, bi, si).map(x -> x <= 0)
-        .orElse(true) : "matched buys and sells not compatable";
-    assert Optionals.apply(sellKey::compare, si, so).map(x -> x <= 0)
-        .orElse(true) : "unmatched sell had better ranking";
-    assert buyMatched.size() <= sellMatched.size()
-        || Optionals.apply(buyPrice::compare, bi, so).map(x -> x > 0)
-            .orElse(true) : "there was room to match more sells and they were compatable";
-    assert sellMatched.size() <= buyMatched.size()
-        || Optionals.apply(sellPrice::compare, si, bo).map(x -> x > 0)
-            .orElse(true) : "there was room to match more buys and they were compatable";
-    assert size() == getBidDepth() + getAskDepth() : "bid and ask depth didn't equal size";
-    assert buyMatched.stream().allMatch(e -> e.getElement().getType() == BUY);
-    assert buyUnmatched.stream().allMatch(e -> e.getElement().getType() == BUY);
-    assert sellMatched.stream().allMatch(e -> e.getElement().getType() == SELL);
-    assert sellUnmatched.stream().allMatch(e -> e.getElement().getType() == SELL);
-
-    return true; // If we made it this far, they hold
+    // Unmatched buy out-ranked matched buy
+    return Optionals.apply(buyKey::compare, bi, bo).map(x -> x <= 0).orElse(true)
+        // Unmatched sell out-ranked matched sell
+        && Optionals.apply(sellKey::compare, si, so).map(x -> x <= 0).orElse(true)
+        // Matched buys and sells were incompatible
+        && Optionals.apply(buyPrice::compare, bi, si).map(x -> x <= 0).orElse(true)
+        // Unmatched buys and sells were compatible
+        && Optionals.apply(buyPrice::compare, bo, so).map(x -> x > 0).orElse(true)
+        // Room to match more sells and they were compatible
+        && (buyMatched.size() <= sellMatched.size()
+            || Optionals.apply(buyPrice::compare, bi, so).map(x -> x > 0).orElse(true))
+        // Room to match more buys and they were compatible
+        && (sellMatched.size() <= buyMatched.size()
+            || Optionals.apply(sellPrice::compare, si, bo).map(x -> x > 0).orElse(true))
+        // Too many matched buys
+        && (buyMatched.isEmpty() || buyMatched.size() - buyMatched.peekSize() < sellMatched.size())
+        // Too many matched sells
+        && (sellMatched.isEmpty()
+            || sellMatched.size() - sellMatched.peekSize() < buyMatched.size())
+        // Bid and ask depth didn't equal size
+        && size() == getBidDepth() + getAskDepth()
+        // Buys not all buys
+        && buyMatched.stream().allMatch(e -> e.getElement().getType() == BUY)
+        // Buys not all buys
+        && buyUnmatched.stream().allMatch(e -> e.getElement().getType() == BUY)
+        // Sells not all sells
+        && sellMatched.stream().allMatch(e -> e.getElement().getType() == SELL)
+        // Sells not all sells
+        && sellUnmatched.stream().allMatch(e -> e.getElement().getType() == SELL);
   }
 
   @Override
   public String toString() {
-    String bm = buyMatched.toString();
-    String bu = buyUnmatched.toString();
-    String sm = sellMatched.toString();
-    String su = sellUnmatched.toString();
-    return '{' + bu.substring(1, bu.length() - 1) + " | " + bm.substring(1, bm.length() - 1)
-        + " || " + sm.substring(1, sm.length() - 1) + " | " + su.substring(1, su.length() - 1)
-        + '}';
+    String bm = buyMatched.stream().map(Object::toString).collect(Collectors.joining(", "));
+    String bu =
+        buyUnmatched.reverseStream().map(Object::toString).collect(Collectors.joining(", "));
+    String sm = sellMatched.reverseStream().map(Object::toString).collect(Collectors.joining(", "));
+    String su = sellUnmatched.stream().map(Object::toString).collect(Collectors.joining(", "));
+    return '{' + bu + " | " + bm + " || " + sm + " | " + su + '}';
   }
 
   private class Key {
@@ -413,6 +420,10 @@ public class FourHeap<P, T, O extends Order<P, T>> {
 
     public Stream<Multiset.Entry<O>> stream() {
       return queue.values().stream().map(Multiset::entrySet).flatMap(Set::stream);
+    }
+
+    public Stream<Multiset.Entry<O>> reverseStream() {
+      return queue.descendingMap().values().stream().map(Multiset::entrySet).flatMap(Set::stream);
     }
 
     @Override

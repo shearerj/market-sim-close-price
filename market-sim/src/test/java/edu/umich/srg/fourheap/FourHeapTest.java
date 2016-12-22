@@ -12,12 +12,25 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
+
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
+import edu.umich.srg.testing.TestInts;
 
 import java.util.Collection;
 import java.util.Random;
 
+@RunWith(Theories.class)
 public class FourHeapTest {
+
+
+  @Rule
+  public RepeatRule repeatRule = new RepeatRule();
 
   private final static Random rand = new Random();
 
@@ -88,6 +101,19 @@ public class FourHeapTest {
   }
 
   @Test
+  public void oustTest() {
+    fh.submit(new Ord(BUY, 3), 2);
+    fh.submit(new Ord(BUY, 5), 1);
+    fh.submit(new Ord(BUY, 6), 1);
+    fh.submit(new Ord(BUY, 7), 1);
+
+    fh.submit(new Ord(SELL, 4), 1);
+    fh.submit(new Ord(SELL, 2), 2);
+
+    fh.submit(new Ord(SELL, 1), 2);
+  }
+
+  @Test
   public void nomatchTest1() {
     fh.submit(new Ord(SELL, 3), 1);
     fh.submit(new Ord(BUY, 10), 1);
@@ -118,7 +144,6 @@ public class FourHeapTest {
     assertEquals(7, fh.size());
     assertEquals(4, fh.getBidDepth());
     assertEquals(3, fh.getAskDepth());
-
   }
 
   @Test
@@ -509,10 +534,27 @@ public class FourHeapTest {
     fh.submit(new Ord(SELL, 1), 1);
   }
 
-  @Test
-  public void quoteInvariantTest() {
-    for (int i = 0; i < 100; i++) {
-      fh.submit(new Ord(rand.nextBoolean() ? BUY : SELL, rand.nextInt(900000) + 100000), 1);
+  @Theory
+  @Repeat(100)
+  public void quoteInvariantTest(@TestInts({20}) int time) {
+    for (; time > 0; time--) {
+      fh.submit(new Ord(rand.nextBoolean() ? BUY : SELL, rand.nextInt(20) + 1), 1);
+    }
+  }
+
+  @Theory
+  @Repeat(100)
+  public void quoteInvariantWithdrawTest(@TestInts({10}) int num, @TestInts({20}) int time,
+      @TestInts({3}) int maxQuant) {
+    Ord[] ords = new Ord[num];
+    for (; time > 0; time--) {
+      int pos = rand.nextInt(num);
+      if (ords[pos] != null) {
+        fh.withdraw(ords[pos], maxQuant);
+      }
+      ords[pos] = new Ord(rand.nextBoolean() ? BUY : SELL, rand.nextInt(20) + 1);
+      int quant = rand.nextInt(maxQuant) + 1;
+      fh.submit(ords[pos], quant);
     }
   }
 
@@ -524,12 +566,6 @@ public class FourHeapTest {
   @Test(expected = IllegalArgumentException.class)
   public void negativeQuantityWithdrawTest() {
     fh.withdraw(new Ord(BUY, 3), -1);
-  }
-
-  @Test
-  public void repeatedInvarianceTest() {
-    for (int i = 0; i < 10; i++)
-      quoteInvariantTest();
   }
 
   private static class Ord implements Order<Integer, Integer> {
