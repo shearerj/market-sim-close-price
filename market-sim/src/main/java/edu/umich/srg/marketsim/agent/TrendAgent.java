@@ -38,7 +38,7 @@ import java.util.function.Function;
  * TODO Enforce position limits, and decided how this should be done. a) stop trading in one
  * direction b) submit market orders to slowly keep position close to zero.
  */
-public class SimpleTrendFollower implements Agent {
+public class TrendAgent implements Agent {
 
   private final Sim sim;
   private final int id;
@@ -53,7 +53,7 @@ public class SimpleTrendFollower implements Agent {
   private Price lastPrice;
 
   /** Basic constructor of a simple trend follower. */
-  public SimpleTrendFollower(int id, Sim sim, Market market, Spec spec) {
+  public TrendAgent(int id, Sim sim, Market market, Spec spec) {
     this.sim = sim;
     this.id = id;
     this.market = market.getView(this, TimeStamp.ZERO);
@@ -67,9 +67,9 @@ public class SimpleTrendFollower implements Agent {
     this.lastPrice = null;
   }
 
-  public static SimpleTrendFollower createFromSpec(Sim sim, Fundamental fundamental,
+  public static TrendAgent createFromSpec(Sim sim, Fundamental fundamental,
       Collection<Market> markets, Market market, Spec spec, Random rand) {
-    return new SimpleTrendFollower(rand.nextInt(), sim, market, spec);
+    return new TrendAgent(rand.nextInt(), sim, market, spec);
   }
 
   private void strategy() {
