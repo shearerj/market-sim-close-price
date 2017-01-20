@@ -25,9 +25,9 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
+import edu.umich.srg.egtaonline.CommandLineOptions;
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
-import edu.umich.srg.egtaonline.Runner;
 import edu.umich.srg.egtaonline.SimSpec;
 import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
@@ -128,7 +128,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true,
+        keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -163,7 +164,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 2, true, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 2, true,
+        keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -194,7 +196,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, false, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, false,
+        keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -235,7 +238,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false,
+        keyPackage);
 
     // Save the results
     List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
@@ -247,7 +251,8 @@ public class IntegrationTest {
 
 
     // Run the simulation again
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false,
+        keyPackage);
 
     // Save the results
     List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
@@ -280,7 +285,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once with one job
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false,
+        keyPackage);
 
     // Save the results
     List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
@@ -292,7 +298,8 @@ public class IntegrationTest {
 
 
     // Run the simulation again with two jobs
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 2, false, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 2, false,
+        keyPackage);
 
     // Save the results
     List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
@@ -325,7 +332,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation ten times
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 20, 1, 1, true, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 20, 1, 1, true,
+        keyPackage);
 
     // Save the average payoff per role strategy, the only thing that can be guaranteed
     List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsNormal =
@@ -336,7 +344,8 @@ public class IntegrationTest {
     specReader = toReader(spec);
 
     // Run the simulation again but only return one aggregate observation
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 2, 10, 1, true, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 2, 10, 1, true,
+        keyPackage);
 
     List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsObsPerSim =
         aggregateStringObservations(obsData.toString(), 1);
@@ -374,8 +383,8 @@ public class IntegrationTest {
         + "\"fundamentalShockVar\":0}}";
     Reader specReader1 = new StringReader(spec1);
     StringWriter obsData1 = new StringWriter();
-    Runner.run(CommandLineInterface::simulate, specReader1, obsData1, numObs, simsPerObs, 1, false,
-        keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader1, obsData1, numObs,
+        simsPerObs, 1, false, keyPackage);
     // All results
     List<JsonObject> results1 = Arrays.stream(obsData1.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
@@ -398,8 +407,8 @@ public class IntegrationTest {
         + "\"fundamentalShockVar\":0}}";
     Reader specReader2 = new StringReader(spec2);
     StringWriter obsData2 = new StringWriter();
-    Runner.run(CommandLineInterface::simulate, specReader2, obsData2, numObs, simsPerObs, 1, false,
-        keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader2, obsData2, numObs,
+        simsPerObs, 1, false, keyPackage);
     // All results
     List<JsonObject> results2 = Arrays.stream(obsData2.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
@@ -491,7 +500,8 @@ public class IntegrationTest {
 
     Reader specReader = new StringReader(spec);
     StringWriter obsData = new StringWriter();
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPackage);
+    CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true,
+        keyPackage);
   }
 
   @Test

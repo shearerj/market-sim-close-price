@@ -10,12 +10,12 @@ import com.google.gson.JsonObject;
 
 import com.github.rvesse.airline.SingleCommand;
 import com.github.rvesse.airline.annotations.Command;
+import com.github.rvesse.airline.annotations.Option;
 
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.egtaonline.CommandLineOptions;
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
-import edu.umich.srg.egtaonline.Runner;
 import edu.umich.srg.egtaonline.SimSpec;
 import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
@@ -35,6 +35,7 @@ import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,12 +50,30 @@ public class CommandLineInterface extends CommandLineOptions {
   private static final Package keyPackage = CommandLineInterface.class.getPackage();
   private static final Splitter specSplitter = Splitter.on('_').omitEmptyStrings();
 
+  @Option(name = {"-a", "--print-agents"},
+      description = "Print the valid agent names and their coresponding class.")
+  public boolean printAgents = false;
+
+  @Option(name = {"-m", "--print-markets"},
+      description = "Print the valid market names and their coresponding class.")
+  public boolean printMarkets = false;
+
   /** The entry point for market-sim. */
   public static void main(String[] args) throws IOException {
     SingleCommand<CommandLineInterface> parser =
         SingleCommand.singleCommand(CommandLineInterface.class);
     CommandLineInterface options = parser.parse(args);
-    Runner.run(CommandLineInterface::simulate, options, keyPackage);
+    if (options.printAgents) {
+      try (Writer out = CommandLineOptions.openout(options.observations)) {
+        EntityBuilder.printAgents(out);
+      }
+    } else if (options.printMarkets) {
+      try (Writer out = CommandLineOptions.openout(options.observations)) {
+        EntityBuilder.printMarkets(out);
+      }
+    } else {
+      options.run(CommandLineInterface::simulate, keyPackage);
+    }
   }
 
   /**
