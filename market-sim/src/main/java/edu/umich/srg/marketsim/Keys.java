@@ -181,6 +181,18 @@ public interface Keys {
   class Expiration extends TimeValue {
   }
 
+  // -------------------
+  // Call Market Agent
+  // -------------------
+
+  @ValueHelp("Fraction of [rmin, rmax] to use at the beginning of a call interval.")
+  class InitialFrac extends DoubleValue {
+  }
+
+  @ValueHelp("Fraction of [rmin, rmax] to use at the end of a call interval.")
+  class FinalFrac extends DoubleValue {
+  }
+
   /* Old leftover keys. */
 
   // public static class DiscountFactors extends DoublesValue {};

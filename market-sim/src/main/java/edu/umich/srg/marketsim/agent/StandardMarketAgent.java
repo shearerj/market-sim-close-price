@@ -6,14 +6,11 @@ import com.google.common.collect.ImmutableList;
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.distributions.Uniform;
-import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
-import edu.umich.srg.marketsim.Keys.Rmax;
-import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
 import edu.umich.srg.marketsim.Keys.Thresh;
@@ -41,14 +38,13 @@ public abstract class StandardMarketAgent implements Agent {
   private static final Set<OrderType> allOrders = EnumSet.allOf(OrderType.class);
 
   protected final Sim sim;
+  protected final Random rand;
   private final int id;
   private final MarketView market;
   private final int maxPosition;
   private final SurplusThreshold threshold;
   private final PrivateValue privateValue;
-  private final Random rand;
   private final Geometric arrivalDistribution;
-  private final IntUniform shadingDistribution;
   private final Supplier<Set<OrderType>> side;
   private final int ordersPerSide;
 
@@ -62,7 +58,6 @@ public abstract class StandardMarketAgent implements Agent {
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
-    this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
     switch (spec.get(Sides.class)) {
       case RANDOM:
         this.side = () -> Collections.singleton(randomOrder.sample(rand));
@@ -77,6 +72,8 @@ public abstract class StandardMarketAgent implements Agent {
     this.rand = rand;
   }
 
+  protected abstract double getDesiredSurplus();
+
   protected abstract double getFinalFundamentalEstiamte();
 
   protected abstract String name();
@@ -90,7 +87,7 @@ public abstract class StandardMarketAgent implements Agent {
 
     Set<OrderType> sides = side.get();
     double finalEstimate = getFinalFundamentalEstiamte();
-    double demandedSurplus = shadingDistribution.sample(rand);
+    double demandedSurplus = getDesiredSurplus();
 
     for (OrderType type : sides) {
       for (int num = 0; num < ordersPerSide; num++) {

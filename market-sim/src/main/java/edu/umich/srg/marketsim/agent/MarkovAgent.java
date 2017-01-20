@@ -1,8 +1,12 @@
 package edu.umich.srg.marketsim.agent;
 
+import edu.umich.srg.distributions.Uniform;
+import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Keys.PriceVarEst;
+import edu.umich.srg.marketsim.Keys.Rmax;
+import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -22,6 +26,7 @@ public class MarkovAgent extends StandardMarketAgent {
 
   private final double transactionVariance;
   private final GaussianFundamentalView fundamental;
+  private final IntUniform shadingDistribution;
 
   /** Standard constructor for the Markov agent. */
   public MarkovAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
@@ -29,11 +34,17 @@ public class MarkovAgent extends StandardMarketAgent {
     this.transactionVariance = spec.get(PriceVarEst.class);
     this.fundamental = ((GaussableView) fundamental.getView(sim)).addNoise(rand,
         spec.get(FundamentalObservationVariance.class));
+    this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
   }
 
   public static MarkovAgent createFromSpec(Sim sim, Fundamental fundamental,
       Collection<Market> markets, Market market, Spec spec, Random rand) {
     return new MarkovAgent(sim, market, fundamental, spec, rand);
+  }
+
+  @Override
+  protected double getDesiredSurplus() {
+    return shadingDistribution.sample(rand);
   }
 
   @Override

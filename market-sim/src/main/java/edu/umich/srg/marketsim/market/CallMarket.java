@@ -51,6 +51,10 @@ public class CallMarket extends AbstractMarket {
     return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class), rand);
   }
 
+  public long getClearingInterval() {
+    return clearInterval;
+  }
+
   /*
    * This function will schedule the next clear at the multiple of clearInterval strictly greater
    * than the current time. The down side is that if an event happens at a clear interval time, that

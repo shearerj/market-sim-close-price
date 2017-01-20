@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 
+import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
@@ -18,6 +19,7 @@ import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
 import edu.umich.srg.marketsim.MarketSimulator;
+import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.agent.StandardMarketAgent.OrderStyle;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -46,7 +48,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
+    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
       @Override
       protected double getFinalFundamentalEstiamte() {
         return fundamentalMean;
@@ -82,7 +84,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
+    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
       @Override
       protected double getFinalFundamentalEstiamte() {
         return fundamentalMean;
@@ -117,7 +119,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
+    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
       @Override
       protected double getFinalFundamentalEstiamte() {
         return fundamentalMean;
@@ -153,7 +155,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new StandardMarketAgent(sim, cda, spec, rand) {
+    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
       @Override
       protected double getFinalFundamentalEstiamte() {
         return fundamentalMean;
@@ -177,6 +179,29 @@ public class StandardMarketAgentTest {
     // Assert 2 buys or 2 sells
     quote = view.getQuote();
     assertEquals(ImmutableSet.of(0, 2), ImmutableSet.of(quote.getAskDepth(), quote.getBidDepth()));
+  }
+
+  private static class MockSMA extends StandardMarketAgent {
+
+    private MockSMA(Sim sim, Market cda, Spec spec) {
+      super(sim, cda, spec, StandardMarketAgentTest.rand);
+    }
+
+    @Override
+    protected double getDesiredSurplus() {
+      return Uniform.closed(100, 500).sample(rand);
+    }
+
+    @Override
+    protected double getFinalFundamentalEstiamte() {
+      return fundamentalMean;
+    }
+
+    @Override
+    protected String name() {
+      return "SMA";
+    }
+
   }
 
 }
