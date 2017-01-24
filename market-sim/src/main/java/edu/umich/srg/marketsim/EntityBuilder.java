@@ -4,12 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Iterables;
 
-import org.reflections.Reflections;
-
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
+
+import org.reflections.Reflections;
 
 import java.io.IOException;
 import java.io.Writer;
