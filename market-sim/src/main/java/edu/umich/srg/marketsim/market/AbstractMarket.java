@@ -60,6 +60,7 @@ abstract class AbstractMarket implements Market, Serializable {
   private long lastSpreadUpdate;
   private double lastSpread;
   private final Multiset<Double> spreads;
+  private final SummStats executionTimes;
 
   AbstractMarket(Sim sim, Fundamental fundamental, PricingRule pricing,
       Selector<AbstractMarketOrder> selector) {
@@ -77,6 +78,7 @@ abstract class AbstractMarket implements Market, Serializable {
     this.lastSpreadUpdate = 0;
     this.lastSpread = Double.POSITIVE_INFINITY;
     this.spreads = HashMultiset.create();
+    this.executionTimes = SummStats.empty();
   }
 
   AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
@@ -123,6 +125,9 @@ abstract class AbstractMarket implements Market, Serializable {
       rmsd.acceptNTimes(diff * diff, matched.getQuantity());
       maxDiff = Double.max(maxDiff, Math.abs(diff));
       transPrice.acceptNTimes(price, matched.getQuantity());
+      long currentTime = sim.getCurrentTime().get();
+      executionTimes.accept(currentTime - buy.getSubmitTime().get());
+      executionTimes.accept(currentTime - sell.getSubmitTime().get());
     }
   }
 
@@ -168,6 +173,7 @@ abstract class AbstractMarket implements Market, Serializable {
     features.addProperty("max_diff", maxDiff);
     features.addProperty("trans_vol", transPrice.getStandardDeviation());
     features.addProperty("median_spread", SummStats.median(spreads));
+    features.addProperty("mean_exec_time", executionTimes.getAverage());
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {

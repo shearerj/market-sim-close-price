@@ -289,6 +289,30 @@ public class AbstractMarketTest {
     assertEquals(30, diff, 1e-7);
   }
 
+  @Test
+  public void executionTimeTest() {
+    double execTimes;
+
+    // Empty
+    execTimes = market.getFeatures().get("mean_exec_time").getAsDouble();
+    assertTrue(Double.isNaN(execTimes));
+
+    // zero diff
+    view.submitOrder(BUY, Price.of(120), 1);
+    view.submitOrder(SELL, Price.of(120), 1);
+    market.clear();
+    execTimes = market.getFeatures().get("mean_exec_time").getAsDouble();
+    assertEquals(0, execTimes, 1e-7);
+
+    // 2 exec time for both of these
+    view.submitOrder(BUY, Price.of(90), 1);
+    view.submitOrder(SELL, Price.of(90), 1);
+    sim.setTime(2);
+    market.clear();
+    execTimes = market.getFeatures().get("mean_exec_time").getAsDouble();
+    assertEquals(1, execTimes, 1e-7);
+  }
+
   // /** Information propagates at proper times */
   // @Test
   // public void latencyTest() {
