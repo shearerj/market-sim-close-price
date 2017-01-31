@@ -3,9 +3,6 @@ package edu.umich.srg.marketsim.agent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
-import org.junit.Test;
-
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
@@ -26,6 +23,9 @@ import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.Random;
 
@@ -71,6 +71,27 @@ public class CallAgentTest {
 
     sim.setTime(110); // Short final clearing interval
     assertEquals(70, agent.getDesiredSurplus(), 1e-6);
+
+    // At final time, it should be no shading
+    sim.setTime(120);
+    assertEquals(20, agent.getDesiredSurplus(), 1e-6);
+  }
+
+  @Test
+  /**
+   * There was a singularity in the math when the call interval aligns with the final time, and an
+   * agent arrives then.
+   */
+  public void alignedTest() {
+    Spec spec = Spec.fromDefaultPairs(base, InitialFrac.class, 0d, FinalFrac.class, 0d);
+    MockSim sim = new MockSim();
+    Fundamental fund = ConstantFundamental.create(1e9, base.get(SimLength.class));
+    Market market = CallMarket.create(sim, fund, 20, rand); // 25 clearing interval
+    CallAgent agent = new CallAgent(sim, market, fund, spec, rand);
+
+    // At final time, it should be no shading
+    sim.setTime(120);
+    assertEquals(20, agent.getDesiredSurplus(), 1e-6);
   }
 
   @Repeat(100)

@@ -51,13 +51,14 @@ public class CallAgent extends StandardMarketAgent {
   protected double getDesiredSurplus() {
     /*
      * Being on a clearing interval counts as being at the start of the next one, so agents will
-     * shade accordingly. Also, rminEff and rmaxEff are compressed, but they are correct and are
-     * tested.
+     * shade accordingly, except at the end of the simulation, in which case it counts as being at
+     * the end. Also, rminEff and rmaxEff are compressed, but they are correct and are tested.
      */
     long current = sim.getCurrentTime().get();
     long next = (current / clearInterval + 1) * clearInterval;
     long delta = Math.min(next, finalTime) - next + clearInterval;
-    double frac = (current - next + clearInterval) / (double) delta;
+    // delta == 0 => at final time
+    double frac = delta == 0 ? 1 : (current - next + clearInterval) / (double) delta;
     double rminEff = finit * (frac - 1) * (rmin - rmax) + rmin;
     double rmaxEff = ffin * frac * (rmin - rmax) + rmax;
     return Uniform.closedOpen(rminEff, rmaxEff).sample(rand);
