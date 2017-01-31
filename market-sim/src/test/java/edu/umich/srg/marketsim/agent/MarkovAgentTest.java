@@ -1,7 +1,5 @@
 package edu.umich.srg.marketsim.agent;
 
-import org.junit.Test;
-
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
@@ -20,6 +18,8 @@ import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.testing.MockSim;
+
+import org.junit.Test;
 
 import java.util.Random;
 

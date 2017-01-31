@@ -6,9 +6,6 @@ import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
@@ -17,6 +14,9 @@ import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
+
+import org.junit.Before;
+import org.junit.Test;
 
 public class CDAMarketTest {
   private Fundamental fund;

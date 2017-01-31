@@ -20,11 +20,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import org.junit.Test;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
-
 import edu.umich.srg.egtaonline.CommandLineOptions;
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
@@ -54,6 +49,11 @@ import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.testing.TestInts;
+
+import org.junit.Test;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
 import java.io.Reader;
 import java.io.StringReader;

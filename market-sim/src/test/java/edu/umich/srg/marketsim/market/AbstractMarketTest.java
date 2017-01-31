@@ -8,9 +8,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.Maps;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.PrioritySelector;
 import edu.umich.srg.marketsim.Price;
@@ -22,6 +19,9 @@ import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Map.Entry;

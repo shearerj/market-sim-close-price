@@ -2,11 +2,11 @@ package edu.umich.srg.util;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Rule;
-import org.junit.Test;
-
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.PrimitiveIterator.OfDouble;
 import java.util.Random;

@@ -2,12 +2,12 @@ package edu.umich.srg.distributions;
 
 import static edu.umich.srg.testing.Asserts.assertTrue;
 
+import edu.umich.srg.testing.TestDoubles;
+import edu.umich.srg.testing.TestInts;
+
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
-
-import edu.umich.srg.testing.TestDoubles;
-import edu.umich.srg.testing.TestInts;
 
 import java.util.Random;
 

@@ -2,8 +2,6 @@ package edu.umich.srg.marketsim.agent;
 
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
-
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.NumRungs;
@@ -19,6 +17,8 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
+
+import org.junit.Test;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -5,11 +5,11 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.HashMultiset;
 
-import org.junit.Rule;
-import org.junit.Test;
-
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.util.Arrays;

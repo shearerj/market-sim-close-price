@@ -6,11 +6,11 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Multiset;
 
-import org.junit.Rule;
-import org.junit.Test;
-
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.Random;
 

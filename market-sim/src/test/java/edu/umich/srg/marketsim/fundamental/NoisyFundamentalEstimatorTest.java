@@ -3,12 +3,6 @@ package edu.umich.srg.marketsim.fundamental;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
-
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 import edu.umich.srg.marketsim.testing.MockSim;
@@ -16,6 +10,12 @@ import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestDoubles;
 import edu.umich.srg.testing.TestInts;
 import edu.umich.srg.util.SummStats;
+
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
 import java.util.Random;
 

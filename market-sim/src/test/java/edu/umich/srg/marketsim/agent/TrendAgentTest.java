@@ -5,9 +5,6 @@ import static edu.umich.srg.fourheap.OrderType.SELL;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.assertQuote;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys;
@@ -23,6 +20,9 @@ import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MockAgent;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Random;
 

@@ -7,9 +7,9 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.junit.Test;
-
 import edu.umich.srg.marketsim.Price;
+
+import org.junit.Test;
 
 import java.util.Set;
 import java.util.stream.Collectors;

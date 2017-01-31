@@ -5,16 +5,16 @@ import static org.junit.Assert.assertEquals;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multiset.Entry;
 
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
+import edu.umich.srg.testing.TestDoubles;
+import edu.umich.srg.testing.TestInts;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
-
-import edu.umich.srg.testing.Repeat;
-import edu.umich.srg.testing.RepeatRule;
-import edu.umich.srg.testing.TestDoubles;
-import edu.umich.srg.testing.TestInts;
 
 import java.util.Random;
 import java.util.stream.IntStream;

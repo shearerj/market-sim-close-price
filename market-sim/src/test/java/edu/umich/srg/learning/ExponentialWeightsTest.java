@@ -5,11 +5,11 @@ import static edu.umich.srg.testing.Asserts.assertTrue;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
-import org.junit.Test;
-
 import edu.umich.srg.learning.ExponentialWeights.NumericExponentialWeights;
 import edu.umich.srg.util.Linear;
 import edu.umich.srg.util.SummStats;
+
+import org.junit.Test;
 
 import java.util.List;
 import java.util.Random;

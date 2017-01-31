@@ -4,16 +4,16 @@ import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
-
 import edu.umich.srg.distributions.Distribution.DoubleDistribution;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.testing.Asserts;
 import edu.umich.srg.testing.TestInts;
+
+import org.junit.Test;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
 import java.util.Random;
 

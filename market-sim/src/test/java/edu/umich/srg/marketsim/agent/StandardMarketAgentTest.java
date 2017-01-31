@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.junit.Test;
-
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys;
@@ -27,6 +25,8 @@ import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.Quote;
+
+import org.junit.Test;
 
 import java.util.Random;
 

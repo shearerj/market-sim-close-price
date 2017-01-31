@@ -4,10 +4,10 @@ import static edu.umich.srg.testing.Asserts.assertChiSquared;
 
 import com.google.common.primitives.Ints;
 
+import edu.umich.srg.learning.ExponentialWeights.NumericExponentialWeights;
+
 import org.junit.Ignore;
 import org.junit.Test;
-
-import edu.umich.srg.learning.ExponentialWeights.NumericExponentialWeights;
 
 import java.util.Map.Entry;
 import java.util.Random;

@@ -6,10 +6,6 @@ import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static edu.umich.srg.marketsim.testing.MarketAsserts.assertQuote;
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-
 import edu.umich.srg.marketsim.MarketSimulator;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -21,6 +17,10 @@ import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
+
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;

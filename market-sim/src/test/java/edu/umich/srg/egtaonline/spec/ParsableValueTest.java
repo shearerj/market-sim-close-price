@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableList;
 
-import org.junit.Test;
-
 import edu.umich.srg.egtaonline.spec.ParsableValue.BoolValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.DoubleValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.EnumValue;
@@ -13,6 +11,8 @@ import edu.umich.srg.egtaonline.spec.ParsableValue.IntValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.IntsValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.LongValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.StringValue;
+
+import org.junit.Test;
 
 public class ParsableValueTest {
 

@@ -14,12 +14,12 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
 
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import edu.umich.srg.testing.Repeat;
-import edu.umich.srg.testing.RepeatRule;
 
 import java.util.Collections;
 import java.util.HashSet;
