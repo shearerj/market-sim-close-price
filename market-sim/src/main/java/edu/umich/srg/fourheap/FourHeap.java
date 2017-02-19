@@ -36,6 +36,20 @@ import java.util.stream.Stream;
  * not the quantity of objects i.e. adding more orders at the same price doesn't increase the
  * complexity.
  */
+
+/*
+ * XXX Currently this is genericised on time T, such that orders have to know what `time` they were
+ * submitted to the market to determine match priority. In some sense this is error prone because if
+ * a market sets time incorrectly, they'll get incorrect matches. The general trend seems to be that
+ * time match priority should be given based off what `clear` the order arrived in. This creates
+ * ideal tie breaking in both a call market and a CDA. We could implement that style of time
+ * priority in this fourheap, but it makes things a little complicated. a) We would need to store
+ * the market time attached to the orders ouselves, but more importantly b) the same order object
+ * could be submitted again at different market times. What is the appropriate way to handle a
+ * removal if it could correspond to two different orders in the fourheap? Do you just throw an
+ * error if that happens? Decide on a way to break a tie? In some sense this change would be meant
+ * to reduce the risk of errors, but it could just be moving them.
+ */
 public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
     implements Multiset<O> {
 
