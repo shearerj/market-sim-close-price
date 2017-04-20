@@ -153,8 +153,9 @@ abstract class AbstractMarket implements Market, Serializable {
 
   @Override
   public Iterable<Entry<Agent, AgentInfo>> getAgentInfo() {
-    return Iterables.transform(views, v -> Maps.<Agent, AgentInfo>immutableEntry(v.getAgent(),
-        ImmutableAgentInfo.of(v.getProfit(), v.getHoldings(), v.getSubmissions())));
+    return Iterables.transform(views,
+        v -> Maps.<Agent, AgentInfo>immutableEntry(v.getAgent(), ImmutableAgentInfo
+            .of(v.getProfit(), v.getHoldings(), v.getTrueSubmissions(), v.getTrueVolume())));
   }
 
   @Override
@@ -206,6 +207,10 @@ abstract class AbstractMarket implements Market, Serializable {
 
     int getTrueHoldings();
 
+    int getTrueSubmissions();
+
+    int getTrueVolume();
+
   }
 
   class AbstractLatentMarketView implements AbstractMarketView {
@@ -216,6 +221,7 @@ abstract class AbstractMarket implements Market, Serializable {
     private double observedProfit;
     private int holdings;
     private int submissions;
+    private int volume;
     private int observedHoldings;
     private Multiset<OrderRecord> orders;
     private final BiMap<OrderRecord, AbstractMarketOrder> recordMap;
@@ -228,6 +234,7 @@ abstract class AbstractMarket implements Market, Serializable {
       this.observedProfit = 0;
       this.holdings = 0;
       this.submissions = 0;
+      this.volume = 0;
       this.observedHoldings = 0;
       this.orders = HashMultiset.create();
       this.recordMap = HashBiMap.create();
@@ -318,8 +325,13 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    public int getSubmissions() {
+    public int getTrueSubmissions() {
       return submissions;
+    }
+
+    @Override
+    public int getTrueVolume() {
+      return volume;
     }
 
     @Override
@@ -341,6 +353,7 @@ abstract class AbstractMarket implements Market, Serializable {
 
       profit += profitChange;
       holdings += holdingsChange;
+      volume += quantity;
 
       if (!orderbook.contains(order)) {
         recordMap.remove(record);
@@ -395,6 +408,7 @@ abstract class AbstractMarket implements Market, Serializable {
     private final Agent agent;
     private int holdings;
     private int submissions;
+    private int volume;
     private double profit;
     private final Multiset<AbstractMarketOrder> orders;
 
@@ -406,6 +420,7 @@ abstract class AbstractMarket implements Market, Serializable {
       this.agent = agent;
       this.holdings = 0;
       this.submissions = 0;
+      this.volume = 0;
       this.profit = 0;
       this.orders = HashMultiset.create();
 
@@ -479,8 +494,13 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
-    public int getSubmissions() {
+    public int getTrueSubmissions() {
       return submissions;
+    }
+
+    @Override
+    public int getTrueVolume() {
+      return volume;
     }
 
     @Override
@@ -500,6 +520,7 @@ abstract class AbstractMarket implements Market, Serializable {
       } else {
         profit -= order.getType().sign() * price.doubleValue() * quantity;
         holdings += order.getType().sign() * quantity;
+        volume += quantity;
         orders.remove(order, quantity);
         agent.notifyOrderTransacted(order, price, quantity);
       }

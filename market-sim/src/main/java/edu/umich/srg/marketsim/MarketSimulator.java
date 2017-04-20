@@ -99,10 +99,7 @@ public class MarketSimulator implements Sim {
 
       for (Market market : markets) {
         for (Entry<Agent, AgentInfo> e : market.getAgentInfo()) {
-          SimAgentInfo info = payoffs.get(e.getKey());
-          info.holdings += e.getValue().getHoldings();
-          info.profit += e.getValue().getProfit();
-          info.submissions += e.getValue().getSubmissions();
+          payoffs.get(e.getKey()).add(e.getValue());
         }
       }
 
@@ -136,11 +133,20 @@ public class MarketSimulator implements Sim {
     private double profit;
     private int holdings;
     private int submissions;
+    private int volume;
 
     private SimAgentInfo() {
       this.profit = 0;
       this.holdings = 0;
       this.submissions = 0;
+      this.volume = 0;
+    }
+
+    private void add(AgentInfo that) {
+      this.profit += that.getProfit();
+      this.holdings += that.getHoldings();
+      this.submissions += that.getSubmissions();
+      this.volume += that.getVolumeTraded();
     }
 
     @Override
@@ -156,6 +162,11 @@ public class MarketSimulator implements Sim {
     @Override
     public int getSubmissions() {
       return submissions;
+    }
+
+    @Override
+    public int getVolumeTraded() {
+      return volume;
     }
 
   }

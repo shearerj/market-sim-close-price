@@ -6,6 +6,7 @@ import static edu.umich.srg.marketsim.testing.MarketAsserts.ABSENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import edu.umich.srg.fourheap.MatchedOrders;
@@ -14,6 +15,7 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
+import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
@@ -312,6 +314,29 @@ public class AbstractMarketTest {
     execTimes = market.getFeatures().get("mean_exec_time").getAsDouble();
     assertEquals(1, execTimes, 1e-7);
   }
+
+  @Test
+  public void agentInfoTest() {
+    MockAgent other = new MockAgent() {};
+    MarketView otherView = market.getView(other, TimeStamp.ZERO);
+
+    otherView.submitOrder(SELL, Price.of(100), 2);
+    view.submitOrder(BUY, Price.of(100), 3);
+    market.clear(); // Buy 2 @ 100
+
+    view.submitOrder(SELL, Price.of(120), 1);
+    otherView.submitOrder(BUY, Price.of(120), 1);
+    market.clear(); // Sell 1 @ 120
+
+    AgentInfo info =
+        Iterables.getOnlyElement(Iterables.filter(market.getAgentInfo(), e -> e.getKey() == agent))
+            .getValue();
+    assertEquals(info.getProfit(), -80, 1e-6);
+    assertEquals(info.getHoldings(), 1);
+    assertEquals(info.getSubmissions(), 4);
+    assertEquals(info.getVolumeTraded(), 3);
+  }
+
 
   // /** Information propagates at proper times */
   // @Test

@@ -179,31 +179,37 @@ public class FeaturesTest {
 
   /** Test that submissions is accurately counted. */
   @Test
-  public void submissionsTest() {
+  public void agentInfoTest() {
     Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    // Buy 2 @ 200
+    // Buy 3 @ 100 then Sell 1 @ 120
     sim.addAgent(new MockAgent() {
       final MarketView view = cda.getView(this, TimeStamp.ZERO);
 
       @Override
       public void initilaize() {
         sim.scheduleIn(TimeStamp.of(1), () -> {
-          view.submitOrder(BUY, Price.of(200), 2);
+          view.submitOrder(BUY, Price.of(100), 3);
+        });
+        sim.scheduleIn(TimeStamp.of(2), () -> {
+          view.submitOrder(SELL, Price.of(120), 1);
         });
       }
     });
 
-    // Sell 1 @ 100
+    // Sell 2 @ 100 then Buy 1 @ 120
     sim.addAgent(new MockAgent() {
       final MarketView view = cda.getView(this, TimeStamp.ZERO);
 
       @Override
       public void initilaize() {
         sim.scheduleIn(TimeStamp.of(1), () -> {
-          view.submitOrder(SELL, Price.of(100), 1);
+          view.submitOrder(SELL, Price.of(100), 2);
+        });
+        sim.scheduleIn(TimeStamp.of(2), () -> {
+          view.submitOrder(BUY, Price.of(120), 1);
         });
       }
     });
@@ -214,12 +220,22 @@ public class FeaturesTest {
     Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     assertEquals(2, payoffs.size());
     assertEquals(0, payoffs.values().stream().mapToDouble(AgentInfo::getProfit).sum(), tol);
-    Set<Integer> holdings = payoffs.values().stream().mapToInt(AgentInfo::getHoldings).boxed()
-        .collect(Collectors.toSet());
+
+    Set<Long> payoffSet =
+        payoffs.values().stream().map(i -> Math.round(i.getProfit())).collect(Collectors.toSet());
+    assertEquals(ImmutableSet.of(-80L, 80L), payoffSet);
+
+    Set<Integer> holdings =
+        payoffs.values().stream().map(AgentInfo::getHoldings).collect(Collectors.toSet());
     assertEquals(ImmutableSet.of(-1, 1), holdings);
-    Set<Integer> submissions = payoffs.values().stream().mapToInt(AgentInfo::getSubmissions).boxed()
-        .collect(Collectors.toSet());
-    assertEquals(ImmutableSet.of(1, 2), submissions);
+
+    Set<Integer> submissions =
+        payoffs.values().stream().map(AgentInfo::getSubmissions).collect(Collectors.toSet());
+    assertEquals(ImmutableSet.of(3, 4), submissions);
+
+    Set<Integer> volumes =
+        payoffs.values().stream().map(AgentInfo::getVolumeTraded).collect(Collectors.toSet());
+    assertEquals(ImmutableSet.of(3), volumes);
   }
 
   @Test
