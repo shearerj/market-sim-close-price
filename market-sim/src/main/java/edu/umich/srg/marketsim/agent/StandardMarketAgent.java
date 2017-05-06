@@ -1,7 +1,13 @@
 package edu.umich.srg.marketsim.agent;
 
+import static edu.umich.srg.fourheap.OrderType.BUY;
+import static java.math.RoundingMode.CEILING;
+import static java.math.RoundingMode.FLOOR;
+
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
+import com.google.common.math.DoubleMath;
+import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Geometric;
@@ -22,6 +28,7 @@ import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
+import edu.umich.srg.util.SummStats;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -48,6 +55,9 @@ public abstract class StandardMarketAgent implements Agent {
   private final Supplier<Set<OrderType>> side;
   private final int ordersPerSide;
 
+  // Bookkeeping
+  private final SummStats shadingStats;
+
   /** Standard constructor for ZIR agent. */
   public StandardMarketAgent(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
@@ -70,6 +80,8 @@ public abstract class StandardMarketAgent implements Agent {
     }
     this.ordersPerSide = spec.get(SubmitDepth.class);
     this.rand = rand;
+
+    this.shadingStats = SummStats.empty();
   }
 
   protected abstract double getDesiredSurplus();
@@ -95,12 +107,15 @@ public abstract class StandardMarketAgent implements Agent {
 
           double privateBenefit = type.sign()
               * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
+          double estimatedValue = finalEstimate + privateBenefit;
 
-          Price toSubmit = threshold.shadePrice(type, market.getQuote(),
-              finalEstimate + privateBenefit, demandedSurplus);
+          double toSubmit =
+              threshold.shadePrice(type, market.getQuote(), estimatedValue, demandedSurplus);
+          long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
+          shadingStats.accept(Math.abs(estimatedValue - toSubmit));
 
-          if (toSubmit.longValue() > 0) {
-            market.submitOrder(type, toSubmit, 1);
+          if (rounded > 0) {
+            market.submitOrder(type, Price.of(rounded), 1);
           }
         }
       }
@@ -117,6 +132,13 @@ public abstract class StandardMarketAgent implements Agent {
   @Override
   public double payoffForExchange(int position, OrderType type) {
     return privateValue.valueForExchange(position, type);
+  }
+
+  @Override
+  public JsonObject getFeatures() {
+    JsonObject feats = Agent.super.getFeatures();
+    feats.addProperty("mean_shading", shadingStats.getAverage());
+    return feats;
   }
 
   @Override

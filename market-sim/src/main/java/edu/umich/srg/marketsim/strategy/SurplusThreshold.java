@@ -1,10 +1,6 @@
 package edu.umich.srg.marketsim.strategy;
 
 import static edu.umich.srg.fourheap.OrderType.BUY;
-import static java.math.RoundingMode.CEILING;
-import static java.math.RoundingMode.FLOOR;
-
-import com.google.common.math.DoubleMath;
 
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Price;
@@ -30,22 +26,21 @@ public class SurplusThreshold {
   }
 
   /** Get the price to submit conditioned on the demanded surplus and the market state. */
-  public Price shadePrice(OrderType type, Quote quote, double estimatedValue,
+  public double shadePrice(OrderType type, Quote quote, double estimatedValue,
       double demandedSurplus) {
     Optional<Price> marketPrice = type == BUY ? quote.getAskPrice() : quote.getBidPrice();
 
     // Strategic shading for guaranteed surplus
-    if (marketPrice.isPresent() && type.sign()
-        * (estimatedValue - marketPrice.get().doubleValue()) > this.threshold * demandedSurplus) {
+    if (marketPrice.isPresent()
+        && type.sign() * (estimatedValue - marketPrice.get().doubleValue()) < demandedSurplus
+        && type.sign() * (estimatedValue - marketPrice.get().doubleValue()) > this.threshold
+            * demandedSurplus) {
 
-      return marketPrice.get();
+      return marketPrice.get().doubleValue();
 
     } else { // Submit order that won't transact immediately
       // Round beneficially
-      long roundedPrice = DoubleMath.roundToLong(estimatedValue - type.sign() * demandedSurplus,
-          type == BUY ? FLOOR : CEILING);
-
-      return Price.of(roundedPrice);
+      return estimatedValue - type.sign() * demandedSurplus;
     }
   }
 
