@@ -137,7 +137,8 @@ public abstract class StandardMarketAgent implements Agent {
   @Override
   public JsonObject getFeatures() {
     JsonObject feats = Agent.super.getFeatures();
-    feats.addProperty("mean_shading", shadingStats.getAverage());
+    feats.addProperty("count_shading", shadingStats.getCount());
+    feats.addProperty("mean_shading", shadingStats.getAverage().orElse(0.0));
     return feats;
   }
 

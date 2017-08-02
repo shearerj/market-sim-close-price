@@ -23,8 +23,8 @@ public class RandomBetaTest {
   public void summaryStatisticsTest(@TestDoubles({1, 10, 16}) double alpha) {
     Beta dist = Beta.with(alpha, alpha);
     SummStats stats = SummStats.over(DoubleStream.generate(() -> dist.sample(rand)).limit(100000));
-    assertEquals(0.5, stats.getAverage(), 1e-2);
-    assertEquals(1 / (8 * alpha + 4), stats.getVariance(), 1e-2);
+    assertEquals(0.5, stats.getAverage().get(), 1e-2);
+    assertEquals(1 / (8 * alpha + 4), stats.getVariance().get(), 1e-2);
   }
 
 }

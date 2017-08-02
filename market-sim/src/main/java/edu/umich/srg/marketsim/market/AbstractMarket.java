@@ -170,11 +170,11 @@ abstract class AbstractMarket implements Market, Serializable {
   public JsonObject getFeatures() {
     JsonObject features = new JsonObject();
 
-    features.addProperty("rmsd", Math.sqrt(rmsd.getAverage()));
+    features.addProperty("rmsd", rmsd.getAverage().map(Math::sqrt).orElse(Double.NaN));
     features.addProperty("max_diff", maxDiff);
-    features.addProperty("trans_vol", transPrice.getStandardDeviation());
-    features.addProperty("median_spread", SummStats.median(spreads));
-    features.addProperty("mean_exec_time", executionTimes.getAverage());
+    features.addProperty("trans_vol", transPrice.getStandardDeviation().orElse(Double.NaN));
+    features.addProperty("median_spread", SummStats.median(spreads).orElse(Double.NaN));
+    features.addProperty("mean_exec_time", executionTimes.getAverage().orElse(Double.NaN));
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {

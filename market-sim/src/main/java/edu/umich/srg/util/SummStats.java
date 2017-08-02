@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.PrimitiveIterator.OfDouble;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -107,30 +108,31 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
   }
 
   /** Return the mean of all data added so far. */
-  public double getAverage() {
-    return count == 0 ? Double.NaN : average;
+  public Optional<Double> getAverage() {
+    return count == 0 ? Optional.empty() : Optional.of(average);
   }
 
   /** Return the sample variance of all data added so far. */
-  public double getVariance() {
-    return count == 0 ? Double.NaN : count == 1 ? 0 : squaredError / (count - 1);
+  public Optional<Double> getVariance() {
+    return count == 0 ? Optional.empty()
+        : count == 1 ? Optional.of(0.0) : Optional.of(squaredError / (count - 1));
   }
 
   /** Return the sample standard deviation of all data added so far. */
-  public double getStandardDeviation() {
-    return Math.sqrt(getVariance());
+  public Optional<Double> getStandardDeviation() {
+    return getVariance().map(Math::sqrt);
   }
 
   public double getSum() {
-    return getAverage() * count;
+    return getAverage().map(x -> x * count).orElse(0.0);
   }
 
-  public double getMin() {
-    return count == 0 ? Double.NaN : min;
+  public Optional<Double> getMin() {
+    return count == 0 ? Optional.empty() : Optional.of(min);
   }
 
-  public double getMax() {
-    return count == 0 ? Double.NaN : max;
+  public Optional<Double> getMax() {
+    return count == 0 ? Optional.empty() : Optional.of(max);
   }
 
   /** Return the number of data points. */
@@ -175,9 +177,9 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
    * Compute median over a collection. O(n log n). Factor is in terms of distinct elements if
    * collection is a multiset.
    */
-  public static double median(Collection<? extends Number> data) {
+  public static Optional<Double> median(Collection<? extends Number> data) {
     if (data.isEmpty()) {
-      return Double.NaN;
+      return Optional.empty();
     } else if (data instanceof Multiset<?>) {
       List<Entry<? extends Number>> entries = ((Multiset<? extends Number>) data).entrySet()
           .stream().sorted(Ordering.natural().onResultOf(e -> e.getElement().doubleValue()))
@@ -201,17 +203,17 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
 
       // Even and not on the line
       if (total % 2 == 1 && index > 0 && sums[index - 1] == (total - 1) / 2) {
-        return (values[index - 1] + values[index]) / 2;
+        return Optional.of((values[index - 1] + values[index]) / 2);
       } else {
-        return values[index];
+        return Optional.of(values[index]);
       }
     } else {
       // TODO This is inefficient, could be O(n)
       double[] sorted = data.stream().mapToDouble(Number::doubleValue).sorted().toArray();
       if (sorted.length % 2 == 0) {
-        return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+        return Optional.of((sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2);
       } else {
-        return sorted[sorted.length / 2];
+        return Optional.of(sorted[sorted.length / 2]);
       }
     }
   }

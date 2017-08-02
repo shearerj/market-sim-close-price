@@ -345,8 +345,10 @@ public class CommandLineOptions {
       JsonObject serializedPlayer = new JsonObject();
       serializedPlayer.addProperty("role", player.getRole());
       serializedPlayer.addProperty("strategy", player.getStrategy());
+      // Here we call Optional::get, but it's object is guaranteed to have something, as there's
+      // always at least one element
       serializedPlayer.addProperty("payoff",
-          next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next().getAverage());
+          next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next().getAverage().get());
       serializedPlayers.add(serializedPlayer);
     }
 

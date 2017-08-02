@@ -1,7 +1,7 @@
 package edu.umich.srg.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import com.google.common.collect.HashMultiset;
 
@@ -37,9 +37,9 @@ public class SummStatsTest {
       truth.accept(d);
     }
     assertEquals(truth.getSum(), test.getSum(), eps);
-    assertEquals(truth.getAverage(), test.getAverage(), eps);
-    assertEquals(truth.getVariance(), test.getVariance(), eps);
-    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation(), eps);
+    assertEquals(truth.getAverage(), test.getAverage().get(), eps);
+    assertEquals(truth.getVariance(), test.getVariance().get(), eps);
+    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation().get(), eps);
   }
 
   @Test
@@ -53,9 +53,9 @@ public class SummStatsTest {
       truth.accept(d);
     }
     assertEquals(truth.getSum(), test.getSum(), eps);
-    assertEquals(truth.getAverage(), test.getAverage(), eps);
-    assertEquals(truth.getVariance(), test.getVariance(), eps);
-    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation(), eps);
+    assertEquals(truth.getAverage(), test.getAverage().get(), eps);
+    assertEquals(truth.getVariance(), test.getVariance().get(), eps);
+    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation().get(), eps);
   }
 
   @Test
@@ -70,31 +70,31 @@ public class SummStatsTest {
       truth.accept(d);
     }
     assertEquals(truth.getSum(), test.getSum(), eps);
-    assertEquals(truth.getAverage(), test.getAverage(), eps);
-    assertEquals(truth.getVariance(), test.getVariance(), eps);
-    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation(), eps);
+    assertEquals(truth.getAverage(), test.getAverage().get(), eps);
+    assertEquals(truth.getVariance(), test.getVariance().get(), eps);
+    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation().get(), eps);
   }
 
   @Test
   public void emptyTest() {
     SummStats test = SummStats.empty();
-    assertEquals(Double.NaN, test.getSum(), eps);
-    assertEquals(Double.NaN, test.getAverage(), eps);
-    assertEquals(Double.NaN, test.getVariance(), eps);
-    assertEquals(Double.NaN, test.getStandardDeviation(), eps);
-    assertEquals(Double.NaN, test.getMin(), eps);
-    assertEquals(Double.NaN, test.getMax(), eps);
+    assertEquals(0.0, test.getSum(), 0.0);
+    assertFalse(test.getAverage().isPresent());
+    assertFalse(test.getVariance().isPresent());
+    assertFalse(test.getStandardDeviation().isPresent());
+    assertFalse(test.getMin().isPresent());
+    assertFalse(test.getMax().isPresent());
   }
 
   @Test
   public void singleTest() {
     SummStats test = SummStats.over(DoubleStream.of(5));
     assertEquals(5, test.getSum(), eps);
-    assertEquals(5, test.getAverage(), eps);
-    assertEquals(0, test.getVariance(), eps);
-    assertEquals(0, test.getStandardDeviation(), eps);
-    assertEquals(5, test.getMin(), eps);
-    assertEquals(5, test.getMax(), eps);
+    assertEquals(5, test.getAverage().get(), eps);
+    assertEquals(0, test.getVariance().get(), eps);
+    assertEquals(0, test.getStandardDeviation().get(), eps);
+    assertEquals(5, test.getMin().get(), eps);
+    assertEquals(5, test.getMax().get(), eps);
   }
 
   @Test
@@ -109,9 +109,9 @@ public class SummStatsTest {
       truth.accept(d);
     }
     assertEquals(truth.getSum(), test.getSum(), eps);
-    assertEquals(truth.getAverage(), test.getAverage(), eps);
-    assertEquals(truth.getVariance(), test.getVariance(), eps);
-    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation(), eps);
+    assertEquals(truth.getAverage(), test.getAverage().get(), eps);
+    assertEquals(truth.getVariance(), test.getVariance().get(), eps);
+    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation().get(), eps);
   }
 
   @Test
@@ -131,30 +131,34 @@ public class SummStatsTest {
       test.combine(sub);
     }
     assertEquals(truth.getSum(), test.getSum(), eps);
-    assertEquals(truth.getAverage(), test.getAverage(), eps);
-    assertEquals(truth.getVariance(), test.getVariance(), eps);
-    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation(), eps);
+    assertEquals(truth.getAverage(), test.getAverage().get(), eps);
+    assertEquals(truth.getVariance(), test.getVariance().get(), eps);
+    assertEquals(truth.getStandardDeviation(), test.getStandardDeviation().get(), eps);
   }
 
   @Test
   public void medianTest() {
     // Array
-    assertEquals(2, SummStats.median(Arrays.asList(1, 2, 3)), 0);
-    assertEquals(2, SummStats.median(Arrays.asList(1, 2, 3, 2)), 0);
-    assertEquals(2.5, SummStats.median(Arrays.asList(1, 2, 3, 4)), 1e-7);
+    assertEquals(2, SummStats.median(Arrays.asList(1, 2, 3)).get(), 0);
+    assertEquals(2, SummStats.median(Arrays.asList(1, 2, 3, 2)).get(), 0);
+    assertEquals(2.5, SummStats.median(Arrays.asList(1, 2, 3, 4)).get(), 1e-7);
 
     // Multiset
-    assertEquals(1, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 2))), 0);
-    assertEquals(1, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 1, 2))), 0);
-    assertEquals(2, SummStats.median(HashMultiset.create(Arrays.asList(1, 2, 2, 3))), 0);
-    assertEquals(1.5, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 2, 2))), 1e-7);
+    assertEquals(1, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 2))).get(), 0);
+    assertEquals(1, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 1, 2))).get(), 0);
+    assertEquals(2, SummStats.median(HashMultiset.create(Arrays.asList(1, 2, 2, 3))).get(), 0);
+    assertEquals(1.5, SummStats.median(HashMultiset.create(Arrays.asList(1, 1, 2, 2))).get(), 1e-7);
 
     // Corner cases
-    assertTrue(Double.isNaN(SummStats.median(Arrays.asList())));
-    assertTrue(Double.isInfinite(
-        SummStats.median(Arrays.asList(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0))));
-    assertTrue(Double.isInfinite(
-        SummStats.median(Arrays.asList(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, 0))));
+    assertFalse(SummStats.median(Arrays.asList()).isPresent());
+    assertEquals(
+        Double.POSITIVE_INFINITY, SummStats
+            .median(Arrays.asList(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0)).get(),
+        0.0);
+    assertEquals(
+        Double.NEGATIVE_INFINITY, SummStats
+            .median(Arrays.asList(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, 0)).get(),
+        0.0);
   }
 
   private static class BigStat implements DoubleConsumer {
