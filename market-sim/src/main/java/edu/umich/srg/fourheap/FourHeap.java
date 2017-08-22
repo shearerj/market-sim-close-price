@@ -619,7 +619,7 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
       Multiset<O> atKey = queue.computeIfAbsent(key, k -> HashMultiset.create());
       int countBefore = atKey.setCount(order, count);
       if (atKey.isEmpty()) {
-        queue.remove(atKey);
+        queue.remove(key);
       }
       size += count - countBefore;
       return countBefore;
@@ -633,7 +633,7 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
       if (changed) {
         size += newCount - oldCount;
         if (atKey.isEmpty()) {
-          queue.remove(atKey);
+          queue.remove(key);
         }
       }
       return changed;
