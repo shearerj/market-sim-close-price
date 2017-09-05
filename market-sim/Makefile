@@ -59,6 +59,7 @@ jar:
 
 egta: jar
 	$(DEFERROR)
+	@jq -e .configuration $(def) > /dev/null || { echo 'defaults.json must have a configuration field' >&2; false; }
 	$(eval $@_TMP := $(shell mktemp -dt XXXXXX))
 	$(eval $@_NAME := $(notdir $(basename $(def))))
 	mkdir -p "$($@_TMP)/$($@_NAME)/script/target"
