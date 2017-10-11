@@ -76,8 +76,8 @@ test:
 	@mvn test | $(COLOR)
 
 create-report:
-	@echo mvn site
-	@mvn site | $(COLOR)
+	@echo mvn jacoco:prepare-agent site
+	@mvn jacoco:prepare-agent site | $(COLOR)
 
 report: create-report
 	$(BROWSER) target/site/project-reports.html 
