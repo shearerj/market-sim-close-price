@@ -28,7 +28,7 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Map.Entry;
 
-public class AbstractMarketTest {
+public class AMarketTest {
   private MockSim sim;
   private MockMarket market;
   private MockAgent agent;
@@ -666,15 +666,15 @@ public class AbstractMarketTest {
   // return order;
   // }
 
-  private static class MockMarket extends AbstractMarket {
+  private static class MockMarket extends AMarket {
 
     private MockMarket(Sim sim) {
       super(sim, ConstantFundamental.create(100, 100), MockMarket::mockPricing,
           PrioritySelector.create());
     }
 
-    private static Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>> mockPricing(
-        Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches) {
+    private static Iterable<Entry<MatchedOrders<Price, AOrder>, Price>> mockPricing(
+        Collection<MatchedOrders<Price, AOrder>> matches) {
       // Awlays matches on buy price
       return () -> matches.stream().map(m -> Maps.immutableEntry(m, m.getBuy().getPrice()))
           .iterator();

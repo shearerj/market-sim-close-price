@@ -20,6 +20,7 @@ import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -37,21 +38,7 @@ import java.util.stream.Stream;
  * complexity.
  */
 
-/*
- * FIXME Currently this is genericised on time T, such that orders have to know what `time` they
- * were submitted to the market to determine match priority. In some sense this is error prone
- * because if a market sets time incorrectly, they'll get incorrect matches. The general trend seems
- * to be that time match priority should be given based off what `clear` the order arrived in. This
- * creates ideal tie breaking in both a call market and a CDA. We could implement that style of time
- * priority in this fourheap, but it makes things a little complicated. a) We would need to store
- * the market time attached to the orders ouselves, but more importantly b) the same order object
- * could be submitted again at different market times. What is the appropriate way to handle a
- * removal if it could correspond to two different orders in the fourheap? Do you just throw an
- * error if that happens? Decide on a way to break a tie? In some sense this change would be meant
- * to reduce the risk of errors, but it could just be moving them.
- */
-public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
-    implements Multiset<O> {
+public class FourHeap<P, O extends IOrder<P>> extends AbstractCollection<O> implements Multiset<O> {
 
   // Orders for unmatched priority where lower is better
   private final Ordering<Key> buyPrice;
@@ -64,10 +51,11 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
   private final OrderQueue sellUnmatched;
   private final Selector<O> selector;
 
-  private FourHeap(Selector<O> selector, Comparator<? super P> priceOrder,
-      Comparator<? super T> timeOrder) {
+  private long time = Long.MIN_VALUE;
+
+  private FourHeap(Selector<O> selector, Comparator<? super P> priceOrder) {
     this.selector = selector;
-    Ordering<Key> keyTime = Ordering.from(timeOrder).onResultOf(k -> k.time);
+    Ordering<Key> keyTime = Ordering.natural().onResultOf(k -> k.time);
     this.sellPrice = Ordering.from(priceOrder).onResultOf(k -> k.price);
     this.sellKey = sellPrice.compound(keyTime);
     this.buyPrice = sellPrice.reverse();
@@ -79,14 +67,14 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
     this.sellMatched = new OrderQueue(sellKey.reverse());
   }
 
-  public static <P, T, O extends Order<P, T>> FourHeap<P, T, O> create(Selector<O> selector,
-      Comparator<? super P> priceOrder, Comparator<? super T> timeOrder) {
-    return new FourHeap<>(selector, priceOrder, timeOrder);
+  public static <P, O extends IOrder<P>> FourHeap<P, O> create(Selector<O> selector,
+      Comparator<? super P> priceOrder) {
+    return new FourHeap<>(selector, priceOrder);
   }
 
-  public static <P extends Comparable<? super P>, T extends Comparable<? super T>, //
-      O extends Order<P, T>> FourHeap<P, T, O> create(Selector<O> selector) {
-    return new FourHeap<>(selector, Ordering.natural(), Ordering.natural());
+  public static <P extends Comparable<? super P>, O extends IOrder<P>> FourHeap<P, O> create(
+      Selector<O> selector) {
+    return new FourHeap<>(selector, Ordering.natural());
   }
 
   @Override
@@ -126,7 +114,7 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
    */
   private int add(O order, int quantity, OrderQueue ordUnmatched, OrderQueue ordMatched,
       OrderQueue oppUnmatched, OrderQueue oppMatched, Comparator<Key> pord, Comparator<Key> kord) {
-    Key key = new Key(order);
+    Key key = new Key(order.getPrice());
     int countBefore;
     // Order is at least as good as worst matched order
     if (!ordMatched.isEmpty() && kord.compare(key, ordMatched.peekKey().get()) <= 0
@@ -171,7 +159,7 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
   @Override
   public int remove(Object order, int quantity) {
     checkArgument(quantity >= 0, "Quantity must be nonnegative");
-    if (order == null || !(order instanceof Order<?, ?>)) {
+    if (order == null || !(order instanceof IOrder<?>)) {
       return 0;
     } else if (quantity == 0) {
       // Do nothing
@@ -218,36 +206,37 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
    * the two matched orders, and the quantity matched by that order. Complexity: O(m) where m is the
    * number of matched orders.
    */
-  public Collection<MatchedOrders<P, T, O>> marketClear() {
+  public Collection<MatchedOrders<P, O>> marketClear() {
+    // Incriment time every clear
+    ++time;
+
     if (buyMatched.isEmpty()) {
       // If one is empty, the other should be, so we don't check
       return Collections.emptyList();
     }
 
     int diff = buyMatched.size() - sellMatched.size();
-    Multiset<O> buy = buyMatched.poll();
-    Multiset<O> sell = sellMatched.poll();
+    Map.Entry<Key, Multiset<O>> buy = buyMatched.pollEntry();
+    Map.Entry<Key, Multiset<O>> sell = sellMatched.pollEntry();
     if (diff > 0) {
-      Key key = new Key(checkNotNull(Iterables.getFirst(buy, null)));
-      Multiset<O> unmatched = selector.select(buy, diff);
-      buyUnmatched.offer(key, unmatched);
+      Multiset<O> unmatched = selector.select(buy.getValue(), diff);
+      buyUnmatched.offer(buy.getKey(), unmatched);
     } else if (diff < 0) {
-      Key key = new Key(checkNotNull(Iterables.getFirst(sell, null)));
-      Multiset<O> unmatched = selector.select(sell, -diff);
-      sellUnmatched.offer(key, unmatched);
+      Multiset<O> unmatched = selector.select(sell.getValue(), -diff);
+      sellUnmatched.offer(sell.getKey(), unmatched);
     }
 
     Iterator<Multiset.Entry<O>> buys =
-        Iterables.concat(buy.entrySet(), buyMatched.entrySet()).iterator();
+        Iterables.concat(buy.getValue().entrySet(), buyMatched.entrySet()).iterator();
     Iterator<Multiset.Entry<O>> sells =
-        Iterables.concat(sell.entrySet(), sellMatched.entrySet()).iterator();
+        Iterables.concat(sell.getValue().entrySet(), sellMatched.entrySet()).iterator();
 
     O buyOrder = null;
     O sellOrder = null;
     int buyQuantity = 0;
     int sellQuantity = 0;
 
-    Builder<MatchedOrders<P, T, O>> transactions = ImmutableList.builder();
+    Builder<MatchedOrders<P, O>> transactions = ImmutableList.builder();
     while (buys.hasNext() || sells.hasNext()) {
       if (buyQuantity == 0) {
         Multiset.Entry<O> entry = buys.next();
@@ -263,7 +252,7 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
       int quantity = Math.min(buyQuantity, sellQuantity);
       buyQuantity -= quantity;
       sellQuantity -= quantity;
-      transactions.add(new MatchedOrders<P, T, O>(buyOrder, sellOrder, quantity));
+      transactions.add(new MatchedOrders<P, O>(buyOrder, sellOrder, quantity));
     }
 
     buyMatched.clear();
@@ -423,20 +412,16 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
         .collect(Collectors.joining(", "));
     String su =
         sellUnmatched.entrySet().stream().map(Object::toString).collect(Collectors.joining(", "));
-    return '{' + bu + " | " + bm + " || " + sm + " | " + su + '}';
+    return String.format("{%s | %s || %s | %s}", bu, bm, sm, su);
   }
 
   private class Key {
     private final P price;
-    private final T time;
+    private final long time;
 
-    private Key(P price, T time) {
+    private Key(P price) {
       this.price = price;
-      this.time = time;
-    }
-
-    private Key(Order<P, T> order) {
-      this(order.getPrice(), order.getTime());
+      this.time = FourHeap.this.time;
     }
 
     @Override
@@ -446,10 +431,10 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
 
     @Override
     public boolean equals(Object obj) {
-      if (obj != null && obj instanceof FourHeap<?, ?, ?>.Key) {
+      if (obj != null && obj instanceof FourHeap<?, ?>.Key) {
         @SuppressWarnings("unchecked")
         Key that = (Key) obj;
-        return Objects.equals(this.price, that.price) && Objects.equals(this.time, that.time);
+        return Objects.equals(this.price, that.price) && this.time == that.time;
       } else {
         return false;
       }
@@ -458,18 +443,25 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
 
     @Override
     public String toString() {
-      return "<" + price + ", " + time + ">";
+      return String.format("<%s, %d>", price, time);
     }
-
   }
 
+  /*
+   * TODO Ideally this would be a Multimap since the Key is now an integral piece of this, however,
+   * that requires appropriate creation of several delegates to keep track of information that is
+   * only necessary as an internal data strcuture, and thus would be a lot of effort for something
+   * that's just a nicer abstraction.
+   */
   private class OrderQueue extends AbstractCollection<O> implements Multiset<O> {
 
     private final NavigableMap<Key, Multiset<O>> queue;
+    private final Map<O, Key> keyMap;
     private int size;
 
     private OrderQueue(Comparator<? super Key> comp) {
       this.queue = new TreeMap<>(comp);
+      this.keyMap = new HashMap<>();
     }
 
     public Optional<Key> peekKey() {
@@ -483,19 +475,19 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
     private Map.Entry<Key, Multiset<O>> pollEntry() {
       Map.Entry<Key, Multiset<O>> result = queue.pollFirstEntry();
       size -= result.getValue().size();
+      result.getValue().elementSet().forEach(keyMap::remove);
       return result;
     }
 
     private void offer(Key key, Multiset<O> orders) {
-      Multiset<O> old = queue.put(key, orders);
+      checkArgument(
+          orders.elementSet().stream().map(o -> keyMap.put(o, key)).allMatch(Objects::isNull),
+          "Some orders were already present");
+      checkArgument(Objects.isNull(queue.put(key, orders)), "Key already existed in queue");
       size += orders.size();
 
-      assert old == null : "Key shouldn't already exist in queue";
-      assert orders.entrySet().stream().allMatch(o -> new Key(o.getElement()).equals(key));
-    }
-
-    public Multiset<O> poll() {
-      return pollEntry().getValue();
+      // Check validity
+      assert orders.entrySet().stream().allMatch(o -> o.getElement().getPrice().equals(key.price));
     }
 
     public void pushTo(OrderQueue to) {
@@ -511,7 +503,8 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
 
     @Override
     public int add(O order, int quantity) {
-      Key key = new Key(order);
+      Key key = new Key(order.getPrice());
+      checkArgument(Objects.isNull(keyMap.put(order, key)), "Order was already in this queue");
       int countBefore = queue.computeIfAbsent(key, k -> HashMultiset.create()).add(order, quantity);
       size += quantity;
       return countBefore;
@@ -525,27 +518,33 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
     @Override
     @SuppressWarnings("unchecked")
     public int remove(Object obj, int quantity) {
-      if (obj != null && obj instanceof Order<?, ?>) {
-        O order = (O) obj;
-        Key key = new Key(order);
-        Multiset<O> set = queue.get(key);
-        if (set == null) {
-          return 0;
-        }
-        int result = set.remove(order, quantity);
-        if (set.isEmpty()) {
-          queue.remove(key);
-        }
-        size -= Math.min(result, quantity);
-        return result;
-      } else {
+      if (obj == null || !(obj instanceof IOrder<?>)) {
         return 0;
       }
+      O order = (O) obj;
+      Key key = keyMap.get(order);
+      if (key == null) {
+        return 0;
+      }
+      Multiset<O> set = queue.get(key);
+      if (set == null) {
+        return 0;
+      }
+      int result = set.remove(order, quantity);
+      if (set.isEmpty()) {
+        queue.remove(key);
+      }
+      if (!set.contains(order)) {
+        keyMap.remove(order);
+      }
+      size -= Math.min(result, quantity);
+      return result;
     }
 
     @Override
     public void clear() {
       queue.clear();
+      keyMap.clear();
       size = 0;
     }
 
@@ -562,25 +561,37 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
     @SuppressWarnings("unchecked")
     @Override
     public boolean contains(Object obj) {
-      if (obj != null && obj instanceof Order<?, ?>) {
-        O order = (O) obj;
-        Key key = new Key(order);
-        return Optional.ofNullable(queue.get(key)).map(ms -> ms.contains(order)).orElse(false);
-      } else {
+      if (obj == null || !(obj instanceof IOrder<?>)) {
         return false;
       }
+      O order = (O) obj;
+      Key key = keyMap.get(order);
+      if (key == null) {
+        return false;
+      }
+      Multiset<O> set = queue.get(key);
+      if (set == null) {
+        return false;
+      }
+      return set.contains(order);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public int count(Object obj) {
-      if (obj != null && obj instanceof Order<?, ?>) {
-        O order = (O) obj;
-        Key key = new Key(order);
-        return Optional.ofNullable(queue.get(key)).map(ms -> ms.count(order)).orElse(0);
-      } else {
+      if (obj == null || !(obj instanceof IOrder<?>)) {
         return 0;
       }
+      O order = (O) obj;
+      Key key = keyMap.get(order);
+      if (key == null) {
+        return 0;
+      }
+      Multiset<O> set = queue.get(key);
+      if (set == null) {
+        return 0;
+      }
+      return set.count(order);
     }
 
     @Override
@@ -610,16 +621,20 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
 
     @Override
     public String toString() {
-      return '{' + stream().map(Object::toString).collect(Collectors.joining(", ")) + '}';
+      return String.format("{%s}",
+          stream().map(Object::toString).collect(Collectors.joining(", ")));
     }
 
     @Override
     public int setCount(O order, int count) {
-      Key key = new Key(order);
+      Key key = keyMap.getOrDefault(order, new Key(order.getPrice()));
       Multiset<O> atKey = queue.computeIfAbsent(key, k -> HashMultiset.create());
       int countBefore = atKey.setCount(order, count);
       if (atKey.isEmpty()) {
         queue.remove(key);
+      }
+      if (!atKey.contains(order)) {
+        keyMap.remove(order);
       }
       size += count - countBefore;
       return countBefore;
@@ -627,7 +642,7 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
 
     @Override
     public boolean setCount(O order, int oldCount, int newCount) {
-      Key key = new Key(order);
+      Key key = keyMap.getOrDefault(order, new Key(order.getPrice()));
       Multiset<O> atKey = queue.computeIfAbsent(key, k -> HashMultiset.create());
       boolean changed = atKey.setCount(order, oldCount, newCount);
       if (changed) {
@@ -635,6 +650,9 @@ public class FourHeap<P, T, O extends Order<P, T>> extends AbstractCollection<O>
         if (atKey.isEmpty()) {
           queue.remove(key);
         }
+      }
+      if (!atKey.contains(order)) {
+        keyMap.remove(order);
       }
       return changed;
     }

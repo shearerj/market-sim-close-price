@@ -24,7 +24,7 @@ import java.util.Random;
 /**
  * Pricing of 0 prices at the lowest bid, 1 at the highest ask, and 0.5, the average between them.
  */
-public class CallMarket extends AbstractMarket {
+public class CallMarket extends AMarket {
 
   private final long clearInterval;
   private boolean nextClearScheduled;
@@ -76,14 +76,13 @@ public class CallMarket extends AbstractMarket {
   }
 
   @Override
-  AbstractMarketOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price,
-      int quantity) {
+  AOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
     scheduleClear();
     return super.submitOrder(submitter, buyOrSell, price, quantity);
   }
 
   @Override
-  void withdrawOrder(AbstractMarketOrder order, int quantity) {
+  void withdrawOrder(AOrder order, int quantity) {
     scheduleClear();
     super.withdrawOrder(order, quantity);
   }
@@ -93,7 +92,6 @@ public class CallMarket extends AbstractMarket {
     this.nextClearScheduled = false;
     super.clear();
     updateQuote();
-    incrementMarketTime();
   }
 
   @Override
@@ -119,18 +117,16 @@ public class CallMarket extends AbstractMarket {
     }
 
     @Override
-    public Iterable<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>> apply(
-        Collection<MatchedOrders<Price, Long, AbstractMarketOrder>> matches) {
+    public Iterable<Entry<MatchedOrders<Price, AOrder>, Price>> apply(
+        Collection<MatchedOrders<Price, AOrder>> matches) {
       double sell =
           matches.stream().mapToDouble(m -> m.getSell().getPrice().doubleValue()).max().orElse(0);
       double buy =
           matches.stream().mapToDouble(m -> m.getBuy().getPrice().doubleValue()).min().orElse(0);
       Price price = Price.of(pricing * sell + (1 - pricing) * buy);
 
-      return () -> matches.stream()
-          .<Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price>>map(
-              m -> new AbstractMap.SimpleImmutableEntry<//
-                  MatchedOrders<Price, Long, AbstractMarketOrder>, Price>(m, price))
+      return () -> matches.stream().<Entry<MatchedOrders<Price, AOrder>, Price>>map(
+          m -> new AbstractMap.SimpleImmutableEntry<MatchedOrders<Price, AOrder>, Price>(m, price))
           .iterator();
     }
 

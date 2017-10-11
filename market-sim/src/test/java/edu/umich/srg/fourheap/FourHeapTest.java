@@ -34,7 +34,7 @@ public class FourHeapTest {
 
   private final static Random rand = new Random();
 
-  private FourHeap<Integer, Integer, Ord> fh;
+  private FourHeap<Integer, Ord> fh;
 
   @Before
   public void setup() {
@@ -380,10 +380,10 @@ public class FourHeapTest {
 
     fh.add(os, 2);
     fh.add(ob, 3);
-    Collection<MatchedOrders<Integer, Integer, Ord>> transactions = fh.marketClear();
+    Collection<MatchedOrders<Integer, Ord>> transactions = fh.marketClear();
 
     assertEquals(1, transactions.size());
-    MatchedOrders<Integer, Integer, Ord> trans = Iterables.getOnlyElement(transactions);
+    MatchedOrders<Integer, Ord> trans = Iterables.getOnlyElement(transactions);
     assertEquals(os, trans.getSell());
     assertEquals(ob, trans.getBuy());
     assertEquals(2, trans.getQuantity());
@@ -402,7 +402,7 @@ public class FourHeapTest {
     fh.add(new Ord(SELL, 6), 2);
     Ord ob = new Ord(BUY, 7);
     fh.add(ob, 4);
-    Collection<MatchedOrders<Integer, Integer, Ord>> transactions = fh.marketClear();
+    Collection<MatchedOrders<Integer, Ord>> transactions = fh.marketClear();
 
     assertEquals(2, transactions.size());
     assertEquals(1, fh.size());
@@ -412,7 +412,7 @@ public class FourHeapTest {
     assertFalse(fh.contains(ob));
 
     boolean one = false, three = false;
-    for (MatchedOrders<Integer, Integer, Ord> trans : transactions) {
+    for (MatchedOrders<Integer, Ord> trans : transactions) {
       switch (trans.getQuantity()) {
         case 1:
           assertEquals(ob, trans.getBuy());
@@ -508,6 +508,44 @@ public class FourHeapTest {
   }
 
   @Test
+  public void buyTimePriorityTest() {
+    Ord buy1 = new Ord(BUY, 2);
+    Ord buy2 = new Ord(BUY, 2);
+    fh.add(buy1, 1);
+    assertTrue(fh.marketClear().isEmpty());
+    fh.add(buy2);
+    fh.add(new Ord(SELL, 1), 1);
+    Iterable<MatchedOrders<Integer, Ord>> matches = fh.marketClear();
+
+    assertEquals(1, Iterables.size(matches));
+    MatchedOrders<Integer, Ord> match = matches.iterator().next();
+    assertEquals(buy1, match.getBuy());
+    assertEquals(2, (int) fh.getBidQuote().get());
+    assertFalse(fh.getAskQuote().isPresent());
+    assertFalse(fh.contains(buy1));
+    assertTrue(fh.contains(buy2));
+  }
+
+  @Test
+  public void sellTimePriorityTest() {
+    Ord sell1 = new Ord(SELL, 1);
+    Ord sell2 = new Ord(SELL, 1);
+    fh.add(sell1, 1);
+    assertTrue(fh.marketClear().isEmpty());
+    fh.add(sell2);
+    fh.add(new Ord(BUY, 2), 1);
+    Iterable<MatchedOrders<Integer, Ord>> matches = fh.marketClear();
+
+    assertEquals(1, Iterables.size(matches));
+    MatchedOrders<Integer, Ord> match = matches.iterator().next();
+    assertEquals(sell1, match.getSell());
+    assertFalse(fh.getBidQuote().isPresent());
+    assertEquals(1, (int) fh.getAskQuote().get());
+    assertFalse(fh.contains(sell1));
+    assertTrue(fh.contains(sell2));
+  }
+
+  @Test
   public void clearQuoteTest() {
     fh.add(new Ord(BUY, 2), 1);
     fh.add(new Ord(SELL, 1), 1);
@@ -568,30 +606,19 @@ public class FourHeapTest {
     fh.remove(new Ord(BUY, 3), -1);
   }
 
-  private static class Ord implements Order<Integer, Integer> {
+  private static class Ord implements IOrder<Integer> {
 
     private final int price;
-    private final int time;
     private final OrderType type;
 
-    private Ord(OrderType type, int price, int time) {
-      this.price = price;
-      this.time = time;
-      this.type = type;
-    }
-
     private Ord(OrderType type, int price) {
-      this(type, price, 0);
+      this.price = price;
+      this.type = type;
     }
 
     @Override
     public Integer getPrice() {
       return price;
-    }
-
-    @Override
-    public Integer getTime() {
-      return time;
     }
 
     @Override
@@ -601,7 +628,7 @@ public class FourHeapTest {
 
     @Override
     public String toString() {
-      return "(" + type + " @ " + price + " on " + time + ")";
+      return String.format("(%s @ %s)", type, price);
     }
   }
 

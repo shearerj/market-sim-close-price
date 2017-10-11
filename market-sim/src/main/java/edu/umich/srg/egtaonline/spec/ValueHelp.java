@@ -10,5 +10,5 @@ import java.lang.annotation.Retention;
 @Retention(RUNTIME)
 public @interface ValueHelp {
   /** The help text to assign. */
-  public String value();
+  String value();
 }

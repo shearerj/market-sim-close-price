@@ -1,6 +1,6 @@
 package edu.umich.srg.fourheap;
 
-public class MatchedOrders<P, T, O extends Order<P, T>> {
+public class MatchedOrders<P, O extends IOrder<P>> {
 
   private final O buy;
   private final O sell;

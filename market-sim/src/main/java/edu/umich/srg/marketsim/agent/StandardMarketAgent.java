@@ -37,7 +37,7 @@ import java.util.Set;
 
 public abstract class StandardMarketAgent implements Agent {
 
-  public static enum OrderStyle {
+  public enum OrderStyle {
     RANDOM, BOTH
   }
 
