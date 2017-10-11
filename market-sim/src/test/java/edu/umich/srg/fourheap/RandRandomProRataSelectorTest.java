@@ -16,7 +16,7 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 @Ignore
-public class RandomConsistentRandomSelectorTest {
+public class RandRandomProRataSelectorTest {
 
   private static final Random rand = new Random();
 
@@ -25,7 +25,7 @@ public class RandomConsistentRandomSelectorTest {
     int size = 5;
     int num = 100000;
     Multiset<Integer> base = ImmutableMultiset.copyOf(IntStream.range(0, size).boxed().iterator());
-    ConsistentRandomSelector<Integer> selector = ConsistentRandomSelector.create(rand);
+    RandomProRataSelector<Integer> selector = RandomProRataSelector.create(rand);
     int[] counts = new int[size];
 
     for (int i = 0; i < num; ++i) {
@@ -46,7 +46,7 @@ public class RandomConsistentRandomSelectorTest {
     int num = 100000;
     Multiset<Integer> base = ImmutableMultiset
         .copyOf(IntStream.range(0, size * scale).map(x -> x / scale).boxed().iterator());
-    ConsistentRandomSelector<Integer> selector = ConsistentRandomSelector.create(rand);
+    RandomProRataSelector<Integer> selector = RandomProRataSelector.create(rand);
     int[] counts = new int[size];
 
     for (int i = 0; i < num; ++i) {

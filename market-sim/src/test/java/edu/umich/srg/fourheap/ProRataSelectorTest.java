@@ -1,6 +1,7 @@
 package edu.umich.srg.fourheap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMultiset;
@@ -14,14 +15,15 @@ import org.junit.Test;
 
 import java.util.Random;
 
-public class ConsistentRandomSelectorTest {
+public class ProRataSelectorTest {
 
   @Rule
   public RepeatRule repeatRule = new RepeatRule();
 
   private static final Random rand = new Random();
 
-  @Repeat(100)
+  /** Test that sizes match what they should be and all rounding is within one. */
+  @Repeat(10000)
   @Test
   public void identityTest() {
     int size = rand.nextInt(100) + 100;
@@ -30,17 +32,25 @@ public class ConsistentRandomSelectorTest {
     assertEquals(size, initial.size());
 
     Multiset<Integer> copy = ImmutableMultiset.copyOf(initial);
-    ConsistentRandomSelector<Integer> selector = ConsistentRandomSelector.create(rand);
+    ProRataSelector<Integer> selector = ProRataSelector.create(rand);
     Multiset<Integer> selection = selector.select(initial, selectSize);
 
-    assertEquals(size - selectSize, initial.size());
     assertEquals(selectSize, selection.size());
+    assertEquals(size - selectSize, initial.size());
+
+    double ratio = selectSize / (double) size;
+    copy.entrySet().forEach(entry -> {
+      int count = selection.count(entry.getElement());
+      assertTrue(Math.abs(entry.getCount() * ratio - count) < 1 + 1e-6);
+      assertTrue((0 <= count) && (count <= entry.getCount()));
+    });
 
     initial.addAll(selection);
     assertEquals(copy, initial);
   }
 
-  @Repeat(100)
+  /** Test that identical seeds produce identical selections. */
+  @Repeat(1000)
   @Test
   public void preservedRandomTest() {
     long seed = rand.nextLong();
@@ -50,7 +60,7 @@ public class ConsistentRandomSelectorTest {
     Multiset<Integer> initial2 = HashMultiset.create(initial1);
 
     Random rand = new Random();
-    ConsistentRandomSelector<Integer> selector = ConsistentRandomSelector.create(rand);
+    ProRataSelector<Integer> selector = ProRataSelector.create(rand);
 
     rand.setSeed(seed);
     Multiset<Integer> selection1 = selector.select(initial1, selectSize);

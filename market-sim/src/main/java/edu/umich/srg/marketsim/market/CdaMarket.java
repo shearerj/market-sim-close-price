@@ -31,8 +31,9 @@ public class CdaMarket extends AbstractMarket {
       public Entry<MatchedOrders<Price, Long, AbstractMarketOrder>, Price> next() {
         MatchedOrders<Price, Long, AbstractMarketOrder> match = it.next();
         // less than is okay here, because two orders will never have the same "time"
-        Price price = match.getBuy().getTime() < match.getSell().getTime()
-            ? match.getBuy().getPrice() : match.getSell().getPrice();
+        Price price =
+            match.getBuy().getTime() < match.getSell().getTime() ? match.getBuy().getPrice()
+                : match.getSell().getPrice();
         return Maps.immutableEntry(match, price);
       }
 

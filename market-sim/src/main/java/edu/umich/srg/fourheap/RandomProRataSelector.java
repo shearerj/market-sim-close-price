@@ -12,24 +12,30 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public class ConsistentRandomSelector<E> implements Selector<E> {
+/**
+ * Select elements to keep uniformly random such that the quantity is still selected. In expectation
+ * `element.count() * quantity / original.size()` will be selected from each element, but it could
+ * be any feasible number. The advantage of this implementation is that large orders are treated
+ * identically to small orders, whereas in the reduced variance version, large orders have reduced
+ * variance. If all orders are the same size, this is identical to ProRataSelector.
+ */
+public class RandomProRataSelector<E> implements Selector<E> {
 
   private final Ordering<Entry<E>> order;
   private final Random rand;
 
-  private ConsistentRandomSelector(Ordering<? super E> ordering, Random rand) {
+  private RandomProRataSelector(Ordering<? super E> ordering, Random rand) {
     this.order = Ordering.natural().onResultOf(Entry<E>::getCount)
         .compound(ordering.onResultOf(Entry::getElement));
     this.rand = rand;
   }
 
-  public static <E extends Comparable<? super E>> ConsistentRandomSelector<E> create(Random rand) {
-    return new ConsistentRandomSelector<>(Ordering.natural(), rand);
+  public static <E extends Comparable<? super E>> RandomProRataSelector<E> create(Random rand) {
+    return new RandomProRataSelector<>(Ordering.natural(), rand);
   }
 
-  public static <E> ConsistentRandomSelector<E> create(Comparator<? super E> comparator,
-      Random rand) {
-    return new ConsistentRandomSelector<>(Ordering.from(comparator), rand);
+  public static <E> RandomProRataSelector<E> create(Comparator<? super E> comparator, Random rand) {
+    return new RandomProRataSelector<>(Ordering.from(comparator), rand);
   }
 
   @Override

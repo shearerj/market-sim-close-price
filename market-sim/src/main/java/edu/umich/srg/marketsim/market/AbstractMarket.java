@@ -160,8 +160,9 @@ abstract class AbstractMarket implements Market, Serializable {
 
   @Override
   public MarketView getView(Agent agent, TimeStamp latency) {
-    AbstractMarketView view = latency.equals(TimeStamp.ZERO)
-        ? new AbstractImmediateMarketView(agent) : new AbstractLatentMarketView(agent, latency);
+    AbstractMarketView view =
+        latency.equals(TimeStamp.ZERO) ? new AbstractImmediateMarketView(agent)
+            : new AbstractLatentMarketView(agent, latency);
     views.add(view);
     return view;
   }

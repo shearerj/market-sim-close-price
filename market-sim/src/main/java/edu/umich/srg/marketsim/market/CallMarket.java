@@ -6,9 +6,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.ConsistentRandomSelector;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.OrderType;
+import edu.umich.srg.fourheap.RandomProRataSelector;
 import edu.umich.srg.marketsim.Keys.ClearInterval;
 import edu.umich.srg.marketsim.Keys.Pricing;
 import edu.umich.srg.marketsim.Price;
@@ -31,7 +31,7 @@ public class CallMarket extends AbstractMarket {
 
   private CallMarket(Sim sim, Fundamental fundamental, CallPricing pricing, long clearInterval,
       Random rand) {
-    super(sim, fundamental, pricing, ConsistentRandomSelector.create(rand));
+    super(sim, fundamental, pricing, RandomProRataSelector.create(rand));
     this.clearInterval = clearInterval;
     this.nextClearScheduled = false;
   }
