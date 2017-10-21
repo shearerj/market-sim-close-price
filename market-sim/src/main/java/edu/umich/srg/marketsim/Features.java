@@ -22,6 +22,14 @@ import java.util.stream.Collectors;
 
 class Features {
 
+  /*
+   * FIXME Add Information metic, that somehow captures amount of information about the underlying
+   * fundamental. We can probably do something like rmsd, but instead of transaction prices do
+   * expected rmsd over time. I'm imagining something like a Gaussian process, where there's more
+   * penalty away from known observations as there's uncertainty. This could potentially be tied to
+   * generic uncertainty about the fundamental.
+   */
+
   static JsonObject computeFeatures(MarketSimulator simulator) {
     JsonObject features = new JsonObject();
 

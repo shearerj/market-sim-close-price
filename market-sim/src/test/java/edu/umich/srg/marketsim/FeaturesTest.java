@@ -55,6 +55,9 @@ import java.util.stream.Collectors;
 @RunWith(Theories.class)
 public class FeaturesTest {
 
+  // FIXME Test that making agents submit true values for a single clear produces measured social
+  // wellfare
+
   private static final Random rand = new Random();
   private static final double tol = 1e-5;
   private static final Spec spec = Spec.builder().putAll(Keys.DEFAULT_KEYS) //

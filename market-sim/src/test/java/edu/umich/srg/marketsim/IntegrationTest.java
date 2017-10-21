@@ -76,6 +76,10 @@ public class IntegrationTest {
   private static final Package keyPackage = Keys.class.getPackage();
   private static final double tol = 1e-8;
 
+  // FIXME Add test of known small games, i.e. two agents one clear
+
+  // FIXME Test that independent of call or cda, zi submissions are identical
+
   @Test
   public void simpleMinimalTest() {
     int numAgents = 10;

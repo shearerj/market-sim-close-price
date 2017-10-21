@@ -24,14 +24,14 @@ import java.util.Random;
 import java.util.TreeMap;
 
 /**
- * This class models a Guassian mean reverting process. It has two important implementation
- * features. First, fundamental values are computed lazily and on demand, so that even if you ask
- * for the fundamental value at time 10000000, it should return reasonably fast, without having to
- * generate all 1000000 values. It is also randomly stable, that is, two fundamentals with the same
- * random generator will produce the same value at every point independent of query order. This
- * costs a logarithmic factor to do, but the stability is generally worth it, and the log factor is
- * tiny in terms of actual time costs. More detail on the math for sampling from the fundamental is
- * in the docs folder.
+ * This class models a Guassian mean reverting process, sometimes referred to as a discrete
+ * Ornstein–Uhlenbeck process. It has two important implementation features. First, fundamental
+ * values are computed lazily and on demand, so that even if you ask for the fundamental value at
+ * time 10000000, it should return reasonably fast, without having to generate all 1000000 values.
+ * It is also randomly stable, that is, two fundamentals with the same random generator will produce
+ * the same value at every point independent of query order. This costs a logarithmic factor to do,
+ * but the stability is generally worth it, and the log factor is tiny in terms of actual time
+ * costs. More detail on the math for sampling from the fundamental is in the docs folder.
  */
 
 public abstract class GaussianMeanReverting implements Fundamental, Serializable {

@@ -39,6 +39,8 @@ public class StandardMarketAgentTest {
           .put(Rmax.class, 500).put(MaxPosition.class, 5).put(PrivateValueVar.class, 1e3)
           .put(SimLength.class, 10L).put(FundamentalMeanReversion.class, 0d).build();
 
+  // FIXME Test that agents created with same seed have same private value
+
   /** Test that both sides submits an order to both sides. */
   @Test
   public void bothSidesTest() {
