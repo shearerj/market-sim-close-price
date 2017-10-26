@@ -133,7 +133,7 @@ public class IntegrationTest {
 
 
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true,
-        keyPackage);
+        false, keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -169,7 +169,7 @@ public class IntegrationTest {
 
 
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 2, true,
-        keyPackage);
+        false, keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -201,7 +201,7 @@ public class IntegrationTest {
 
 
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, false,
-        keyPackage);
+        false, keyPackage);
 
     assertFalse(obsData.toString().isEmpty());
 
@@ -243,7 +243,7 @@ public class IntegrationTest {
 
     // Run the simulation once
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false,
-        keyPackage);
+        false, keyPackage);
 
     // Save the results
     List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
@@ -256,7 +256,7 @@ public class IntegrationTest {
 
     // Run the simulation again
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false,
-        keyPackage);
+        false, keyPackage);
 
     // Save the results
     List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
@@ -290,7 +290,7 @@ public class IntegrationTest {
 
     // Run the simulation once with one job
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false,
-        keyPackage);
+        false, keyPackage);
 
     // Save the results
     List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
@@ -303,7 +303,7 @@ public class IntegrationTest {
 
     // Run the simulation again with two jobs
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 2, false,
-        keyPackage);
+        false, keyPackage);
 
     // Save the results
     List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
@@ -337,7 +337,7 @@ public class IntegrationTest {
 
     // Run the simulation ten times
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 20, 1, 1, true,
-        keyPackage);
+        false, keyPackage);
 
     // Save the average payoff per role strategy, the only thing that can be guaranteed
     List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsNormal =
@@ -349,7 +349,7 @@ public class IntegrationTest {
 
     // Run the simulation again but only return one aggregate observation
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 2, 10, 1, true,
-        keyPackage);
+        false, keyPackage);
 
     List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsObsPerSim =
         aggregateStringObservations(obsData.toString(), 1);
@@ -388,7 +388,7 @@ public class IntegrationTest {
     Reader specReader1 = new StringReader(spec1);
     StringWriter obsData1 = new StringWriter();
     CommandLineOptions.run(CommandLineInterface::simulate, specReader1, obsData1, numObs,
-        simsPerObs, 1, false, keyPackage);
+        simsPerObs, 1, false, false, keyPackage);
     // All results
     List<JsonObject> results1 = Arrays.stream(obsData1.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
@@ -412,7 +412,7 @@ public class IntegrationTest {
     Reader specReader2 = new StringReader(spec2);
     StringWriter obsData2 = new StringWriter();
     CommandLineOptions.run(CommandLineInterface::simulate, specReader2, obsData2, numObs,
-        simsPerObs, 1, false, keyPackage);
+        simsPerObs, 1, false, false, keyPackage);
     // All results
     List<JsonObject> results2 = Arrays.stream(obsData2.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
@@ -505,7 +505,7 @@ public class IntegrationTest {
     Reader specReader = new StringReader(spec);
     StringWriter obsData = new StringWriter();
     CommandLineOptions.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true,
-        keyPackage);
+        false, keyPackage);
   }
 
   @Test

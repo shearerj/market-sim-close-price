@@ -82,6 +82,9 @@ public class CommandLineOptions {
   @Option(name = "--no-features", description = "Don't compute features.")
   public boolean noFeatures = false;
 
+  @Option(name = "--flush", description = "Flush after every observation.")
+  public boolean flush = false;
+
   @Once
   @Arguments(title = "num-observations",
       description = "The number of observations to gather from the simulation spec."
@@ -110,12 +113,12 @@ public class CommandLineOptions {
 
   /** Run an egta script with readers and writers. */
   public static void run(BiFunction<SimSpec, Integer, Observation> sim, Reader specs, Writer writer,
-      int numObs, int simsPerObs, int jobs, boolean noFeatures, Package keyPackage) {
+      int numObs, int simsPerObs, int jobs, boolean noFeatures, boolean flush, Package keyPackage) {
 
     boolean outputFeatures = simsPerObs == 1 && !noFeatures;
     SpecReader input = new SpecReader(specs, keyPackage);
     Consumer<Entry<JsonObject, Observation>> output =
-        createObsWriter(writer, simsPerObs, outputFeatures);
+        createObsWriter(writer, simsPerObs, outputFeatures, flush);
 
     run(sim, () -> input, output, numObs * simsPerObs, jobs);
 
@@ -138,7 +141,7 @@ public class CommandLineOptions {
       }
     } else {
       try (Reader in = openin(simSpec); Writer out = openout(observations)) {
-        run(sim, in, out, numObs, simsPerObs, jobs, noFeatures, keyPackage);
+        run(sim, in, out, numObs, simsPerObs, jobs, noFeatures, flush, keyPackage);
       }
     }
   }
@@ -254,7 +257,7 @@ public class CommandLineOptions {
   }
 
   private static Consumer<Entry<JsonObject, Observation>> createObsWriter(Writer output,
-      int simsPerObs, boolean outputFeatures) {
+      int simsPerObs, boolean outputFeatures, boolean flush) {
     if (simsPerObs == 1 && outputFeatures) {
       // Output features one at a time
       Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
@@ -265,6 +268,9 @@ public class CommandLineOptions {
         gson.toJson(base, output);
         try {
           output.append('\n');
+          if (flush) {
+            output.flush();
+          }
         } catch (IOException e) {
           e.printStackTrace();
           System.exit(1);
@@ -303,6 +309,9 @@ public class CommandLineOptions {
             gson.toJson(base, output);
             try {
               output.append('\n');
+              if (flush) {
+                output.flush();
+              }
             } catch (IOException e) {
               e.printStackTrace();
               System.exit(1);
