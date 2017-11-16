@@ -52,7 +52,7 @@ abstract class AMarket implements Market, Serializable {
 
   // Bookkeeping
   private final FundamentalView fundView;
-  private final Collection<AbstractMarketView> views;
+  private final Collection<AMarketView> views;
   private final List<Entry<TimeStamp, Price>> prices;
 
   // Features
@@ -87,7 +87,7 @@ abstract class AMarket implements Market, Serializable {
     this.priceDiff = SummStats.empty();
   }
 
-  AOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
+  AOrder submitOrder(AMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
     AOrder order = new AOrder(submitter, buyOrSell, price, sim.getCurrentTime(), sequenceNum++);
     orderbook.add(order, quantity);
     return order;
@@ -115,7 +115,7 @@ abstract class AMarket implements Market, Serializable {
       sell.submitter.transacted(sell, price, matched.getQuantity());
 
       // Notify all agents of transaction
-      for (AbstractMarketView view : views) {
+      for (AMarketView view : views) {
         view.transaction(price, matched.getQuantity());
       }
 
@@ -147,7 +147,7 @@ abstract class AMarket implements Market, Serializable {
     lastSpread = quote.getSpread();
     spreads.add(lastSpread);
 
-    for (AbstractMarketView view : views) {
+    for (AMarketView view : views) {
       view.setQuote(quote);
     }
   }
@@ -161,9 +161,8 @@ abstract class AMarket implements Market, Serializable {
 
   @Override
   public MarketView getView(Agent agent, TimeStamp latency) {
-    AbstractMarketView view =
-        latency.equals(TimeStamp.ZERO) ? new AbstractImmediateMarketView(agent)
-            : new AbstractLatentMarketView(agent, latency);
+    AMarketView view = latency.equals(TimeStamp.ZERO) ? new AImmediateMarketView(agent)
+        : new ALatentMarketView(agent, latency);
     views.add(view);
     return view;
   }
@@ -197,7 +196,7 @@ abstract class AMarket implements Market, Serializable {
     return Integer.toUnsignedString(System.identityHashCode(this), 36).toUpperCase();
   }
 
-  interface AbstractMarketView extends MarketView {
+  interface AMarketView extends MarketView {
 
     void setQuote(Quote quote);
 
@@ -217,7 +216,7 @@ abstract class AMarket implements Market, Serializable {
 
   }
 
-  class AbstractLatentMarketView implements AbstractMarketView {
+  class ALatentMarketView implements AMarketView {
     private final TimeStamp latency;
     private Quote quote;
     private final Agent agent;
@@ -230,7 +229,7 @@ abstract class AMarket implements Market, Serializable {
     private Multiset<OrderRecord> orders;
     private final BiMap<OrderRecord, AOrder> recordMap;
 
-    AbstractLatentMarketView(Agent agent, TimeStamp latency) {
+    ALatentMarketView(Agent agent, TimeStamp latency) {
       this.latency = latency;
       this.quote = Quote.empty();
       this.agent = agent;
@@ -406,7 +405,7 @@ abstract class AMarket implements Market, Serializable {
   }
 
   /** A market view when there is no latency between market access. */
-  class AbstractImmediateMarketView implements AbstractMarketView {
+  class AImmediateMarketView implements AMarketView {
     private Quote quote;
     private final Agent agent;
     private int holdings;
@@ -418,7 +417,7 @@ abstract class AMarket implements Market, Serializable {
     private boolean inSubmission;
     private final Queue<QueuedTransaction> queuedTransactions;
 
-    AbstractImmediateMarketView(Agent agent) {
+    AImmediateMarketView(Agent agent) {
       this.quote = Quote.empty();
       this.agent = agent;
       this.holdings = 0;
@@ -562,10 +561,9 @@ abstract class AMarket implements Market, Serializable {
     private final Price price;
     private final TimeStamp submitTime;
     private final OrderType type;
-    private final AbstractMarketView submitter;
+    private final AMarketView submitter;
 
-    AOrder(AbstractMarketView submiter, OrderType type, Price price, TimeStamp submitTime,
-        long sequence) {
+    AOrder(AMarketView submiter, OrderType type, Price price, TimeStamp submitTime, long sequence) {
       this.submitter = checkNotNull(submiter);
       this.price = checkNotNull(price);
       this.submitTime = checkNotNull(submitTime);

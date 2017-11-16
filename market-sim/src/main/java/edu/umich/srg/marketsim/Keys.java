@@ -13,7 +13,7 @@ import edu.umich.srg.egtaonline.spec.ParsableValue.StringsValue;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.ValueHelp;
 import edu.umich.srg.fourheap.OrderType;
-import edu.umich.srg.marketsim.agent.StandardMarketAgent.OrderStyle;
+import edu.umich.srg.marketsim.agent.ZiAgent.OrderStyle;
 
 /**
  * This file contains all of the type safe keys used in Spec object for initializing agents and
@@ -120,10 +120,6 @@ public interface Keys {
   // -------------------------
   // Specific agent parameters
   // -------------------------
-
-  @ValueHelp("Markov agent's estimate variance for price relative to the fundamental.")
-  class PriceVarEst extends DoubleValue {
-  }
 
   @ValueHelp("Number of order the shock agent will submit.")
   class NumShockOrders extends IntValue {
@@ -308,6 +304,7 @@ public interface Keys {
   Spec DEFAULT_KEYS = Spec.builder() //
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
+      .put(FundamentalObservationVariance.class, 0d) // Perfect revelation
 
       .put(Pricing.class, 0.5) // Even call market
 

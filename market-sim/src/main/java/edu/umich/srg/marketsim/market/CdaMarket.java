@@ -41,7 +41,7 @@ public class CdaMarket extends AMarket {
   }
 
   @Override
-  AOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
+  AOrder submitOrder(AMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
     AOrder order = super.submitOrder(submitter, buyOrSell, price, quantity);
     clear();
     return order;

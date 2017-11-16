@@ -12,17 +12,24 @@ import com.google.gson.JsonObject;
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.distributions.Uniform;
+import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
+import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
+import edu.umich.srg.marketsim.Keys.Rmax;
+import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
 import edu.umich.srg.marketsim.Keys.Thresh;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
+import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
@@ -30,12 +37,13 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
 import edu.umich.srg.util.SummStats;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Random;
 import java.util.Set;
 
-public abstract class StandardMarketAgent implements Agent {
+public class ZiAgent implements Agent {
 
   public enum OrderStyle {
     RANDOM, BOTH
@@ -54,12 +62,14 @@ public abstract class StandardMarketAgent implements Agent {
   private final Geometric arrivalDistribution;
   private final Supplier<Set<OrderType>> side;
   private final int ordersPerSide;
+  private final IntUniform shadingDistribution;
+  private final FundamentalView fundamental;
 
   // Bookkeeping
   private final SummStats shadingStats;
 
   /** Standard constructor for ZIR agent. */
-  public StandardMarketAgent(Sim sim, Market market, Spec spec, Random rand) {
+  public ZiAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     this.sim = sim;
     this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
@@ -68,6 +78,12 @@ public abstract class StandardMarketAgent implements Agent {
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
+    this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
+    this.fundamental =
+        spec.get(FundamentalObservationVariance.class).isInfinite() ? fundamental.getView(sim)
+            : ((GaussableView) fundamental.getView(sim)).addNoise(rand,
+                spec.get(FundamentalObservationVariance.class));
+
     switch (spec.get(Sides.class)) {
       case RANDOM:
         this.side = () -> Collections.singleton(randomOrder.sample(rand));
@@ -84,11 +100,10 @@ public abstract class StandardMarketAgent implements Agent {
     this.shadingStats = SummStats.empty();
   }
 
-  protected abstract double getDesiredSurplus();
-
-  protected abstract double getFinalFundamentalEstiamte();
-
-  protected abstract String name();
+  public static ZiAgent createFromSpec(Sim sim, Fundamental fundamental, Collection<Market> markets,
+      Market market, Spec spec, Random rand) {
+    return new ZiAgent(sim, market, fundamental, spec, rand);
+  }
 
   private void scheduleNextArrival() {
     sim.scheduleIn(TimeStamp.of(1 + arrivalDistribution.sample(rand)), this::strategy);
@@ -98,8 +113,8 @@ public abstract class StandardMarketAgent implements Agent {
     ImmutableList.copyOf(market.getActiveOrders().entrySet()).forEach(market::withdrawOrder);
 
     Set<OrderType> sides = side.get();
-    double finalEstimate = getFinalFundamentalEstiamte();
-    double demandedSurplus = getDesiredSurplus();
+    double finalEstimate = fundamental.getEstimatedFinalFundamental();
+    double demandedSurplus = shadingDistribution.sample(rand);
 
     for (OrderType type : sides) {
       for (int num = 0; num < ordersPerSide; num++) {
@@ -149,7 +164,6 @@ public abstract class StandardMarketAgent implements Agent {
 
   @Override
   public String toString() {
-    return name() + " " + Integer.toUnsignedString(id, 36).toUpperCase();
+    return "ZI " + Integer.toUnsignedString(id, 36).toUpperCase();
   }
-
 }

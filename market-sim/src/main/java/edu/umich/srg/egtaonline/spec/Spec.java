@@ -220,6 +220,7 @@ public class Spec {
           .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Entry::getValue));
     }
 
+    @Override
     public <T> ParsingBuilder put(Class<? extends Value<T>> key, T value) {
       return (ParsingBuilder) super.put(key, value);
     }
@@ -236,6 +237,7 @@ public class Spec {
       return this;
     }
 
+    @Override
     public ParsingBuilder putAll(Spec other) {
       return (ParsingBuilder) super.putAll(other);
     }

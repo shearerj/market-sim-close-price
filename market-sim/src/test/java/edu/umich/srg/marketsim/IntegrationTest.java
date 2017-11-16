@@ -456,7 +456,7 @@ public class IntegrationTest {
         .build();
 
     Multiset<RoleStrat> assignment = HashMultiset.create(1);
-    assignment.add(RoleStrat.of("role", toStratString("zir", Spec.empty())));
+    assignment.add(RoleStrat.of("role", toStratString("zi", Spec.empty())));
     SimSpec spec = SimSpec.create(assignment, configuration);
     CommandLineInterface.simulate(spec, 0);
   }
@@ -484,8 +484,8 @@ public class IntegrationTest {
     Spec truthful = Spec.fromPairs(Rmin.class, 0, Rmax.class, 0);
 
     Multiset<RoleStrat> assignment = HashMultiset.create(1);
-    assignment.add(RoleStrat.of("role", toStratString("zir", Spec.empty())));
-    assignment.add(RoleStrat.of("role", toStratString("zir", truthful)));
+    assignment.add(RoleStrat.of("role", toStratString("zi", Spec.empty())));
+    assignment.add(RoleStrat.of("role", toStratString("zi", truthful)));
     SimSpec spec = SimSpec.create(assignment, configuration);
     Observation obs = CommandLineInterface.simulate(spec, 0);
 

@@ -4,11 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableSet;
 
-import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
+import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
@@ -16,21 +16,28 @@ import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
+import edu.umich.srg.marketsim.Keys.Thresh;
 import edu.umich.srg.marketsim.MarketSimulator;
 import edu.umich.srg.marketsim.Sim;
-import edu.umich.srg.marketsim.agent.StandardMarketAgent.OrderStyle;
+import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.marketsim.agent.ZiAgent.OrderStyle;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.fundamental.GaussianJump;
+import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.Quote;
+import edu.umich.srg.marketsim.testing.MockSim;
 
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.Random;
 
-public class StandardMarketAgentTest {
+public class ZiAgentTest {
 
   private static final Random rand = new Random();
   private static final double fundamentalMean = 1e9;
@@ -50,17 +57,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
-      @Override
-      protected double getFinalFundamentalEstiamte() {
-        return fundamentalMean;
-      }
-
-      @Override
-      protected String name() {
-        return "SMA";
-      }
-    };
+    ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
     MarketView view = cda.getView(agent);
     Quote quote;
 
@@ -86,17 +83,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
-      @Override
-      protected double getFinalFundamentalEstiamte() {
-        return fundamentalMean;
-      }
-
-      @Override
-      protected String name() {
-        return "SMA";
-      }
-    };
+    ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
     MarketView view = cda.getView(agent);
     Quote quote;
 
@@ -121,17 +108,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
-      @Override
-      protected double getFinalFundamentalEstiamte() {
-        return fundamentalMean;
-      }
-
-      @Override
-      protected String name() {
-        return "SMA";
-      }
-    };
+    ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
     MarketView view = cda.getView(agent);
     Quote quote;
 
@@ -157,17 +134,7 @@ public class StandardMarketAgentTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
-    StandardMarketAgent agent = new MockSMA(sim, cda, spec) {
-      @Override
-      protected double getFinalFundamentalEstiamte() {
-        return fundamentalMean;
-      }
-
-      @Override
-      protected String name() {
-        return "SMA";
-      }
-    };
+    ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
     MarketView view = cda.getView(agent);
     Quote quote;
 
@@ -183,27 +150,57 @@ public class StandardMarketAgentTest {
     assertEquals(ImmutableSet.of(0, 2), ImmutableSet.of(quote.getAskDepth(), quote.getBidDepth()));
   }
 
-  private static class MockSMA extends StandardMarketAgent {
+  @Test
+  public void integrationTest() {
+    int numAgents = 10;
+    long simLength = 10;
 
-    private MockSMA(Sim sim, Market cda, Spec spec) {
-      super(sim, cda, spec, StandardMarketAgentTest.rand);
+    Fundamental fundamental = GaussianMeanReverting.create(new Random(), simLength, 1e9, 0, 0);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
+    for (int i = 0; i < numAgents; ++i) {
+      sim.addAgent(new ZiAgent(sim, cda, fundamental, base, rand));
     }
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(simLength));
 
-    @Override
-    protected double getDesiredSurplus() {
-      return Uniform.closed(100, 500).sample(rand);
-    }
+    Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
+    assertEquals(numAgents, payoffs.size());
+  }
 
-    @Override
-    protected double getFinalFundamentalEstiamte() {
-      return fundamentalMean;
-    }
+  @Test
+  public void fundamentalConstructionTest() {
+    Sim sim = new MockSim();
+    Market market = CdaMarket.create(sim, ConstantFundamental.create(0, 100));
 
-    @Override
-    protected String name() {
-      return "SMA";
-    }
+    Spec spec = Spec.builder().putAll(base).put(FundamentalObservationVariance.class, 100d)
+        .put(Thresh.class, 1d).put(PrivateValueVar.class, 100d).put(Rmin.class, 0)
+        .put(Rmax.class, 0).build();
 
+    // Constant
+    new ZiAgent(sim, market, ConstantFundamental.create(0, 100), spec, rand);
+    new ZiAgent(sim, market, GaussianMeanReverting.create(rand, 1000, 0, 0, 0), spec, rand);
+    new ZiAgent(sim, market, GaussianJump.create(rand, 100, 0, 0, .5), spec, rand);
+    new ZiAgent(sim, market, GaussianJump.create(rand, 100, 0, 100, 0), spec, rand);
+
+    // Random Walk
+    new ZiAgent(sim, market, GaussianMeanReverting.create(rand, 1000, 0, 0, 10), spec, rand);
+
+    // IID Gaussian
+    new ZiAgent(sim, market, GaussianMeanReverting.create(rand, 1000, 0, 1, 10), spec, rand);
+
+    // Mean Revering
+    new ZiAgent(sim, market, GaussianMeanReverting.create(rand, 1000, 0, 0.001, 10), spec, rand);
+  }
+
+  @Test(expected = ClassCastException.class)
+  /** Test that invalid class fails. Can't have Gaussian Jump with Observation Variance */
+  public void fundamentalConstructionErrorTest() {
+    Sim sim = new MockSim();
+    Fundamental fundamental = GaussianJump.create(rand, 100, 0, 100, .5);
+    Market market = CdaMarket.create(sim, fundamental);
+    Spec spec = Spec.builder().putAll(base).put(FundamentalObservationVariance.class, 100d).build();
+    new ZiAgent(sim, market, fundamental, spec, rand);
   }
 
 }

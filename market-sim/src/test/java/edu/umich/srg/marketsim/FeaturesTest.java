@@ -24,7 +24,7 @@ import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.Thresh;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
-import edu.umich.srg.marketsim.agent.ZirAgent;
+import edu.umich.srg.marketsim.agent.ZiAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
@@ -86,7 +86,7 @@ public class FeaturesTest {
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
     for (int i = 0; i < numAgents; ++i) {
-      sim.addAgent(new ZirAgent(sim, cda, fundamental, spec, rand));
+      sim.addAgent(new ZiAgent(sim, cda, fundamental, spec, rand));
     }
     if (intermediate) {
       sim.addAgent(new NoiseAgent(sim, cda, spec, rand));

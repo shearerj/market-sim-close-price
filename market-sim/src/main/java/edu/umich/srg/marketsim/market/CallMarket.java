@@ -76,7 +76,7 @@ public class CallMarket extends AMarket {
   }
 
   @Override
-  AOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
+  AOrder submitOrder(AMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
     scheduleClear();
     return super.submitOrder(submitter, buyOrSell, price, quantity);
   }
