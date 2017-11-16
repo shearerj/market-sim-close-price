@@ -48,13 +48,14 @@ abstract class AMarket implements Market, Serializable {
   final Sim sim;
   private final FourHeap<Price, AOrder> orderbook;
   private final PricingRule pricing;
-  // XXX This is only necessary for CDA
   private long sequenceNum;
 
   // Bookkeeping
   private final FundamentalView fundView;
   private final Collection<AbstractMarketView> views;
   private final List<Entry<TimeStamp, Price>> prices;
+
+  // Features
   private final SummStats rmsd;
   private double maxDiff;
   private final SummStats transPrice;
@@ -62,6 +63,8 @@ abstract class AMarket implements Market, Serializable {
   private double lastSpread;
   private final Multiset<Double> spreads;
   private final SummStats executionTimes;
+  private long volume;
+  private final SummStats priceDiff;
 
   AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector) {
     this.sim = sim;
@@ -72,6 +75,7 @@ abstract class AMarket implements Market, Serializable {
     this.fundView = fundamental.getView(sim);
     this.views = new ArrayList<>();
     this.prices = new ArrayList<>();
+
     this.rmsd = SummStats.empty();
     this.maxDiff = 0;
     this.transPrice = SummStats.empty();
@@ -79,6 +83,8 @@ abstract class AMarket implements Market, Serializable {
     this.lastSpread = Double.POSITIVE_INFINITY;
     this.spreads = HashMultiset.create();
     this.executionTimes = SummStats.empty();
+    this.volume = 0;
+    this.priceDiff = SummStats.empty();
   }
 
   AOrder submitOrder(AbstractMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
@@ -125,6 +131,8 @@ abstract class AMarket implements Market, Serializable {
       long currentTime = sim.getCurrentTime().get();
       executionTimes.accept(currentTime - buy.getSubmitTime().get());
       executionTimes.accept(currentTime - sell.getSubmitTime().get());
+      volume += matched.getQuantity();
+      priceDiff.accept(diff);
     }
   }
 
@@ -169,6 +177,8 @@ abstract class AMarket implements Market, Serializable {
     features.addProperty("trans_vol", transPrice.getStandardDeviation().orElse(Double.NaN));
     features.addProperty("median_spread", SummStats.median(spreads).orElse(Double.NaN));
     features.addProperty("mean_exec_time", executionTimes.getAverage().orElse(Double.NaN));
+    features.addProperty("volume", volume);
+    features.addProperty("price_var", priceDiff.getVariance().orElse(Double.NaN));
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {
