@@ -7,6 +7,8 @@ import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
+import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
+import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
@@ -22,10 +24,15 @@ public interface Market {
 
   void clear();
 
+  <T extends TransactionObserver> T addTransactionObserver(T obs);
+
+  <Q extends QuoteObserver> Q addQuoteObserver(Q obs);
+
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
 
   JsonObject getFeatures();
 
+  // FIXME Remove market view, and instead make latency an agent feature that it can add
   interface MarketView {
 
     TimeStamp getLatency();
@@ -41,8 +48,6 @@ public interface Market {
     default void withdrawOrder(Multiset.Entry<OrderRecord> entry) {
       withdrawOrder(entry.getElement(), entry.getCount());
     }
-
-    Quote getQuote();
 
     Multiset<OrderRecord> getActiveOrders();
 

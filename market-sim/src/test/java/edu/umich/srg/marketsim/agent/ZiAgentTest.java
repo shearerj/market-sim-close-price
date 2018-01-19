@@ -28,8 +28,8 @@ import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
-import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.Quote;
+import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.testing.MockSim;
 
 import org.junit.Test;
@@ -58,18 +58,18 @@ public class ZiAgentTest {
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
-    MarketView view = cda.getView(agent);
+    GetQuoteObserver quoteInfo = cda.addQuoteObserver(GetQuoteObserver.create(cda));
     Quote quote;
 
     // Assert quote empty before
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(0, quote.getAskDepth());
     assertEquals(0, quote.getBidDepth());
 
     agent.strategy();
 
     // Assert buy and sell afterwards
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(1, quote.getAskDepth());
     assertEquals(1, quote.getBidDepth());
   }
@@ -84,18 +84,18 @@ public class ZiAgentTest {
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
-    MarketView view = cda.getView(agent);
+    GetQuoteObserver quoteInfo = cda.addQuoteObserver(GetQuoteObserver.create(cda));
     Quote quote;
 
     // Assert quote empty before
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(0, quote.getAskDepth());
     assertEquals(0, quote.getBidDepth());
 
     agent.strategy();
 
     // Assert 2 buys or 2 sells
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(ImmutableSet.of(0, 2), ImmutableSet.of(quote.getAskDepth(), quote.getBidDepth()));
   }
 
@@ -109,18 +109,18 @@ public class ZiAgentTest {
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
-    MarketView view = cda.getView(agent);
+    GetQuoteObserver quoteInfo = cda.addQuoteObserver(GetQuoteObserver.create(cda));
     Quote quote;
 
     // Assert quote empty before
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(0, quote.getAskDepth());
     assertEquals(0, quote.getBidDepth());
 
     agent.strategy();
 
     // Assert buy and sell afterwards
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(3, quote.getAskDepth());
     assertEquals(3, quote.getBidDepth());
   }
@@ -135,18 +135,18 @@ public class ZiAgentTest {
     Market cda = sim.addMarket(CdaMarket.create(sim, fundamental));
 
     ZiAgent agent = new ZiAgent(sim, cda, fundamental, spec, rand);
-    MarketView view = cda.getView(agent);
+    GetQuoteObserver quoteInfo = cda.addQuoteObserver(GetQuoteObserver.create(cda));
     Quote quote;
 
     // Assert quote empty before
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(0, quote.getAskDepth());
     assertEquals(0, quote.getBidDepth());
 
     agent.strategy();
 
     // Assert 2 buys or 2 sells
-    quote = view.getQuote();
+    quote = quoteInfo.getQuote();
     assertEquals(ImmutableSet.of(0, 2), ImmutableSet.of(quote.getAskDepth(), quote.getBidDepth()));
   }
 

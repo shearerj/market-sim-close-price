@@ -26,7 +26,7 @@ public class Quote implements Serializable {
     this.askDepth = askDepth;
   }
 
-  static Quote empty() {
+  public static Quote empty() {
     return empty;
   }
 

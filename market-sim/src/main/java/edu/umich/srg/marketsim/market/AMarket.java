@@ -25,16 +25,20 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
+import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
+import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
 import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -53,6 +57,8 @@ abstract class AMarket implements Market, Serializable {
   // Bookkeeping
   private final FundamentalView fundView;
   private final Collection<AMarketView> views;
+  private final Set<QuoteObserver> quoteObservers;
+  private final Set<TransactionObserver> transactionObservers;
   private final List<Entry<TimeStamp, Price>> prices;
 
   // Features
@@ -74,6 +80,8 @@ abstract class AMarket implements Market, Serializable {
 
     this.fundView = fundamental.getView(sim);
     this.views = new ArrayList<>();
+    this.quoteObservers = new LinkedHashSet<>();
+    this.transactionObservers = new LinkedHashSet<>();
     this.prices = new ArrayList<>();
 
     this.rmsd = SummStats.empty();
@@ -115,8 +123,8 @@ abstract class AMarket implements Market, Serializable {
       sell.submitter.transacted(sell, price, matched.getQuantity());
 
       // Notify all agents of transaction
-      for (AMarketView view : views) {
-        view.transaction(price, matched.getQuantity());
+      for (TransactionObserver obs : transactionObservers) {
+        obs.notifyTransaction(price, matched.getQuantity());
       }
 
       // Bookkeeping
@@ -147,8 +155,8 @@ abstract class AMarket implements Market, Serializable {
     lastSpread = quote.getSpread();
     spreads.add(lastSpread);
 
-    for (AMarketView view : views) {
-      view.setQuote(quote);
+    for (QuoteObserver obs : quoteObservers) {
+      obs.notifyQuote(quote);
     }
   }
 
@@ -157,6 +165,18 @@ abstract class AMarket implements Market, Serializable {
     return Iterables.transform(views,
         v -> Maps.<Agent, AgentInfo>immutableEntry(v.getAgent(), ImmutableAgentInfo
             .of(v.getProfit(), v.getHoldings(), v.getTrueSubmissions(), v.getTrueVolume())));
+  }
+
+  @Override
+  public <T extends TransactionObserver> T addTransactionObserver(T obs) {
+    this.transactionObservers.add(obs);
+    return obs;
+  }
+
+  @Override
+  public <Q extends QuoteObserver> Q addQuoteObserver(Q obs) {
+    this.quoteObservers.add(obs);
+    return obs;
   }
 
   @Override
@@ -198,11 +218,7 @@ abstract class AMarket implements Market, Serializable {
 
   interface AMarketView extends MarketView {
 
-    void setQuote(Quote quote);
-
     void transacted(AOrder order, Price price, int quantity);
-
-    void transaction(Price price, int quantity);
 
     Agent getAgent();
 
@@ -218,7 +234,6 @@ abstract class AMarket implements Market, Serializable {
 
   class ALatentMarketView implements AMarketView {
     private final TimeStamp latency;
-    private Quote quote;
     private final Agent agent;
     private double profit;
     private double observedProfit;
@@ -231,7 +246,6 @@ abstract class AMarket implements Market, Serializable {
 
     ALatentMarketView(Agent agent, TimeStamp latency) {
       this.latency = latency;
-      this.quote = Quote.empty();
       this.agent = agent;
       this.profit = 0;
       this.observedProfit = 0;
@@ -241,19 +255,6 @@ abstract class AMarket implements Market, Serializable {
       this.observedHoldings = 0;
       this.orders = HashMultiset.create();
       this.recordMap = HashBiMap.create();
-    }
-
-    @Override
-    public void setQuote(Quote quote) {
-      sim.scheduleIn(latency, () -> {
-        this.quote = quote;
-        agent.notifyQuoteUpdated(this);
-      });
-    }
-
-    @Override
-    public void transaction(Price price, int quantity) {
-      sim.scheduleIn(latency, () -> agent.notifyTransaction(this, price, quantity));
     }
 
     @Override
@@ -272,7 +273,6 @@ abstract class AMarket implements Market, Serializable {
 
         sim.scheduleIn(latency, () -> {
           recordMap.put(record, order);
-          agent.notifyOrderSubmitted(record);
         });
       });
 
@@ -293,17 +293,8 @@ abstract class AMarket implements Market, Serializable {
         if (!orderbook.contains(order)) {
           recordMap.remove(record);
         }
-
-        sim.scheduleIn(latency, () -> {
-          agent.notifyOrderWithrawn(record, quantity);
-        });
       });
 
-    }
-
-    @Override
-    public Quote getQuote() {
-      return quote;
     }
 
     @Override
@@ -406,7 +397,6 @@ abstract class AMarket implements Market, Serializable {
 
   /** A market view when there is no latency between market access. */
   class AImmediateMarketView implements AMarketView {
-    private Quote quote;
     private final Agent agent;
     private int holdings;
     private int submissions;
@@ -418,7 +408,6 @@ abstract class AMarket implements Market, Serializable {
     private final Queue<QueuedTransaction> queuedTransactions;
 
     AImmediateMarketView(Agent agent) {
-      this.quote = Quote.empty();
       this.agent = agent;
       this.holdings = 0;
       this.submissions = 0;
@@ -428,17 +417,6 @@ abstract class AMarket implements Market, Serializable {
 
       this.inSubmission = false;
       this.queuedTransactions = new LinkedList<>();
-    }
-
-    @Override
-    public void setQuote(Quote quote) {
-      this.quote = quote;
-      agent.notifyQuoteUpdated(this);
-    }
-
-    @Override
-    public void transaction(Price price, int quantity) {
-      this.agent.notifyTransaction(this, price, quantity);
     }
 
     @Override
@@ -452,7 +430,6 @@ abstract class AMarket implements Market, Serializable {
       AOrder order = AMarket.this.submitOrder(this, buyOrSell, price, quantity);
       submissions += quantity;
       orders.add(order, quantity);
-      agent.notifyOrderSubmitted(order);
       inSubmission = false;
 
       while (!queuedTransactions.isEmpty()) {
@@ -467,12 +444,6 @@ abstract class AMarket implements Market, Serializable {
     public void withdrawOrder(OrderRecord order, int quantity) {
       orders.remove(order, quantity);
       AMarket.this.withdrawOrder((AOrder) order, quantity);
-      agent.notifyOrderWithrawn(order, quantity);
-    }
-
-    @Override
-    public Quote getQuote() {
-      return quote;
     }
 
     @Override

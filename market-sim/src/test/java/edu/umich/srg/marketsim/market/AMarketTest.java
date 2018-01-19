@@ -17,6 +17,7 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.marketsim.market.Market.MarketView;
+import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
@@ -32,6 +33,7 @@ public class AMarketTest {
   private MockSim sim;
   private MockMarket market;
   private MockAgent agent;
+  private GetQuoteObserver quoteInfo;
   private MarketView view;
 
   @Before
@@ -39,6 +41,7 @@ public class AMarketTest {
     sim = new MockSim();
     market = new MockMarket(sim);
     agent = new MockAgent();
+    quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     view = market.getView(agent, TimeStamp.ZERO);
   }
 
@@ -46,14 +49,14 @@ public class AMarketTest {
   public void addBid() {
     view.submitOrder(BUY, Price.of(1), 1);
     market.updateQuote();
-    MarketAsserts.assertQuote(view.getQuote(), 1, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), 1, ABSENT);
   }
 
   @Test
   public void addAsk() {
     view.submitOrder(SELL, Price.of(1), 1);
     market.updateQuote();
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, 1);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, 1);
   }
 
   @Test
@@ -65,7 +68,7 @@ public class AMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(buy));
     assertEquals(0, view.getQuantity(sell));
   }
@@ -79,7 +82,7 @@ public class AMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(buy));
     assertEquals(0, view.getQuantity(sell));
   }
@@ -97,7 +100,7 @@ public class AMarketTest {
 
     // Testing the market for the correct transactions
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), 100, 180);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), 100, 180);
     assertEquals(0, view.getQuantity(buyTrans));
     assertEquals(0, view.getQuantity(sellTrans));
     assertEquals(1, view.getQuantity(buy));
@@ -116,7 +119,7 @@ public class AMarketTest {
     market.updateQuote();
 
     assertEquals(4, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(buy1));
     assertEquals(0, view.getQuantity(sell1));
     assertEquals(0, view.getQuantity(buy2));
@@ -137,7 +140,7 @@ public class AMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), 110, 130);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), 110, 130);
     assertEquals(0, view.getQuantity(buyTrans));
     assertEquals(0, view.getQuantity(sellTrans));
     assertEquals(1, view.getQuantity(buy));
@@ -155,7 +158,7 @@ public class AMarketTest {
     // Check that two units transact and that post-trade BID is correct (3 buy units at 150)
     assertEquals(2, agent.transactions);
     assertEquals(4, agent.transactedUnits);
-    MarketAsserts.assertQuote(view.getQuote(), 150, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), 150, ABSENT);
     assertEquals(0, view.getQuantity(sell));
     assertEquals(3, view.getQuantity(buy));
   }
@@ -175,7 +178,7 @@ public class AMarketTest {
     market.clear();
 
     assertEquals(4, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
     assertEquals(0, view.getQuantity(sell1));
     assertEquals(0, view.getQuantity(sell2));
     assertEquals(0, view.getQuantity(buy));
@@ -189,7 +192,7 @@ public class AMarketTest {
     market.updateQuote();
 
     // Check that quotes are correct (no bid, ask @100)
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, 100);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, 100);
 
     // Withdraw order
     view.withdrawOrder(order, view.getQuantity(order));
@@ -197,7 +200,7 @@ public class AMarketTest {
     market.updateQuote();
 
     // Check that quotes are correct (no bid, no ask)
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
 
     // Check that no transaction, because order withdrawn
     order = view.submitOrder(BUY, Price.of(125), 1);
@@ -215,7 +218,7 @@ public class AMarketTest {
     market.updateQuote();
 
     assertEquals(2, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
   }
 
   @Test
@@ -235,7 +238,7 @@ public class AMarketTest {
     market.updateQuote();
 
     assertEquals(4, agent.transactions);
-    MarketAsserts.assertQuote(view.getQuote(), 160, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), 160, ABSENT);
   }
 
   @Test

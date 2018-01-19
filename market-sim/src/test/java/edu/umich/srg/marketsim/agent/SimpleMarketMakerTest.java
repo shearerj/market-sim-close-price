@@ -10,13 +10,11 @@ import edu.umich.srg.marketsim.Keys.RungThickness;
 import edu.umich.srg.marketsim.Keys.TickImprovement;
 import edu.umich.srg.marketsim.Keys.TickOutside;
 import edu.umich.srg.marketsim.MarketSimulator;
-import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
-import edu.umich.srg.marketsim.market.Market.MarketView;
 
 import org.junit.Test;
 
@@ -40,19 +38,15 @@ public class SimpleMarketMakerTest {
 
     // Market Maker
     AtomicBoolean transacted = new AtomicBoolean(false);
+    cda.addTransactionObserver((price, quant) -> {
+      transacted.set(true);
+    });
+
     SimpleMarketMaker marketMaker = new SimpleMarketMaker(sim, cda,
         Spec.builder().put(ArrivalRate.class, 0.5).put(RungThickness.class, 1)
             .put(NumRungs.class, 4).put(RungSep.class, 10).put(TickImprovement.class, false)
             .put(TickOutside.class, false).build(),
-        rand) {
-
-      @Override
-      public void notifyTransaction(MarketView market, Price price, int quantity) {
-        super.notifyTransaction(market, price, quantity);
-        transacted.set(true);
-      }
-
-    };
+        rand);
     sim.addAgent(marketMaker);
 
     // Run

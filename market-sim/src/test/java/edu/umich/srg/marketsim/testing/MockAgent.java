@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.agent.Agent;
-import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
@@ -61,23 +60,11 @@ public class MockAgent implements Agent {
   }
 
   @Override
-  public void notifyOrderSubmitted(OrderRecord order) {}
-
-  @Override
-  public void notifyOrderWithrawn(OrderRecord order, int quantity) {}
-
-  @Override
   public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {
     transactions++;
     transactedUnits += quantity;
     lastTransactionPrice = price;
   }
-
-  @Override
-  public void notifyQuoteUpdated(MarketView market) {}
-
-  @Override
-  public void notifyTransaction(MarketView market, Price price, int quantity) {}
 
   public static class MockAgentBuilder {
 

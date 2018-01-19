@@ -32,6 +32,7 @@ import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
 import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
+import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
@@ -56,6 +57,7 @@ public class ZiAgent implements Agent {
   protected final Random rand;
   private final int id;
   private final MarketView market;
+  private final GetQuoteObserver quoteInfo;
   private final int maxPosition;
   private final SurplusThreshold threshold;
   private final PrivateValue privateValue;
@@ -73,6 +75,7 @@ public class ZiAgent implements Agent {
     this.sim = sim;
     this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
+    this.quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     this.maxPosition = spec.get(MaxPosition.class);
     this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
@@ -125,7 +128,7 @@ public class ZiAgent implements Agent {
           double estimatedValue = finalEstimate + privateBenefit;
 
           double toSubmit =
-              threshold.shadePrice(type, market.getQuote(), estimatedValue, demandedSurplus);
+              threshold.shadePrice(type, quoteInfo.getQuote(), estimatedValue, demandedSurplus);
           long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
           shadingStats.accept(Math.abs(estimatedValue - toSubmit));
 

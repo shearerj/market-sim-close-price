@@ -1,6 +1,12 @@
+# Project #
+###########
+/*.json
+/*.zip
+
 # Maven #
 #########
 /target
+/bin
 
 # Vim #
 #######

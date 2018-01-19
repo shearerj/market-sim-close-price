@@ -19,6 +19,7 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.Quote;
+import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.strategy.MarketMakerLadder;
 
 import java.util.Collection;
@@ -34,6 +35,7 @@ public class SimpleMarketMaker implements Agent {
   private final int id;
   private final Sim sim;
   private final MarketView market;
+  private final GetQuoteObserver quoteInfo;
   private final LongDistribution arrivalDistribution;
   private final int rungThickness;
   private final MarketMakerLadder strategy;
@@ -43,6 +45,7 @@ public class SimpleMarketMaker implements Agent {
     this.sim = sim;
     this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
+    this.quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
     this.rungThickness = spec.get(RungThickness.class);
     this.strategy = new MarketMakerLadder(spec.get(RungSep.class), spec.get(NumRungs.class),
@@ -75,7 +78,7 @@ public class SimpleMarketMaker implements Agent {
   }
 
   private void updateQuote() {
-    Quote quote = market.getQuote();
+    Quote quote = quoteInfo.getQuote();
     this.lastBid = quote.getBidPrice().map(Optional::of).orElse(lastBid);
     this.lastAsk = quote.getAskPrice().map(Optional::of).orElse(lastAsk);
   }

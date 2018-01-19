@@ -11,6 +11,7 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market.MarketView;
+import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
@@ -22,6 +23,7 @@ public class CDAMarketTest {
   private Fundamental fund;
   private MockSim sim;
   private CdaMarket market;
+  private GetQuoteObserver quoteInfo;
   private MockAgent agent;
   private MarketView view;
 
@@ -30,6 +32,7 @@ public class CDAMarketTest {
     sim = new MockSim();
     fund = ConstantFundamental.create(0, 100);
     market = CdaMarket.create(sim, fund);
+    quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     agent = new MockAgent();
     view = market.getView(agent, TimeStamp.ZERO);
   }
@@ -37,22 +40,22 @@ public class CDAMarketTest {
   @Test
   public void addBid() {
     view.submitOrder(BUY, Price.of(1), 1);
-    MarketAsserts.assertQuote(view.getQuote(), Price.of(1), null);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), Price.of(1), null);
   }
 
   @Test
   public void addAsk() {
     view.submitOrder(SELL, Price.of(1), 1);
-    MarketAsserts.assertQuote(view.getQuote(), null, Price.of(1));
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), null, Price.of(1));
   }
 
   @Test
   public void withdrawTest() {
     OrderRecord order = view.submitOrder(SELL, Price.of(100), 1);
-    MarketAsserts.assertQuote(view.getQuote(), null, Price.of(100));
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), null, Price.of(100));
 
     view.withdrawOrder(order, view.getQuantity(order));
-    MarketAsserts.assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), null, null);
   }
 
   @Test
@@ -60,7 +63,7 @@ public class CDAMarketTest {
     OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
     OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
 
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
     assertEquals(Price.of(100), agent.lastTransactionPrice);
     assertTrue(view.getActiveOrders().isEmpty());
     assertEquals(0, view.getQuantity(buy));
@@ -72,7 +75,7 @@ public class CDAMarketTest {
     OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
     OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
 
-    MarketAsserts.assertQuote(view.getQuote(), ABSENT, ABSENT);
+    MarketAsserts.assertQuote(quoteInfo.getQuote(), ABSENT, ABSENT);
     assertEquals(Price.of(50), agent.lastTransactionPrice);
     assertTrue(view.getActiveOrders().isEmpty());
     assertEquals(0, view.getQuantity(buy));
