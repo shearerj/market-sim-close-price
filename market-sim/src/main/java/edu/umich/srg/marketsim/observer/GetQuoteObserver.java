@@ -1,17 +1,19 @@
 package edu.umich.srg.marketsim.observer;
 
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
 import edu.umich.srg.marketsim.market.Quote;
-import edu.umich.srg.util.LruCache;
-
-import java.util.Collections;
-import java.util.Map;
 
 public class GetQuoteObserver implements QuoteObserver {
 
-  private static Map<Market, GetQuoteObserver> singletons =
-      Collections.synchronizedMap(new LruCache<>(128));
+  private static LoadingCache<Market, GetQuoteObserver> singletons =
+      CacheBuilder.newBuilder().weakKeys().build(CacheLoader.from(GetQuoteObserver::new));
+
   private Quote quote;
 
   private GetQuoteObserver() {
@@ -27,8 +29,9 @@ public class GetQuoteObserver implements QuoteObserver {
     return quote;
   }
 
+  /** Create a GetQuoteObserver. */
   public static GetQuoteObserver create(Market market) {
-    return singletons.computeIfAbsent(market, m -> new GetQuoteObserver());
+    return singletons.getUnchecked(market);
   }
 
 }
