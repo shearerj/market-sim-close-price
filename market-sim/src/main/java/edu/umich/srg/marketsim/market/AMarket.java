@@ -128,9 +128,6 @@ abstract class AMarket implements Market, Serializable {
       }
 
       // Bookkeeping
-      if (!prices.isEmpty() && Iterables.getLast(prices).getKey().equals(sim.getCurrentTime())) {
-        prices.remove(prices.size() - 1);
-      }
       prices.add(new AbstractMap.SimpleImmutableEntry<>(sim.getCurrentTime(), price));
       double diff = price.doubleValue() - fundView.getEstimatedFinalFundamental();
       rmsd.acceptNTimes(diff * diff, matched.getQuantity());
