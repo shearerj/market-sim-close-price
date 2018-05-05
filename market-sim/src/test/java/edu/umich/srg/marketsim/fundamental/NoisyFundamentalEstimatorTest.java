@@ -59,9 +59,9 @@ public class NoisyFundamentalEstimatorTest {
       hmmError.accept((estimate - actual) * (estimate - actual));
     }
 
-    assertEquals(0, naiveBias.getAverage().get(), eps);
-    assertEquals(0, hmmBias.getAverage().get(), eps);
-    assertTrue(naiveError.getAverage().get() > hmmError.getAverage().get() - eps);
+    assertEquals(0, naiveBias.getAverage().getAsDouble(), eps);
+    assertEquals(0, hmmBias.getAverage().getAsDouble(), eps);
+    assertTrue(naiveError.getAverage().getAsDouble() > hmmError.getAverage().getAsDouble() - eps);
   }
 
   @Theory
@@ -96,10 +96,10 @@ public class NoisyFundamentalEstimatorTest {
       optimal.addObservation(actual, observation);
     }
 
-    assertEquals(0, naiveBias.getAverage().get(), eps);
-    assertEquals(0, hmmBias.getAverage().get(), eps);
-    assertTrue(naiveError.getAverage().get() > hmmError.getAverage().get() - eps);
-    assertTrue(hmmError.getAverage().get() > optimal.getError() - eps);
+    assertEquals(0, naiveBias.getAverage().getAsDouble(), eps);
+    assertEquals(0, hmmBias.getAverage().getAsDouble(), eps);
+    assertTrue(naiveError.getAverage().getAsDouble() > hmmError.getAverage().getAsDouble() - eps);
+    assertTrue(hmmError.getAverage().getAsDouble() > optimal.getError() - eps);
   }
 
   @Theory
@@ -133,9 +133,9 @@ public class NoisyFundamentalEstimatorTest {
       hmmError.accept((estimate - actual) * (estimate - actual));
     }
 
-    assertEquals(0, naiveBias.getAverage().get(), eps);
-    assertEquals(0, hmmBias.getAverage().get(), eps);
-    assertTrue(naiveError.getAverage().get() > hmmError.getAverage().get() - eps);
+    assertEquals(0, naiveBias.getAverage().getAsDouble(), eps);
+    assertEquals(0, hmmBias.getAverage().getAsDouble(), eps);
+    assertTrue(naiveError.getAverage().getAsDouble() > hmmError.getAverage().getAsDouble() - eps);
   }
 
   @Theory
@@ -172,11 +172,12 @@ public class NoisyFundamentalEstimatorTest {
       baselineError.accept((baselineEstimate - actual) * (baselineEstimate - actual));
     }
 
-    assertEquals(0, naiveBias.getAverage().get(), eps);
-    assertEquals(0, hmmBias.getAverage().get(), eps);
-    assertEquals(0, baselineBias.getAverage().get(), eps);
-    assertTrue(naiveError.getAverage().get() > hmmError.getAverage().get() - eps);
-    assertTrue(baselineError.getAverage().get() > hmmError.getAverage().get() - eps);
+    assertEquals(0, naiveBias.getAverage().getAsDouble(), eps);
+    assertEquals(0, hmmBias.getAverage().getAsDouble(), eps);
+    assertEquals(0, baselineBias.getAverage().getAsDouble(), eps);
+    assertTrue(naiveError.getAverage().getAsDouble() > hmmError.getAverage().getAsDouble() - eps);
+    assertTrue(
+        baselineError.getAverage().getAsDouble() > hmmError.getAverage().getAsDouble() - eps);
   }
 
   private static class OptimalLinearError {

@@ -188,7 +188,7 @@ abstract class AMarket implements Market, Serializable {
   public JsonObject getFeatures() {
     JsonObject features = new JsonObject();
 
-    features.addProperty("rmsd", rmsd.getAverage().map(Math::sqrt).orElse(Double.NaN));
+    features.addProperty("rmsd", Math.sqrt(rmsd.getAverage().orElse(Double.NaN)));
     features.addProperty("max_diff", maxDiff);
     features.addProperty("trans_vol", transPrice.getStandardDeviation().orElse(Double.NaN));
     features.addProperty("median_spread", SummStats.median(spreads).orElse(Double.NaN));

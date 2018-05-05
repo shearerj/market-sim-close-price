@@ -357,7 +357,8 @@ public class CommandLineOptions {
       // Here we call Optional::get, but it's object is guaranteed to have something, as there's
       // always at least one element
       serializedPlayer.addProperty("payoff",
-          next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next().getAverage().get());
+          next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next().getAverage()
+              .getAsDouble());
       serializedPlayers.add(serializedPlayer);
     }
 
