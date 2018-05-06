@@ -80,6 +80,9 @@ class Features {
     features.addProperty("em_surplus_loss", compEq.emSurplusLoss);
   }
 
+  // FIXME This produces different results with the same random seed, but for reasons I don't
+  // understand...
+
   // This will utterly fail if private valuations aren't diminishing marginal
   // This uses payoffForPosition which scales linearly. The linear number should be small
   // enough that it doesn't really matter, but it is a source of inefficiency / slowness.
