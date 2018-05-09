@@ -76,6 +76,7 @@ class Features {
 
     features.addProperty("max_surplus", compEq.maxSurplus);
     features.addProperty("ce_price", compEq.cePrice);
+    features.addProperty("ce_volume", compEq.ceVolume);
     features.addProperty("im_surplus_loss", compEq.imSurplusLoss);
     features.addProperty("em_surplus_loss", compEq.emSurplusLoss);
   }
@@ -181,7 +182,10 @@ class Features {
       }
     }
 
-    return new CompEqResults(cePrice, maxSurplus, imSurplusLoss, emSurplusLoss);
+    int ceVolume =
+        cePositions.entrySet().stream().mapToInt(Entry::getValue).filter(p -> p > 0).sum();
+
+    return new CompEqResults(ceVolume, cePrice, maxSurplus, imSurplusLoss, emSurplusLoss);
   }
 
   private static double surplusDifference(Agent agent, int start, int end) {
@@ -194,18 +198,21 @@ class Features {
   }
 
   private static final class CompEqResults {
+    private final int ceVolume;
     private final double cePrice;
     private final double maxSurplus;
     private final double imSurplusLoss;
     private final double emSurplusLoss;
 
-    private CompEqResults(double cePrice, double maxSurplus, double imSurplusLoss,
+    private CompEqResults(int ceVolume, double cePrice, double maxSurplus, double imSurplusLoss,
         double emSurplusLoss) {
+      assert ceVolume >= 0 : "ce volume was negative";
       assert maxSurplus >= 0 : "max surplus was negative";
       assert !Double.isNaN(maxSurplus) : "max surplus was nan";
       assert !Double.isNaN(imSurplusLoss) : "im surplus loss was nan";
       assert !Double.isNaN(emSurplusLoss) : "em surplus loss was nan";
 
+      this.ceVolume = ceVolume;
       this.cePrice = cePrice;
       this.maxSurplus = maxSurplus;
       this.imSurplusLoss = imSurplusLoss;
