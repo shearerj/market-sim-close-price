@@ -71,6 +71,8 @@ abstract class AMarket implements Market, Serializable {
   private final SummStats executionTimes;
   private long volume;
   private final SummStats priceDiff;
+  private final SummStats bidDepth;
+  private final SummStats askDepth;
 
   AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector) {
     this.sim = sim;
@@ -93,6 +95,8 @@ abstract class AMarket implements Market, Serializable {
     this.executionTimes = SummStats.empty();
     this.volume = 0;
     this.priceDiff = SummStats.empty();
+    this.bidDepth = SummStats.empty();
+    this.askDepth = SummStats.empty();
   }
 
   AOrder submitOrder(AMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
@@ -151,6 +155,8 @@ abstract class AMarket implements Market, Serializable {
     lastSpreadUpdate = currentTime;
     lastSpread = quote.getSpread();
     spreads.add(lastSpread);
+    bidDepth.accept(quote.getBidDepth());
+    askDepth.accept(quote.getAskDepth());
 
     for (QuoteObserver obs : quoteObservers) {
       obs.notifyQuote(quote);
@@ -195,6 +201,8 @@ abstract class AMarket implements Market, Serializable {
     features.addProperty("mean_exec_time", executionTimes.getAverage().orElse(Double.NaN));
     features.addProperty("volume", volume);
     features.addProperty("price_var", priceDiff.getVariance().orElse(Double.NaN));
+    features.addProperty("bid_depth", bidDepth.getAverage().orElse(Double.NaN));
+    features.addProperty("ask_depth", askDepth.getAverage().orElse(Double.NaN));
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {
