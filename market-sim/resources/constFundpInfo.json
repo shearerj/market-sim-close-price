@@ -1,0 +1,19 @@
+{
+    "assignment": {
+        "role": {
+            "zi": 20
+        }
+    },
+    "configuration": {
+        "markets": "cda",
+        "fundamentalMeanReversion": 1,
+        "fundamentalShockVar": 0,
+        "arrivalRate": 0.5,
+        "simLength": 10,
+        "maxPosition": 10,
+        "privateValueVar": 1,
+        "thresh": 0.5,
+        "Rmin": 0,
+        "Rmax": 10
+    }
+}
