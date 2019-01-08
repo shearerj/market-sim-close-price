@@ -17,6 +17,8 @@ public interface Observation {
     String getStrategy();
 
     double getPayoff();
+    
+    int getHoldings();
 
     JsonObject getFeatures();
 

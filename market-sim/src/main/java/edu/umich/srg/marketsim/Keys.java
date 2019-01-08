@@ -105,6 +105,14 @@ public interface Keys {
   @ValueHelp("The minimum surplus an agent will demand.")
   class Rmin extends IntValue {
   }
+  
+  @ValueHelp("The amount of external contract holdings an agent possesses.")
+  class ContractHoldings extends IntValue {
+  }
+  
+  @ValueHelp("The proportion of external contract holdings an agent uses to adjust desired surplus.")
+  class BenchmarkProp extends DoubleValue {
+  }
 
   @ValueHelp("How agents should decide what side to pick.")
   class Sides extends EnumValue<OrderStyle> {
@@ -120,6 +128,14 @@ public interface Keys {
   // -------------------------
   // Specific agent parameters
   // -------------------------
+  
+  @ValueHelp("Markov agent's estimate variance for price relative to the fundamental.")
+  class PriceVarEst extends DoubleValue {
+  }
+  
+  @ValueHelp("Markov agent's estimate variance for price relative to the fundamental.")
+  class ShareEstimates extends BoolValue {
+  }
 
   @ValueHelp("Number of order the shock agent will submit.")
   class NumShockOrders extends IntValue {
@@ -311,6 +327,7 @@ public interface Keys {
       .put(Sides.class, OrderStyle.RANDOM) // Submit orders randomly (legacy)
       .put(SubmitDepth.class, 1) // Submit one order per arrival (legacy)
       .put(Thresh.class, 1d) // No threshold
+      .put(ShareEstimates.class, false) // Don't share estimates unless explicit
       .build();
 
 }

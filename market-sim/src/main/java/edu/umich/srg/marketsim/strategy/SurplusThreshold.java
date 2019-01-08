@@ -32,6 +32,19 @@ public class SurplusThreshold {
 
     // Strategic shading for guaranteed surplus
     if (marketPrice.isPresent()
+            && demandedSurplus < 0) {
+    	
+    	if (type.sign() > 0) {
+    		
+    		return marketPrice.get().doubleValue();
+    		
+    	} else {
+    		
+    		return estimatedValue - type.sign() * demandedSurplus;
+    		
+    	}
+ 	
+    } else if (marketPrice.isPresent()
         && type.sign() * (estimatedValue - marketPrice.get().doubleValue()) < demandedSurplus
         && type.sign() * (estimatedValue - marketPrice.get().doubleValue()) > this.threshold
             * demandedSurplus) {

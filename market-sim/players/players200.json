@@ -1,0 +1,254 @@
+[
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 6352.038866504054,
+    "holdings": -2,
+    "features": {
+      "count_shading": 2,
+      "mean_shading": 211,
+      "arrivals": 2,
+      "mean_fundamental_error": 8789030.34346815
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -5033.642118084255,
+    "holdings": 2,
+    "features": {
+      "count_shading": 4,
+      "mean_shading": 403.60595735299285,
+      "arrivals": 4,
+      "mean_fundamental_error": 8789030.193290731
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -5310.622627611747,
+    "holdings": 2,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 390.3333333333333,
+      "arrivals": 6,
+      "mean_fundamental_error": 8789030.35052752
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 2985.9751296897466,
+    "holdings": -1,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 516.5,
+      "arrivals": 6,
+      "mean_fundamental_error": 8789030.495330721
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 1931,
+    "holdings": 0,
+    "features": {
+      "count_shading": 8,
+      "mean_shading": 437.625,
+      "arrivals": 8,
+      "mean_fundamental_error": 8571207.663658595
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "holdings": 0,
+    "features": {
+      "count_shading": 5,
+      "mean_shading": 547.6,
+      "arrivals": 5,
+      "mean_fundamental_error": 8789516.39854543
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 8904.242813654893,
+    "holdings": -2,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 505.33333333333337,
+      "arrivals": 3,
+      "mean_fundamental_error": 8647317.283410987
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -2701.0608962863994,
+    "holdings": 1,
+    "features": {
+      "count_shading": 4,
+      "mean_shading": 599,
+      "arrivals": 4,
+      "mean_fundamental_error": 8752663.573516581
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -998.7930203454605,
+    "holdings": 1,
+    "features": {
+      "count_shading": 5,
+      "mean_shading": 271.2,
+      "arrivals": 5,
+      "mean_fundamental_error": 8789030.392059045
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 7355.411749504008,
+    "holdings": -2,
+    "features": {
+      "count_shading": 7,
+      "mean_shading": 416.57142857142856,
+      "arrivals": 7,
+      "mean_fundamental_error": 8789037.210199734
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 999,
+    "holdings": 0,
+    "features": {
+      "count_shading": 5,
+      "mean_shading": 544.4,
+      "arrivals": 5,
+      "mean_fundamental_error": 8789030.355082547
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -2515.984107602283,
+    "holdings": 2,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 453.33333333333337,
+      "arrivals": 6,
+      "mean_fundamental_error": 8790520.292003969
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "holdings": 0,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 657,
+      "arrivals": 6,
+      "mean_fundamental_error": 8800117.895220283
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -2922.583520593615,
+    "holdings": 1,
+    "features": {
+      "count_shading": 4,
+      "mean_shading": 300,
+      "arrivals": 4,
+      "mean_fundamental_error": 8792685.782059345
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -8370.677053370408,
+    "holdings": 3,
+    "features": {
+      "count_shading": 10,
+      "mean_shading": 531.4762227114524,
+      "arrivals": 10,
+      "mean_fundamental_error": 8789029.881254027
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 2995.7596951610303,
+    "holdings": -1,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 163,
+      "arrivals": 6,
+      "mean_fundamental_error": 8789204.04439206
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "holdings": 0,
+    "features": {
+      "count_shading": 2,
+      "mean_shading": 390,
+      "arrivals": 2,
+      "mean_fundamental_error": 8789030.34346815
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 11052.836671192335,
+    "holdings": -2,
+    "features": {
+      "count_shading": 7,
+      "mean_shading": 364.4285714285714,
+      "arrivals": 7,
+      "mean_fundamental_error": 8788713.850105317
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 9075.87684493784,
+    "holdings": -2,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 629.7737454948559,
+      "arrivals": 3,
+      "mean_fundamental_error": 8789030.34346815
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 3583.1585689315693,
+    "holdings": -1,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 537.8333333333333,
+      "arrivals": 6,
+      "mean_fundamental_error": 8794844.81749891
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "b",
+    "payoff": -2704.5963964382327,
+    "holdings": 1,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 346.344495779175,
+      "arrivals": 3,
+      "mean_fundamental_error": 8736418.927018687
+    }
+  }
+]

@@ -107,6 +107,7 @@ public class CommandLineInterface extends CommandLineOptions {
     Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     for (PlayerInfo info : playerInfo) {
       info.payoff = payoffs.get(info.agent).getProfit();
+      info.holdings = payoffs.get(info.agent).getHoldings();
       info.features = info.agent.getFeatures();
     }
 
@@ -255,7 +256,8 @@ public class CommandLineInterface extends CommandLineOptions {
 
   private static class PlayerInfo implements Player {
 
-    private final String role;
+    public int holdings;
+	private final String role;
     private final String strategy;
     private final Agent agent;
     private double payoff;
@@ -266,6 +268,7 @@ public class CommandLineInterface extends CommandLineOptions {
       this.strategy = roleAndStrategy.getStrategy();
       this.agent = agent;
       this.payoff = 0;
+      this.holdings = 0;
       this.features = null;
     }
 
@@ -282,6 +285,11 @@ public class CommandLineInterface extends CommandLineOptions {
     @Override
     public double getPayoff() {
       return payoff;
+    }
+    
+    @Override
+    public int getHoldings() {
+      return holdings;
     }
 
     @Override
