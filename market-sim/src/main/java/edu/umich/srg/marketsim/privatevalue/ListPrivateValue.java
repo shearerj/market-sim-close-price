@@ -54,6 +54,12 @@ class ListPrivateValue implements PrivateValue {
   @Override
   public double valueForExchange(int position, OrderType type) {
     int index = position + offset - (requireNonNull(type) == SELL ? 1 : 0);
+    //System.out.println(12345);
+    //System.out.println(position);
+	//System.out.println(type.sign());
+    //System.out.println(index);
+    //System.out.println(values.length);
+    //System.out.println(values[index] * type.sign());
     if (index >= values.length) {
       return extraBuy * type.sign();
     } else if (index < 0) {

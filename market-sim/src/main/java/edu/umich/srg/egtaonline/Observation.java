@@ -18,7 +18,7 @@ public interface Observation {
 
     double getPayoff();
     
-    int getHoldings();
+    //int getHoldings();
 
     JsonObject getFeatures();
 

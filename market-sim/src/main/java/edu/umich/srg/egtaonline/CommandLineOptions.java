@@ -334,7 +334,7 @@ public class CommandLineOptions {
       serializedPlayer.addProperty("role", player.getRole());
       serializedPlayer.addProperty("strategy", player.getStrategy());
       serializedPlayer.addProperty("payoff", player.getPayoff());
-      serializedPlayer.addProperty("holdings", player.getHoldings());
+      //serializedPlayer.addProperty("holdings", player.getHoldings());
       JsonObject features;
       if (serializeFeatures && !(features = player.getFeatures()).entrySet().isEmpty()) {
         serializedPlayer.add("features", features);

@@ -1,7 +1,8 @@
 {
     "assignment": {
         "role": {
-            "m": 10
+            "m": 9,
+            "b": 1
         }
     }, 
     "configuration": {
@@ -13,13 +14,14 @@
         "Rmax": 1000,
         "fundamentalShockVar": 1000000.0,
         "PriceVarEst": 1000000000000,
-        "simLength": 1000,
+        "simLength": 10000,
         "arrivalRate": 0.005,
         "thresh": 0.5,
         "fundamentalMeanReversion": 0.05,
         "markets": "cda",
         "fundamentalObservationVariance": 10000000000.0,
         "benchmarkProp": 1,
-        "contractHoldings": 1000
+        "contractHoldings": 100000,
+        "benchmarkThresh": 0.5
     }
 }

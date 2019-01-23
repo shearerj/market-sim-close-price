@@ -32,25 +32,14 @@ public class SurplusThreshold {
 
     // Strategic shading for guaranteed surplus
     if (marketPrice.isPresent()
-            && demandedSurplus < 0) {
-    	
-    	if (type.sign() > 0) {
-    		
-    		return marketPrice.get().doubleValue();
-    		
-    	} else {
-    		
-    		return estimatedValue - type.sign() * demandedSurplus;
-    		
-    	}
- 	
-    } else if (marketPrice.isPresent()
         && type.sign() * (estimatedValue - marketPrice.get().doubleValue()) < demandedSurplus
         && type.sign() * (estimatedValue - marketPrice.get().doubleValue()) > this.threshold
             * demandedSurplus) {
 
       return marketPrice.get().doubleValue();
 
+    } else if (threshold < 2e-3) {
+      return -1; // Don't submit
     } else { // Submit order that won't transact immediately
       // Round beneficially
       return estimatedValue - type.sign() * demandedSurplus;
@@ -58,3 +47,4 @@ public class SurplusThreshold {
   }
 
 }
+
