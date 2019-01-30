@@ -70,6 +70,10 @@ public interface Keys {
   @ValueHelp("The clearing interval for a call market.")
   class ClearInterval extends LongValue {
   }
+  
+  @ValueHelp("The type of benchmark used, if left empty then VWAP is used.")
+  class BenchmarkType extends StringsValue {
+  }
 
   // ------
   // Agents
@@ -142,18 +146,20 @@ public interface Keys {
   class TimeToLiquidate extends LongValue {
   }
   
-  @ValueHelp("The amount of external contract holdings an agent possesses.")
+  //----------------
+  // Benchmark Agent
+  //----------------
+  @ValueHelp("The amount of external contract holdings an agent possesses, must be a positive value.")
   class ContractHoldings extends IntValue {
   }
   
-  @ValueHelp("The proportion of external contract holdings an agent uses to adjust desired surplus.")
-  class BenchmarkProp extends DoubleValue {
+  @ValueHelp("The direction of external contract holdings an agent uses to adjust desired surplus, must be in {-1,0,1}.")
+  class BenchmarkDir extends IntValue {
   }
   
-  @ValueHelp("The fraction of demanded surplus necessary for a benchmark agent to submit an order at bid "
-	      + "or ask.")
-	  class BenchmarkThresh extends DoubleValue {
-	  }
+  @ValueHelp("The fraction of demanded surplus necessary for a benchmark agent to submit an order at bid or ask.")
+  class BenchmarkThresh extends DoubleValue {
+  }
 
   // ------------
   // Market Maker

@@ -21,6 +21,7 @@ import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.EntityBuilder.AgentCreator;
 import edu.umich.srg.marketsim.EntityBuilder.MarketCreator;
+import edu.umich.srg.marketsim.Keys.BenchmarkType;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;

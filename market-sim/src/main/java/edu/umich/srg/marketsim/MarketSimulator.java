@@ -13,6 +13,7 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -96,19 +97,25 @@ public class MarketSimulator implements Sim {
       // Get total agent holdings and profit according to all markets
       Map<Agent, SimAgentInfo> payoffs = Maps.toMap(agents, a -> new SimAgentInfo());
       agentPayoffs = payoffs;
-
+      
+      double benchmark = 0;
+      int aBenchDir = 0;
+      
       for (Market market : markets) {
+    	benchmark = market.getBenchmark();
         for (Entry<Agent, AgentInfo> e : market.getAgentInfo()) {
           payoffs.get(e.getKey()).add(e.getValue());
         }
       }
-
+      
       // Get current fundamental price
       double fundamentalValue = fundamental.getValueAt(getCurrentTime().get());
       for (Entry<Agent, SimAgentInfo> e : payoffs.entrySet()) {
         Agent agent = e.getKey();
+        aBenchDir = agent.getBenchmarkDir();
         SimAgentInfo info = e.getValue();
         info.profit += info.holdings * fundamentalValue;
+        info.profit += aBenchDir * benchmark;
         OrderType direction = info.holdings > 0 ? BUY : SELL;
         for (int pos = 0; pos != info.holdings; pos += direction.sign()) {
           info.profit += agent.payoffForExchange(pos, direction);

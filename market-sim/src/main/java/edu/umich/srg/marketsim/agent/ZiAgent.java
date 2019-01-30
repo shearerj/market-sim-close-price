@@ -159,6 +159,11 @@ public class ZiAgent implements Agent {
     feats.addProperty("mean_shading", shadingStats.getAverage().orElse(0.0));
     return feats;
   }
+  
+  @Override
+  public int getBenchmarkDir() {
+	return 0;
+  }
 
   @Override
   public int getId() {

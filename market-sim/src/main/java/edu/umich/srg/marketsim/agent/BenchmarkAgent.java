@@ -27,7 +27,7 @@ import edu.umich.srg.marketsim.Keys.PriceVarEst;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.ContractHoldings;
-import edu.umich.srg.marketsim.Keys.BenchmarkProp;
+import edu.umich.srg.marketsim.Keys.BenchmarkDir;
 import edu.umich.srg.marketsim.Keys.ShareEstimates;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
@@ -79,7 +79,7 @@ public class BenchmarkAgent implements Agent {
 	  private final GaussianFundamentalView fundamental;
 	  private final IntUniform shadingDistribution;
 	  private final int contractHoldings;
-	  private final double benchmarkProp;
+	  private final int benchmarkDir;
 
 	  // Bookkeeping
 	  private final double finalFundamental;
@@ -116,7 +116,7 @@ public class BenchmarkAgent implements Agent {
 	    this.fundamentalError = SummStats.empty();
 	    
 	    this.contractHoldings = spec.get(ContractHoldings.class);
-	    this.benchmarkProp = spec.get(BenchmarkProp.class);
+	    this.benchmarkDir = spec.get(BenchmarkDir.class);
 	    
 	    if (spec.get(ShareEstimates.class)) {
 	      this.fundamental = SharedGaussianView.create(sim, fundamental, rand,
@@ -158,7 +158,7 @@ public class BenchmarkAgent implements Agent {
 	              * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
 	          double estimatedValue = finalEstimate + privateBenefit;
 
-	          double contract = benchmarkProp * contractHoldings;
+	          int contract = benchmarkDir * contractHoldings;
 	          double toSubmit =
 	              threshold.benchPrice(type, quoteInfo.getQuote(), estimatedValue, demandedSurplus, contract);
 	          if (toSubmit < 0) { // Hacky patch to stop submiting
@@ -195,6 +195,11 @@ public class BenchmarkAgent implements Agent {
 	    feats.addProperty("arrivals", fundamentalError.getCount());
 	    feats.addProperty("mean_fundamental_error", fundamentalError.getAverage().orElse(0.0));
 	    return feats;
+	  }
+	  
+	  @Override
+	  public int getBenchmarkDir() {
+		return benchmarkDir;
 	  }
 
 	  @Override

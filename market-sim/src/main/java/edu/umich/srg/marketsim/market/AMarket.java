@@ -19,6 +19,7 @@ import edu.umich.srg.fourheap.IOrder;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.fourheap.Selector;
+import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -27,6 +28,8 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
 import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
 import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
+import edu.umich.srg.marketsim.market.Benchmark;
+import edu.umich.srg.marketsim.Keys.BenchmarkType;
 import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
@@ -73,6 +76,10 @@ abstract class AMarket implements Market, Serializable {
   private final SummStats priceDiff;
   private final SummStats bidDepth;
   private final SummStats askDepth;
+  
+  // Benchmark
+  private final Benchmark benchType;
+  private double benchmark;
 
   AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector) {
     this.sim = sim;
@@ -97,6 +104,9 @@ abstract class AMarket implements Market, Serializable {
     this.priceDiff = SummStats.empty();
     this.bidDepth = SummStats.empty();
     this.askDepth = SummStats.empty();
+    //this.benchType = Benchmark.create(BenchmarkType.class);
+    this.benchType = Benchmark.create("vwap");
+    this.benchmark = 0;
   }
 
   AOrder submitOrder(AMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
@@ -143,6 +153,7 @@ abstract class AMarket implements Market, Serializable {
       volume += matched.getQuantity();
       priceDiff.accept(diff);
     }
+    benchmark = benchType.calcBenchmark(prices);
   }
 
   void updateQuote() {
@@ -203,6 +214,7 @@ abstract class AMarket implements Market, Serializable {
     features.addProperty("price_var", priceDiff.getVariance().orElse(Double.NaN));
     features.addProperty("bid_depth", bidDepth.getAverage().orElse(Double.NaN));
     features.addProperty("ask_depth", askDepth.getAverage().orElse(Double.NaN));
+    features.addProperty("benchmark", benchmark);
 
     JsonArray jprices = new JsonArray();
     for (Entry<TimeStamp, Price> obs : prices) {
@@ -214,6 +226,11 @@ abstract class AMarket implements Market, Serializable {
     features.add("prices", jprices);
 
     return features;
+  }
+  
+  @Override
+  public double getBenchmark() {
+  	return benchmark;
   }
 
   @Override
@@ -261,7 +278,7 @@ abstract class AMarket implements Market, Serializable {
       this.orders = HashMultiset.create();
       this.recordMap = HashBiMap.create();
     }
-
+    
     @Override
     public TimeStamp getLatency() {
       return latency;

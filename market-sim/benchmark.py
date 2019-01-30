@@ -28,12 +28,12 @@ def vwmp(file_name):
 	for i,t in enumerate(transactions):
 		prices[i] = t[1]
 
-	vwap = np.med(prices)
+	vwap = np.median(prices)
 	return vwap
 
 
 def main():
-	file_name = 'prices.json'
+	file_name = 'prices/prices.json'
 	benchmark = vwap(file_name)
 	print(benchmark)
 

@@ -40,7 +40,7 @@ public class SurplusBenchmark {
 
   /** Get the price to submit conditioned on the demanded surplus and the market state. */
   public double benchPrice(OrderType type, Quote quote, double estimatedValue,
-      double demandedSurplus, double contract) {
+      double demandedSurplus, int contract) {
     Optional<Price> marketPrice = type == BUY ? quote.getAskPrice() : quote.getBidPrice();
     
     double benchSurplus = demandedSurplus - type.sign() * contract;

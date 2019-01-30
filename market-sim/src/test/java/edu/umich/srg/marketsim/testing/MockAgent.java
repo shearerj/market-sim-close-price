@@ -43,6 +43,11 @@ public class MockAgent implements Agent {
   public JsonObject getFeatures() {
     return new JsonObject();
   }
+  
+  @Override
+  public int getBenchmarkDir() {
+	return 0;
+  }
 
   @Override
   public int getId() {

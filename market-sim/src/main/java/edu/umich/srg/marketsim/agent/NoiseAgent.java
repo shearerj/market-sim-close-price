@@ -106,6 +106,11 @@ public class NoiseAgent implements Agent {
     features.addProperty("transactions", numTransactions);
     return features;
   }
+  
+  @Override
+  public int getBenchmarkDir() {
+	return 0;
+  }
 
   @Override
   public int getId() {

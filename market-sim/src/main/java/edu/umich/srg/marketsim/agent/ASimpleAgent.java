@@ -156,6 +156,11 @@ public abstract class ASimpleAgent implements Agent {
     feats.addProperty("mean_fundamental_error", fundamentalError.getAverage().orElse(0.0));
     return feats;
   }
+  
+  @Override
+  public int getBenchmarkDir() {
+	  return 0;
+  }
 
   @Override
   public final int getId() {

@@ -23,6 +23,11 @@ public class NoOpAgent implements Agent {
   public int getId() {
     return 0;
   }
+  
+  @Override
+  public int getBenchmarkDir() {
+	return 0;
+  }
 
   @Override
   public double payoffForExchange(int position, OrderType type) {

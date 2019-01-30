@@ -11,6 +11,7 @@ import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
 import com.google.common.reflect.TypeToken;
 
+import edu.umich.srg.marketsim.Keys.BenchmarkType;
 import edu.umich.srg.util.IndentWriter;
 
 import java.io.IOException;
@@ -208,6 +209,11 @@ public class Spec {
     public Spec build() {
       return new Spec(ImmutableClassToInstanceMap.<Value<?>, Value<?>>copyOf(builder));
     }
+
+	public Builder put(Class<BenchmarkType> class1, String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
   }
 

@@ -11,6 +11,7 @@ import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
 import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map.Entry;
 
 public interface Market {
@@ -31,11 +32,13 @@ public interface Market {
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
 
   JsonObject getFeatures();
+  
+  double getBenchmark();
 
   // FIXME Remove market view, and instead make latency an agent feature that it can add
   interface MarketView {
-
-    TimeStamp getLatency();
+	  
+	TimeStamp getLatency();
 
     OrderRecord submitOrder(OrderType buyOrSell, Price price, int quantity);
 

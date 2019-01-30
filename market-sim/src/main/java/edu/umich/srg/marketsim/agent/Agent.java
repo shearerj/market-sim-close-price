@@ -19,6 +19,9 @@ public interface Agent {
 
   /** The payoff for the agent for making an exchange at position. */
   double payoffForExchange(int position, OrderType type);
+  
+  /** The direction that an agent is trying to move the final benchmark calculation */
+  int getBenchmarkDir();
 
   /** A json object of any miscellaneous features an agent wishes to compute. */
   default JsonObject getFeatures() {

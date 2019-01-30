@@ -1,27 +1,25 @@
 {
     "assignment": {
-        "role": {
-            "m": 9,
-            "b": 1
-        }
+        "zi": {
+            "markov:rmin_0_rmax_1000_Thresh_0.8": 9
+
+        },
+        "bench_mani": {
+            "benchmark:rmin_0_rmax_1000_benchmarkThresh_0.8_benchmarkImpact_10000": 1
+            }
     }, 
     "configuration": {
-        "randomSeed": 100,
         "fundamentalMean": 1000000.0, 
-        "Rmin": 0, 
         "maxPosition": 10,
         "privateValueVar": 50000000.0,
-        "Rmax": 1000,
         "fundamentalShockVar": 1000000.0,
-        "PriceVarEst": 1000000000000,
+        "PriceVarEst": "Infinity",
         "simLength": 10000,
         "arrivalRate": 0.005,
-        "thresh": 0.5,
         "fundamentalMeanReversion": 0.05,
         "markets": "cda",
         "fundamentalObservationVariance": 10000000000.0,
-        "benchmarkProp": 1,
-        "contractHoldings": 100000,
-        "benchmarkThresh": 0.5
+        "benchmarkDir": 1,
+        "contractHoldings": 1
     }
 }

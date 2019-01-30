@@ -93,6 +93,11 @@ public class SimpleMarketMaker implements Agent {
     // No Private Value
     return 0;
   }
+  
+  @Override
+  public int getBenchmarkDir() {
+	return 0;
+  }
 
   @Override
   public int getId() {
