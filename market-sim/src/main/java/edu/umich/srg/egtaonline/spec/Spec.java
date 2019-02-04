@@ -210,11 +210,6 @@ public class Spec {
       return new Spec(ImmutableClassToInstanceMap.<Value<?>, Value<?>>copyOf(builder));
     }
 
-	public Builder put(Class<BenchmarkType> class1, String string) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
   }
 
   public static class ParsingBuilder extends Builder {

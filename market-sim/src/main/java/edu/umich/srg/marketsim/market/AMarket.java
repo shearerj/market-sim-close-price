@@ -19,7 +19,6 @@ import edu.umich.srg.fourheap.IOrder;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.fourheap.Selector;
-import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -29,7 +28,6 @@ import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
 import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
 import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
 import edu.umich.srg.marketsim.market.Benchmark;
-import edu.umich.srg.marketsim.Keys.BenchmarkType;
 import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
@@ -81,7 +79,7 @@ abstract class AMarket implements Market, Serializable {
   private final Benchmark benchType;
   private double benchmark;
 
-  AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector) {
+  AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector, String benchmarkType) {
     this.sim = sim;
     this.orderbook = FourHeap.create(selector);
     this.pricing = pricing;
@@ -104,8 +102,7 @@ abstract class AMarket implements Market, Serializable {
     this.priceDiff = SummStats.empty();
     this.bidDepth = SummStats.empty();
     this.askDepth = SummStats.empty();
-    //this.benchType = Benchmark.create(BenchmarkType.class);
-    this.benchType = Benchmark.create("vwap");
+    this.benchType = Benchmark.create(benchmarkType);
     this.benchmark = 0;
   }
 

@@ -26,6 +26,7 @@ import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Keys.PriceVarEst;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
+import edu.umich.srg.marketsim.Keys.BenchmarkImpact;
 import edu.umich.srg.marketsim.Keys.ContractHoldings;
 import edu.umich.srg.marketsim.Keys.BenchmarkDir;
 import edu.umich.srg.marketsim.Keys.ShareEstimates;
@@ -78,7 +79,8 @@ public class BenchmarkAgent implements Agent {
 	  private final int ordersPerSide;
 	  private final GaussianFundamentalView fundamental;
 	  private final IntUniform shadingDistribution;
-	  private final int contractHoldings;
+	  private final int benchmarkImpact;
+	  private final double contractHoldings;
 	  private final int benchmarkDir;
 
 	  // Bookkeeping
@@ -115,6 +117,7 @@ public class BenchmarkAgent implements Agent {
 	    this.shadingStats = SummStats.empty();
 	    this.fundamentalError = SummStats.empty();
 	    
+	    this.benchmarkImpact = spec.get(BenchmarkImpact.class);
 	    this.contractHoldings = spec.get(ContractHoldings.class);
 	    this.benchmarkDir = spec.get(BenchmarkDir.class);
 	    
@@ -158,9 +161,9 @@ public class BenchmarkAgent implements Agent {
 	              * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
 	          double estimatedValue = finalEstimate + privateBenefit;
 
-	          int contract = benchmarkDir * contractHoldings;
+	          int impact = benchmarkDir * benchmarkImpact; //Does it make sense to also multiply by holdings?
 	          double toSubmit =
-	              threshold.benchPrice(type, quoteInfo.getQuote(), estimatedValue, demandedSurplus, contract);
+	              threshold.benchPrice(type, quoteInfo.getQuote(), estimatedValue, demandedSurplus, impact);
 	          if (toSubmit < 0) { // Hacky patch to stop submiting
 	            continue;
 	          }
@@ -200,6 +203,11 @@ public class BenchmarkAgent implements Agent {
 	  @Override
 	  public int getBenchmarkDir() {
 		return benchmarkDir;
+	  }
+	  
+	  @Override
+	  public double getContractHoldings() {
+		  return contractHoldings;
 	  }
 
 	  @Override

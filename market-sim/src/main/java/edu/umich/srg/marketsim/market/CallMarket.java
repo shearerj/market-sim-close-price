@@ -9,6 +9,7 @@ import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.fourheap.RandomProRataSelector;
+import edu.umich.srg.marketsim.Keys.BenchmarkType;
 import edu.umich.srg.marketsim.Keys.ClearInterval;
 import edu.umich.srg.marketsim.Keys.Pricing;
 import edu.umich.srg.marketsim.Price;
@@ -30,25 +31,25 @@ public class CallMarket extends AMarket {
   private boolean nextClearScheduled;
 
   private CallMarket(Sim sim, Fundamental fundamental, CallPricing pricing, long clearInterval,
-      Random rand) {
-    super(sim, fundamental, pricing, RandomProRataSelector.create(rand));
+      Random rand, String benchmarkType) {
+    super(sim, fundamental, pricing, RandomProRataSelector.create(rand), benchmarkType);
     this.clearInterval = clearInterval;
     this.nextClearScheduled = false;
   }
 
   public static CallMarket create(Sim sim, Fundamental fundamental, double pricing,
-      long clearInterval, Random rand) {
-    return new CallMarket(sim, fundamental, new CallPricing(pricing), clearInterval, rand);
+      long clearInterval, Random rand, String benchmarkType) {
+    return new CallMarket(sim, fundamental, new CallPricing(pricing), clearInterval, rand, benchmarkType);
   }
 
   public static CallMarket create(Sim sim, Fundamental fundamental, long clearInterval,
       Random rand) {
-    return create(sim, fundamental, 0.5, clearInterval, rand);
+    return create(sim, fundamental, 0.5, clearInterval, rand, "vwap");
   }
 
   public static CallMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec,
       Random rand) {
-    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class), rand);
+    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class), rand, spec.get(BenchmarkType.class).iterator().next());
   }
 
   public long getClearingInterval() {

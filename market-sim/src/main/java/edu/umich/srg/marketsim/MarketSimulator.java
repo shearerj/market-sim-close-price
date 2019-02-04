@@ -100,6 +100,7 @@ public class MarketSimulator implements Sim {
       
       double benchmark = 0;
       int aBenchDir = 0;
+      double aContractHoldings = 0;
       
       for (Market market : markets) {
     	benchmark = market.getBenchmark();
@@ -113,9 +114,10 @@ public class MarketSimulator implements Sim {
       for (Entry<Agent, SimAgentInfo> e : payoffs.entrySet()) {
         Agent agent = e.getKey();
         aBenchDir = agent.getBenchmarkDir();
+        aContractHoldings = agent.getContractHoldings();
         SimAgentInfo info = e.getValue();
         info.profit += info.holdings * fundamentalValue;
-        info.profit += aBenchDir * benchmark;
+        info.profit += aBenchDir * aContractHoldings * benchmark;
         OrderType direction = info.holdings > 0 ? BUY : SELL;
         for (int pos = 0; pos != info.holdings; pos += direction.sign()) {
           info.profit += agent.payoffForExchange(pos, direction);

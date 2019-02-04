@@ -22,6 +22,9 @@ public interface Agent {
   
   /** The direction that an agent is trying to move the final benchmark calculation */
   int getBenchmarkDir();
+  
+  /** The direction that an agent is trying to move the final benchmark calculation */
+  double getContractHoldings();
 
   /** A json object of any miscellaneous features an agent wishes to compute. */
   default JsonObject getFeatures() {

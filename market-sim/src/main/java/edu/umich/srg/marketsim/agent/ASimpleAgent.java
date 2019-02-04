@@ -161,6 +161,11 @@ public abstract class ASimpleAgent implements Agent {
   public int getBenchmarkDir() {
 	  return 0;
   }
+  
+  @Override
+  public double getContractHoldings() {
+	  return 0;
+  }
 
   @Override
   public final int getId() {

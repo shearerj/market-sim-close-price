@@ -14,12 +14,13 @@
         "privateValueVar": 50000000.0,
         "fundamentalShockVar": 1000000.0,
         "PriceVarEst": "Infinity",
-        "simLength": 10000,
+        "simLength": 1000,
         "arrivalRate": 0.005,
         "fundamentalMeanReversion": 0.05,
         "markets": "cda",
         "fundamentalObservationVariance": 10000000000.0,
         "benchmarkDir": 1,
-        "contractHoldings": 1
+        "contractHoldings": 0.5,
+        "benchmarkType": "vwmp"
     }
 }

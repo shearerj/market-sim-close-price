@@ -5,7 +5,6 @@
         }
     }, 
     "configuration": {
-        "randomSeed": 100,
         "fundamentalMean": 1000000.0, 
         "Rmin": 0, 
         "maxPosition": 10,

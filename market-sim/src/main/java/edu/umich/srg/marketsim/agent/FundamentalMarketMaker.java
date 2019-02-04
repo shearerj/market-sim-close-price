@@ -93,6 +93,11 @@ public class FundamentalMarketMaker implements Agent {
   public int getBenchmarkDir() {
 	  return 0;
   }
+  
+  @Override
+  public double getContractHoldings() {
+	  return 0;
+  }
 
   @Override
   public int getId() {

@@ -12,6 +12,9 @@ import edu.umich.srg.fourheap.PrioritySelector;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.Keys.BenchmarkType;
+import edu.umich.srg.marketsim.Keys.Markets;
+import edu.umich.srg.marketsim.Keys.Rmin;
 
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -27,17 +30,17 @@ public class CdaMarket extends AMarket {
         priceOrder.min(match.getBuy(), match.getSell()).getPrice())).iterator();
   }
 
-  private CdaMarket(Sim sim, Fundamental fundamental) {
+  private CdaMarket(Sim sim, Fundamental fundamental, String benchmarkType) {
     // We can use an arbitrary selector, since there won't be ties on time
-    super(sim, fundamental, CdaMarket::pricingRule, PrioritySelector.create());
+    super(sim, fundamental, CdaMarket::pricingRule, PrioritySelector.create(), benchmarkType);
   }
 
   public static CdaMarket create(Sim sim, Fundamental fundamental) {
-    return new CdaMarket(sim, fundamental);
+    return new CdaMarket(sim, fundamental, "vwap");
   }
 
   public static CdaMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec, Random rand) {
-    return new CdaMarket(sim, fundamental);
+    return new CdaMarket(sim, fundamental, spec.get(BenchmarkType.class).iterator().next());
   }
 
   @Override

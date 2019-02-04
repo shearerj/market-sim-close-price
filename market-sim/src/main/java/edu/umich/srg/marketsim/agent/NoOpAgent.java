@@ -28,6 +28,11 @@ public class NoOpAgent implements Agent {
   public int getBenchmarkDir() {
 	return 0;
   }
+  
+  @Override
+  public double getContractHoldings() {
+	  return 0;
+  }
 
   @Override
   public double payoffForExchange(int position, OrderType type) {
