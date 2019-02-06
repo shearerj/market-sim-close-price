@@ -62,7 +62,7 @@ public interface Keys {
   // Markets
   // -------
 
-  @ValueHelp("The type of benchmark used, if left empty then VWAP is used.")
+  @ValueHelp("The type of benchmark used.")
   class BenchmarkType extends StringsValue {
   }
   

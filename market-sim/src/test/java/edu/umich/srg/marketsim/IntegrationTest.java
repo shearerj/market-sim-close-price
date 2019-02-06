@@ -512,7 +512,7 @@ public class IntegrationTest {
   public void longCallMarketTest() {
     Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market call = sim.addMarket(CallMarket.create(sim, fundamental, 0.5, 1000, rand));
+    Market call = sim.addMarket(CallMarket.create(sim, fundamental, 0.5, 1000, rand, "vwap"));
     sim.addAgent(new MockAgent() {
       @Override
       public void initilaize() {

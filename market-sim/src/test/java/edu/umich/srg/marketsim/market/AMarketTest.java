@@ -673,7 +673,7 @@ public class AMarketTest {
 
     private MockMarket(Sim sim) {
       super(sim, ConstantFundamental.create(100, 100), MockMarket::mockPricing,
-          PrioritySelector.create());
+          PrioritySelector.create(), "vwap");
     }
 
     private static Iterable<Entry<MatchedOrders<Price, AOrder>, Price>> mockPricing(

@@ -65,7 +65,7 @@ public class CallMarketTest {
   @Test
   public void abnormalPricingPolicyTest() {
     MockSim sim = new MockSim();
-    CallMarket market = CallMarket.create(sim, fund, 0.2, 100, rand);
+    CallMarket market = CallMarket.create(sim, fund, 0.2, 100, rand, "vwap");
     GetQuoteObserver quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     AtomicInteger transacted = new AtomicInteger(0);
     Agent agent = new MockAgent() {

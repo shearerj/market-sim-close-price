@@ -5,6 +5,8 @@
         }
     }, 
     "configuration": {
+        "simLength": 1000,
+        "numSim": 5,
         "fundamentalMean": 1000000.0, 
         "Rmin": 0, 
         "maxPosition": 10,
@@ -12,7 +14,6 @@
         "Rmax": 1000,
         "fundamentalShockVar": 1000000.0,
         "PriceVarEst": 1000000000000,
-        "simLength": 1000,
         "arrivalRate": 0.005,
         "thresh": 0.5,
         "fundamentalMeanReversion": 0.05,
