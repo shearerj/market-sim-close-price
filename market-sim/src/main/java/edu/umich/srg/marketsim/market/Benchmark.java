@@ -37,6 +37,9 @@ public class Benchmark {
 		else if (benchType.toLowerCase().equals("rvwap")) {
 			return rvwap(prices);
 		}
+		else if (benchType.toLowerCase().equals("rtwap")) {
+			return rtwap(prices);
+		}
 		else {
 			return 0;
 		}
@@ -122,6 +125,30 @@ public class Benchmark {
 		}
 		if (subSize > 0) {
 			return (double)bench / (double)subSize;
+		} else {
+			return 0;
+		}
+	}
+	
+	private double rtwap (List<Entry<TimeStamp, Price>> prices) {
+		int bench = 0;
+		double count = 0;
+		// min of weight range
+		int weightMin = 1;
+		// max of weight range
+		int weightMax = 10;
+		int price;
+		int weight;
+		Random rand = new Random();
+		for (Entry<TimeStamp, Price> p : prices) {
+			TimeStamp t = p.getKey();
+			price = p.getValue().intValue();
+			weight = rand.nextInt(weightMax - weightMin + 1) + weightMin;
+			bench += price * weight;
+			count += weight;
+		}
+		if (count > 0) {
+			return bench / count;
 		} else {
 			return 0;
 		}
