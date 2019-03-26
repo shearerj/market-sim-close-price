@@ -4,6 +4,7 @@
 /*.zip
 /run_scripts/*
 /game_analysis/*
+/profiles/*
 
 # Maven #
 #########
