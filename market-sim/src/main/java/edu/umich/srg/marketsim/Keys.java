@@ -164,6 +164,22 @@ public interface Keys {
   @ValueHelp("The fraction of demanded surplus necessary for a benchmark agent to submit an order at bid or ask.")
   class BenchmarkThresh extends DoubleValue {
   }
+  
+  @ValueHelp("The fixed book depth level for training in deep RL.")
+  class ViewBookDepth extends IntValue {
+  }
+  
+  @ValueHelp("Determines if the agent's payoff from the benchmark will contribute to the deep RL reward, must be 0 or 1.")
+  class BenchmarkReward extends IntValue {
+  }
+  
+  @ValueHelp("Boolean value which determines whether the deep RL benchmark agent chooses its action by a policy or randomly.")
+  class PolicyAction extends BoolValue {
+  }
+  
+  @ValueHelp("Variance used when randomly selecting the price to submit for a deep RL benchmark agent's order.")
+  class RandomActionVar extends DoubleValue {
+  }
 
   // ------------
   // Market Maker
@@ -344,6 +360,7 @@ public interface Keys {
       .put(Thresh.class, 1d) // No threshold
       .put(BenchmarkThresh.class, 1d) // No threshold
       .put(ShareEstimates.class, false) // Don't share estimates unless explicit
+      .put(PolicyAction.class, false) // Randomly generate action
       .build();
 
 }

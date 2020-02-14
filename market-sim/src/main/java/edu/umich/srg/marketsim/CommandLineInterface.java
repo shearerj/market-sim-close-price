@@ -108,7 +108,10 @@ public class CommandLineInterface extends CommandLineOptions {
     for (PlayerInfo info : playerInfo) {
       AgentInfo pays = payoffs.get(info.agent);
       info.payoff = pays.getProfit();
+      System.out.println(6666666);
+  	  System.out.println(info.payoff);
       info.features = info.agent.getFeatures();
+      //add final rl obs here
       info.features.addProperty("holdings", pays.getHoldings());
       info.features.addProperty("holdings_abs", Math.abs(pays.getHoldings()));
     }

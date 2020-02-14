@@ -11,6 +11,7 @@ import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
 import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -59,6 +60,14 @@ public interface Market {
     double getProfit();
 
     int getHoldings();
+    
+    double getCurrentBenchmark();
+    
+    int getCurrentNumTransactions();
+    
+    ArrayList<Price> getBidVector();
+    
+    ArrayList<Price> getAskVector();
 
     // TODO Add last transaction price, maybe notification
 

@@ -17,6 +17,7 @@ import edu.umich.srg.collect.SetViews;
 import edu.umich.srg.util.Optionals;
 
 import java.util.AbstractCollection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -273,6 +274,37 @@ public class FourHeap<P, O extends IOrder<P>> extends AbstractCollection<O> impl
     return Stream.of(sin, bout1, bout2).filter(Optional::isPresent).map(Optional::get).min(buyPrice)
         .map(k -> k.price);
   }
+  
+  /**
+   * return the first visible bid price level based on k and binSize
+   * @return
+   */
+  public ArrayList<P> getBidVector() {
+    ArrayList<P> bidVector = new ArrayList<>();
+    OrderQueue popSet = new OrderQueue(buyKey);
+    while (!buyUnmatched.isEmpty()) {
+      Map.Entry<FourHeap<P, O>.Key, Multiset<O>> current = buyUnmatched.pollEntry();
+      P currentPrice = current.getKey().price;
+      bidVector.add(currentPrice);
+      if (!popSet.addAll(current.getValue())) {
+        System.err.println("bug in buyUnmatched adding back");
+      }
+
+      Optional<FourHeap<P, O>.Key> next = buyUnmatched.peekKey();
+      // price level
+      //while (next != null && (next.price).equals(currentPrice)) {
+      while (next.isPresent() && next.get().price.equals(currentPrice)) {
+        if (!popSet.addAll(buyUnmatched.pollEntry().getValue())) {
+          System.err.println("bug in buyUnmatched adding back");
+        }
+        next = buyUnmatched.peekKey();
+      }
+    }
+    buyUnmatched.addAll(popSet);
+    return bidVector;
+  }
+
+
 
   /**
    * Returns the ask quote for the fourheap. A buy order with a price above this is guaranteed to
@@ -286,6 +318,37 @@ public class FourHeap<P, O extends IOrder<P>> extends AbstractCollection<O> impl
     return Stream.of(bin, sout1, sout2).filter(Optional::isPresent).map(Optional::get)
         .min(sellPrice).map(k -> k.price);
   }
+  
+  /**
+   * return the first visible ask price level based on k and binSize
+   * 
+   * @param k
+   * @return
+   */
+  public ArrayList<P> getAskVector() {
+    ArrayList<P> askVector = new ArrayList<>();
+    OrderQueue popSet = new OrderQueue(sellKey);
+    while (!sellUnmatched.isEmpty()) {
+    	Map.Entry<FourHeap<P, O>.Key, Multiset<O>> current = sellUnmatched.pollEntry();
+      P currentPrice = current.getKey().price;
+      askVector.add(currentPrice);
+      if (!popSet.addAll(current.getValue())) {
+        System.err.println("bug in sellUnmatched adding back");
+      }
+
+      Optional<FourHeap<P, O>.Key> next = sellUnmatched.peekKey();
+      // if next order is in the bin, continue to hide
+      while (next.isPresent() && next.get().price.equals(currentPrice)) {
+        if (!popSet.addAll(sellUnmatched.pollEntry().getValue())) {
+          System.err.println("bug in sellUnmatched adding back");
+        }
+        next = sellUnmatched.peekKey();
+      }
+    }
+    sellUnmatched.addAll(popSet);
+    return askVector;
+  }
+
 
   private Stream<OrderQueue> queueStream() {
     return Stream.of(buyUnmatched, buyMatched, sellUnmatched, sellMatched);

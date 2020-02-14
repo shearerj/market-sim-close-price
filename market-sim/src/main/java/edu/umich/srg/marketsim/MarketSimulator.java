@@ -117,11 +117,11 @@ public class MarketSimulator implements Sim {
         aContractHoldings = agent.getContractHoldings();
         SimAgentInfo info = e.getValue();
         info.profit += info.holdings * fundamentalValue;
-        info.profit += aBenchDir * aContractHoldings * benchmark;
         OrderType direction = info.holdings > 0 ? BUY : SELL;
         for (int pos = 0; pos != info.holdings; pos += direction.sign()) {
           info.profit += agent.payoffForExchange(pos, direction);
         }
+        info.profit += aBenchDir * aContractHoldings * benchmark;
       }
     }
     return agentPayoffs;

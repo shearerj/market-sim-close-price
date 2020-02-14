@@ -93,12 +93,6 @@ public abstract class ASimpleAgent implements Agent {
     this.fundamentalError = SummStats.empty();
   }
 
-  protected abstract double getDesiredSurplus();
-
-  protected abstract double getFinalFundamentalEstiamte();
-
-  protected abstract String name();
-
   private void scheduleNextArrival() {
     sim.scheduleIn(TimeStamp.of(1 + arrivalDistribution.sample(rand)), this::strategy);
   }
@@ -110,6 +104,10 @@ public abstract class ASimpleAgent implements Agent {
     double finalEstimate = getFinalFundamentalEstiamte();
     fundamentalError.accept(Math.pow(finalEstimate - finalFundamental, 2));
     double demandedSurplus = getDesiredSurplus();
+    
+    for(int i=0; i<market.getAskVector().size();i++) {
+    	//System.out.println(market.getAskVector().get(i).doubleValue());
+    }
 
     for (OrderType type : sides) {
       for (int num = 0; num < ordersPerSide; num++) {
@@ -119,6 +117,7 @@ public abstract class ASimpleAgent implements Agent {
               * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
           double estimatedValue = finalEstimate + privateBenefit;
 
+          demandedSurplus -= type.sign() * getBenchmarkImpact();
           double toSubmit =
               threshold.shadePrice(type, quoteInfo.getQuote(), estimatedValue, demandedSurplus);
           if (toSubmit < 0) { // Hacky patch to stop submiting
@@ -157,14 +156,27 @@ public abstract class ASimpleAgent implements Agent {
     return feats;
   }
   
+ 
+  protected abstract double getDesiredSurplus();
+  
+  protected abstract int getBenchmarkImpact();
+
+  protected abstract double getFinalFundamentalEstiamte();
+
+  protected abstract String name();
+  
+  protected abstract int benchmarkDirection();
+  
+  protected abstract double benchmarkHoldings();
+  
   @Override
   public int getBenchmarkDir() {
-	  return 0;
+	return benchmarkDirection();
   }
   
   @Override
   public double getContractHoldings() {
-	  return 0;
+	return benchmarkHoldings();
   }
 
   @Override

@@ -72,7 +72,9 @@ public class Benchmark {
 			price = p.getValue().intValue();
 			p_only.add(price);
 			count += 1;
+			System.out.println(price);
 		}
+		System.out.println(count);
 		Collections.sort(p_only);
 		if (count > 0) {
 			if (count % 2 == 1) {

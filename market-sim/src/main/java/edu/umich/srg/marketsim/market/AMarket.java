@@ -19,6 +19,7 @@ import edu.umich.srg.fourheap.IOrder;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.fourheap.Selector;
+//import edu.umich.srg.fourheap.FourHeap.OrderQueue;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -41,6 +42,7 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
+//import java.util.stream.Stream;
 
 /**
  * Base class for all markets. This class provides almost all market functionality that one should
@@ -78,6 +80,7 @@ abstract class AMarket implements Market, Serializable {
   // Benchmark
   private final Benchmark benchType;
   private double benchmark;
+  private int num_transactions;
 
   AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector, String benchmarkType) {
     this.sim = sim;
@@ -104,6 +107,7 @@ abstract class AMarket implements Market, Serializable {
     this.askDepth = SummStats.empty();
     this.benchType = Benchmark.create(benchmarkType);
     this.benchmark = 0;
+    this.num_transactions = 0;
   }
 
   AOrder submitOrder(AMarketView submitter, OrderType buyOrSell, Price price, int quantity) {
@@ -119,11 +123,12 @@ abstract class AMarket implements Market, Serializable {
   @Override
   public void clear() {
     Collection<MatchedOrders<Price, AOrder>> matches = orderbook.marketClear();
+    num_transactions = num_transactions + matches.size();
     for (Entry<MatchedOrders<Price, AOrder>, Price> pricedTrade : pricing.apply(matches)) {
 
       MatchedOrders<Price, AOrder> matched = pricedTrade.getKey();
       Price price = pricedTrade.getValue();
-
+      
       // Notify buyer
       AOrder buy = matched.getBuy();
       buy.submitter.transacted(buy, price, matched.getQuantity());
@@ -151,6 +156,7 @@ abstract class AMarket implements Market, Serializable {
       priceDiff.accept(diff);
     }
     benchmark = benchType.calcBenchmark(prices);
+
   }
 
   void updateQuote() {
@@ -345,12 +351,31 @@ abstract class AMarket implements Market, Serializable {
     public int getTrueVolume() {
       return volume;
     }
+    
+    @Override
+    public double getCurrentBenchmark() {
+        return benchmark;
+    }
+    
+    @Override
+    public int getCurrentNumTransactions() {
+    	return num_transactions;
+    }
+    
+    @Override
+    public ArrayList<Price> getBidVector() {
+    	return orderbook.getBidVector();
+    }
+    
+    @Override
+    public ArrayList<Price> getAskVector() {
+    	return orderbook.getAskVector();
+    }
 
     @Override
     public Multiset<OrderRecord> getActiveOrders() {
       return Multisets.unmodifiableMultiset(orders);
     }
-
 
     @Override
     public int getQuantity(OrderRecord record) {
@@ -493,6 +518,26 @@ abstract class AMarket implements Market, Serializable {
     @Override
     public int getTrueVolume() {
       return volume;
+    }
+    
+    @Override
+    public double getCurrentBenchmark() {
+    	return benchmark;
+    }
+    
+    @Override
+    public int getCurrentNumTransactions() {
+    	return num_transactions;
+    }
+    
+    @Override
+    public ArrayList<Price> getBidVector() {
+    	return orderbook.getBidVector();
+    }
+    
+    @Override
+    public ArrayList<Price> getAskVector() {
+    	return orderbook.getAskVector();
     }
 
     @Override

@@ -161,7 +161,7 @@ public class BenchmarkAgent implements Agent {
 	              * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
 	          double estimatedValue = finalEstimate + privateBenefit;
 
-	          int impact = benchmarkDir * benchmarkImpact; //Does it make sense to also multiply by holdings?
+	          int impact = benchmarkDir * benchmarkImpact;
 	          double toSubmit =
 	              threshold.benchPrice(type, quoteInfo.getQuote(), estimatedValue, demandedSurplus, impact);
 	          if (toSubmit < 0) { // Hacky patch to stop submiting
