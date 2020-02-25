@@ -84,7 +84,8 @@ def main():
     if 'randomseed' in keys:
         seed = int(conf['configuration'][keys['randomseed']])
         rand.seed(seed)
-     
+    
+    #potentially move this to each step even in warm up, rewrite each time
     try:
         samp = {role:
                 {strat: int(count) for strat, count
@@ -119,19 +120,39 @@ def main():
 
 
     print("made it to ddpg!")
-    print(replay_buffer[4])
+    assert np.array(replay_buffer[0]['state0']).size == np.array(replay_buffer[0]['state1']).size,"First state0 != state1 length."
+    assert np.array(replay_buffer[0]['state0']).size == np.array(replay_buffer[len(replay_buffer)-1]['state0']).size,"First state0 != last state0 length."
+    assert np.array(replay_buffer[len(replay_buffer)-1]['state0']).size == np.array(replay_buffer[len(replay_buffer)-1]['state1']).size,"Last state0 != state1 length."
+    assert np.array(replay_buffer[0]['action']).size == np.array(replay_buffer[len(replay_buffer)-1]['action']).size,"First action != last action length."
+    nb_states = np.array(replay_buffer[0]['state0']).size
+    nb_actions = np.array(replay_buffer[0]['action']).size
+
     if args.seed > 0:
         np.random.seed(args.seed)
-    nb_states = env.observation_space.shape[0] #size of state space
-    nb_actions = env.action_space.shape[0] # size of action space
     agent = DDPG(nb_states, nb_actions, args)
 
+    bsize = args.bsize
+    print(len(replay_buffer))
+    assert bsize <= len(replay_buffer), "Mini batch is bigger than replay buffer."
+
     for i in range(args.training_steps):
-        # k is the size of the mini batch
-        mini_batch = random.choices(replay_buffer, k=2)
-        # convert mini batch into np.array where (k, -1), separate state0, action, reward, state1, terminal
+        mini_batch = random.choices(replay_buffer, k=bsize)
+        state0_batch = np.empty((bsize,nb_states))
+        state1_batch = np.empty((bsize,nb_states))
+        action_batch = np.empty((bsize,nb_actions))
+        term_batch = np.empty((bsize,1))
+        reward_batch = np.empty((bsize,1))
+        for j, ob in enumerate(mini_batch):
+            state0_batch[j,:] = np.array(ob['state0'])
+            state1_batch[j,:] = np.array(ob['state1'])
+            action_batch[j,:] = np.array(ob['action']['price'])
+            term_batch[j,:] = np.array(ob['terminal'])
+            reward_batch[j,:] = np.array(ob['reward'])
         
-        agent.update_policy()
+        agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
+
+        # get weights and bias for policy actions
+        # create new config file where update policy action to true, and feed in weights etc
 
         os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > drl_out.json")
         with open('drl_out.json') as json_file:
@@ -150,8 +171,8 @@ def main():
             replay_buffer = replay_buffer[begin_buffer:len(replay_buffer)]
             curr_arrivals = curr_arrivals - begin_buffer
 
-    for i, ob in enumerate(replay_buffer):
-        json.dump(ob, replay_buffer_file)
+    #for i, ob in enumerate(replay_buffer):
+        #json.dump(ob, replay_buffer_file)
 
 
 if __name__ == '__main__':

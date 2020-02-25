@@ -11,6 +11,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<jython.version>2.7.1</jython.version>
 	</properties>
 
 	<dependencies>
@@ -20,6 +21,12 @@
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 			<scope>test</scope>
+		</dependency>
+		<!-- Python -->
+		<dependency>
+    		<groupId>org.python</groupId>
+    		<artifactId>jython-standalone</artifactId>
+    		<version>2.7.0</version>
 		</dependency>
 		<!-- Collections -->
 		<dependency>

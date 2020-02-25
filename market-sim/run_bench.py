@@ -5,7 +5,7 @@ from benchmark import vwap
 
 #os.system('make jar')
 
-seed = 500
+#seed = 500
 benchmarkProp = 1
 
 with open('resources/constFundpInfo.json', 'r') as f:
