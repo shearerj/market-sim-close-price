@@ -1,0 +1,20 @@
+
+python3 run_market_sim.py -c run_scripts/drl_config.json -m profiles/zib_test.json -n 10 -s False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

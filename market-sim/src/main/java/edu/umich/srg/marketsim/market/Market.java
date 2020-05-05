@@ -65,6 +65,8 @@ public interface Market {
     
     int getCurrentNumTransactions();
     
+    List<Entry<TimeStamp, Price>> getCurrentTransactions();
+    
     ArrayList<Price> getBidVector();
     
     ArrayList<Price> getAskVector();

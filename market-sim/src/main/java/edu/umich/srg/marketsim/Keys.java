@@ -169,6 +169,10 @@ public interface Keys {
   class ViewBookDepth extends IntValue {
   }
   
+  @ValueHelp("The fixed length of obsevable transactions for training in deep RL.")
+  class TransactionDepth extends IntValue {
+  }
+  
   @ValueHelp("Determines if the agent's payoff from the benchmark will contribute to the deep RL reward, must be 0 or 1.")
   class BenchmarkReward extends IntValue {
   }
@@ -177,8 +181,22 @@ public interface Keys {
   class PolicyAction extends BoolValue {
   }
   
-  @ValueHelp("Variance used when randomly selecting the price to submit for a deep RL benchmark agent's order.")
-  class RandomActionVar extends DoubleValue {
+  @ValueHelp("Coefficient used when mapping actions from [1,1] to prices, used for Deep RL agent.")
+  class ActionCoefficient extends DoubleValue {
+  }
+  
+  @ValueHelp("The path for deep RL model when using policy-based action.")
+  class BenchmarkModelPath extends StringsValue {
+  }
+
+  
+  @ValueHelp("Size of state space.")
+  class NbStates extends IntValue {
+  }
+  
+  
+  @ValueHelp("Size of action space.")
+  class NbActions extends IntValue {
   }
 
   // ------------
@@ -361,6 +379,8 @@ public interface Keys {
       .put(BenchmarkThresh.class, 1d) // No threshold
       .put(ShareEstimates.class, false) // Don't share estimates unless explicit
       .put(PolicyAction.class, false) // Randomly generate action
+      .put(NbStates.class, 0) // Assign arbitrary number of states
+      .put(NbActions.class, 0) // Assign arbitrary number of actions
       .build();
 
 }

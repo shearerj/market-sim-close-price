@@ -6,8 +6,8 @@ import com.google.gson.JsonObject;
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.distributions.Uniform;
+import edu.umich.srg.distributions.Uniform.ContinuousUniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
-import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
@@ -24,12 +24,13 @@ import edu.umich.srg.marketsim.Keys.ShareEstimates;
 import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
-import edu.umich.srg.marketsim.Keys.Thresh;
-import edu.umich.srg.marketsim.Keys.ViewBookDepth;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.BenchmarkReward;
 import edu.umich.srg.marketsim.Keys.PolicyAction;
-import edu.umich.srg.marketsim.Keys.RandomActionVar;
+import edu.umich.srg.marketsim.Keys.ActionCoefficient;
+import edu.umich.srg.marketsim.Keys.BenchmarkModelPath;
+import edu.umich.srg.marketsim.Keys.NbStates;
+import edu.umich.srg.marketsim.Keys.NbActions;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -38,27 +39,27 @@ import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView;
 import edu.umich.srg.marketsim.fundamental.GaussianFundamentalView.GaussableView;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
-import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.observer.MarkovObserver;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SharedGaussianView;
-import edu.umich.srg.marketsim.strategy.SurplusThreshold;
 import edu.umich.srg.util.SummStats;
-import edu.umich.srg.marketsim.strategy.PythonPolicyAction;
+import edu.umich.srg.learning.StateSpace;
 
 import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
 import static java.math.RoundingMode.CEILING;
 import static java.math.RoundingMode.FLOOR;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -77,14 +78,11 @@ public class RLBenchmarkAgent implements Agent {
   protected final Random rand;
   private final int id;
   private final MarketView market;
-  private final GetQuoteObserver quoteInfo;
   private int maxPosition;
-  private final SurplusThreshold threshold;
   private PrivateValue privateValue;
   private final Geometric arrivalDistribution;
   private final Supplier<Set<OrderType>> side;
   private final int ordersPerSide;
-  private final Long timeHorizon;
 
   // Bookkeeping
   private final double finalFundamental;
@@ -97,11 +95,17 @@ public class RLBenchmarkAgent implements Agent {
   private final int benchmarkImpact;
   private final double contractHoldings;
   private final int benchmarkDir;
-  private final int bookDepth;
   private double prevBenchmark;
+  private double prevProfit;
   private final int benchmarkReward;
   private final boolean policyAction;
-  private final double randomActionVar;
+  private final double actionCoefficient;
+  private final String benchmarkModelPath;
+  private final int nbStates;
+  private final int nbActions;
+  
+  private final StateSpace stateSpace;
+  
   private Boolean firstArrival;
   
   private final double observationVar;
@@ -114,9 +118,7 @@ public class RLBenchmarkAgent implements Agent {
     this.sim = sim;
     this.id = rand.nextInt();
     this.market = market.getView(this, TimeStamp.ZERO);
-    this.quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     this.maxPosition = spec.get(MaxPosition.class);
-    this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
@@ -148,13 +150,16 @@ public class RLBenchmarkAgent implements Agent {
     this.benchmarkImpact = spec.get(BenchmarkImpact.class);
     this.contractHoldings = spec.get(ContractHoldings.class);
     this.benchmarkDir = spec.get(BenchmarkDir.class);
-    this.bookDepth = spec.get(ViewBookDepth.class);
     this.benchmarkReward = spec.get(BenchmarkReward.class);
     this.prevBenchmark = spec.get(FundamentalMean.class);
-    this.timeHorizon = spec.get(SimLength.class);
     this.observationVar = spec.get(FundamentalObservationVariance.class);
     this.policyAction = spec.get(PolicyAction.class);
-    this.randomActionVar = spec.get(RandomActionVar.class);
+    this.actionCoefficient = spec.get(ActionCoefficient.class);
+    this.benchmarkModelPath =spec.get(BenchmarkModelPath.class).iterator().next();
+    this.nbStates = spec.get(NbStates.class);
+    this.nbActions = spec.get(NbActions.class);
+    
+    this.stateSpace = StateSpace.create(this.sim,this.market,spec);
   
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
@@ -184,13 +189,13 @@ public class RLBenchmarkAgent implements Agent {
     ImmutableList.copyOf(market.getActiveOrders().entrySet()).forEach(market::withdrawOrder);
     
     JsonObject curr_obs = new JsonObject();
-    JsonArray state = this.stateSpace(false);
+    JsonArray state = this.stateSpace.getState(this.getFinalFundamentalEstiamte(), privateValue);
+    System.out.println(this.stateSpace.getStateSize());
     JsonObject action = new JsonObject();
 
     Set<OrderType> sides = side.get();
     double finalEstimate = getFinalFundamentalEstiamte();
     fundamentalError.accept(Math.pow(finalEstimate - finalFundamental, 2));
-    double demandedSurplus = getDesiredSurplus();
     
     double estProfit = market.getProfit();
     int market_h = market.getHoldings();
@@ -207,7 +212,36 @@ public class RLBenchmarkAgent implements Agent {
 	            * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
 	        double estimatedValue = finalEstimate + privateBenefit;
 	
-	        double toSubmit = PythonPolicyAction();
+	        double alpha;
+	        //System.out.println(state.size());
+	        try {
+				FileWriter stateFile = new FileWriter("temp_state.json");
+				JsonObject curr_state = new JsonObject();
+				curr_state.add("state0", state);
+				stateFile.write(curr_state.toString());
+				stateFile.close();
+				
+				//double toSubmit = PythonPolicyAction();
+				 
+				ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p","run_scripts/drl_param.json",
+						"-f","temp_state.json","-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,"-a",""+this.nbActions);
+				//		"-f","temp_state.json","-m",""+drl_model,"-s",""+nb_states,"-a",""+nb_actions);
+				Process p = pb.start();
+				 
+				BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+				alpha = new Double(in.readLine()).doubleValue();
+	  	        
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				ContinuousUniform actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
+	  	        alpha = actionsToSubmit.sample(rand);
+			}
+	        
+  	        //System.out.println(alpha);
+  	        int alpha_sign = 1;
+  	        if (alpha < 0) {alpha_sign = -1;};
+  	        double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(alpha);
 	        if (toSubmit < 0) { // Hacky patch to stop submitting
 	          continue;
 	        }
@@ -218,7 +252,7 @@ public class RLBenchmarkAgent implements Agent {
 	          market.submitOrder(type, Price.of(rounded), 1);
 	            
 	          //action.addProperty("side", type.sign());
-	          action.addProperty("price", rounded);
+	          action.addProperty("price", alpha);
 	        }
 	      }
 	    }
@@ -226,12 +260,15 @@ public class RLBenchmarkAgent implements Agent {
   	    for (int num = 0; num < ordersPerSide; num++) {
   	      if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
   	
-  	        double privateBenefit = type.sign()
-  	            * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
-  	        double estimatedValue = finalEstimate + privateBenefit;
+  	        //double privateBenefit = type.sign()
+  	        //    * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
+  	        //double estimatedValue = finalEstimate + privateBenefit;
   	        
-  	        Gaussian pricesToSubmit = Gaussian.withMeanVariance(estimatedValue, this.randomActionVar);
-  	        double toSubmit = pricesToSubmit.sample(rand);
+  	        ContinuousUniform actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
+  	        double alpha = actionsToSubmit.sample(rand);
+  	        int alpha_sign = 1;
+  	        if (alpha < 0) {alpha_sign = -1;};
+  	        double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(alpha);
   	        if (toSubmit < 0) { // Hacky patch to stop submiting
   	          continue;
   	        }
@@ -243,7 +280,7 @@ public class RLBenchmarkAgent implements Agent {
   	          //orderSign = type.sign();
   	            
   	          //action.addProperty("side", type.sign());
-  	          action.addProperty("price", rounded);  	            
+  	          action.addProperty("price", alpha);  	            
   	        }
   	      }
   	    }
@@ -265,6 +302,9 @@ public class RLBenchmarkAgent implements Agent {
         firstArrival = false;
       } else {
         double benchDiff = currBenchmark - this.prevBenchmark;
+        //double profitDiff = estProfit - this.prevProfit;
+        //profitDiff += (benchDiff * this.benchmarkReward * this.benchmarkDir);
+        //this.prev_obs.addProperty("reward", profitDiff);
         estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
         this.prev_obs.addProperty("reward", estProfit);
         this.rl_observations.add(prev_obs);
@@ -276,103 +316,11 @@ public class RLBenchmarkAgent implements Agent {
     //rl_observations.add(curr_obs);
     
     this.prevBenchmark = currBenchmark;
+    this.prevProfit = estProfit;
     this.prev_obs = curr_obs;
 
     scheduleNextArrival();
   }
-  
-  protected final JsonArray stateSpace(Boolean terminal) {
-	JsonArray state = new JsonArray();
-	
-	double finalEstimate;
-	if(terminal) {
-		finalEstimate = this.finalFundamental;
-	}
-	else {
-		finalEstimate = this.getFinalFundamentalEstiamte();
-	}
-    state.add(finalEstimate);
-    
-	ArrayList<Price> bid_vector = market.getBidVector();
-    ArrayList<Price> ask_vector = market.getAskVector();
-    state.add(bid_vector.size());
-    state.add(ask_vector.size());
-    if (bid_vector.size() >= this.bookDepth) {
-    	bid_vector = new ArrayList<Price>(bid_vector.subList(0, this.bookDepth));
-    }
-    
-    else {
-    	Price dummy_bid = Price.of(finalEstimate - 3 * Math.sqrt(this.observationVar));
-    	
-    	//Super hacky way to force dummy bid to be less than the lowest bid present. 0.3% chance this is ever used though
-    	if (bid_vector.size() > 0) {
-    		if (dummy_bid.compareTo(bid_vector.get(bid_vector.size()-1)) > 0) {
-    			dummy_bid = Price.of(bid_vector.get(bid_vector.size()-1).longValue() - 100);
-    		}
-    	}
-    	for(int i=bid_vector.size(); i<this.bookDepth;i++) {
-    		bid_vector.add(i, dummy_bid);
-    	}
-    }
-    if (ask_vector.size() >= this.bookDepth) {
-    	ask_vector = new ArrayList<Price>(ask_vector.subList(0, this.bookDepth));
-    }
-    else {
-    	Price dummy_ask = Price.of(finalEstimate + 3 * java.lang.Math.sqrt(this.observationVar));
-    	//Super hacky way to force dummy ask to be greater than the highest bid present. 0.3% chance this is ever used though
-    	if (ask_vector.size() > 0) {
-    		if (dummy_ask.compareTo(ask_vector.get(ask_vector.size()-1)) < 0) {
-    			dummy_ask = Price.of(ask_vector.get(ask_vector.size()-1).longValue() + 100);
-    		}
-    	}
-    	for(int i=ask_vector.size(); i<this.bookDepth;i++) {
-    		ask_vector.add(i, dummy_ask);
-    	}
-    }
-    
-    for(int i = bid_vector.size() - 1; i>=0; i--) {
-    	state.add(bid_vector.get(i).doubleValue());
-    }
-    for(int i = 0; i< ask_vector.size(); i++) {
-    	state.add(ask_vector.get(i).doubleValue());
-    }
-    
-    int num_transactions = market.getCurrentNumTransactions();
-    state.add(num_transactions);
-    
-    int contract_h = this.benchmarkDir * this.benchmarkImpact;
-    state.add(contract_h);
-    
-    //.getView(this, TimeStamp.ZERO)
-    int market_h = market.getHoldings();
-    state.add(market_h);
-    
-    double privateBidBenefit;
-    double privateAskBenefit;
-    if (Math.abs(market_h + OrderType.BUY.sign()) <= this.maxPosition) {
-        privateBidBenefit = OrderType.BUY.sign()
-            * this.privateValue.valueForExchange(market_h + OrderType.BUY.sign(), OrderType.BUY);
-    }
-    else {
-    	privateBidBenefit = 0; //Dummy variable
-    }
-    if (Math.abs(market_h + OrderType.SELL.sign()) <= this.maxPosition) {
-        privateAskBenefit = OrderType.SELL.sign()
-            * this.privateValue.valueForExchange(market_h + OrderType.SELL.sign(), OrderType.SELL);
-    }
-    else {
-    	privateAskBenefit = 0; //Dummy variable
-    }
-    state.add(privateBidBenefit);
-    state.add(privateAskBenefit);
-    
-    long timeTilEnd = this.timeHorizon - sim.getCurrentTime().get();
-    state.add(timeTilEnd);
-    
-    return state;
-  }
-  
-  
 
   @Override
   public final void initilaize() {
@@ -407,12 +355,16 @@ public class RLBenchmarkAgent implements Agent {
 
 	double finalBenchmark = market.getCurrentBenchmark();
 	double benchDiff = finalBenchmark - this.prevBenchmark;
+	//double profitDiff = estProfit - this.prevProfit;
+    //profitDiff += (benchDiff * this.benchmarkReward * this.benchmarkDir);
     estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
-    
-    JsonArray state = this.stateSpace(true);
+   
+    JsonArray state = this.stateSpace.getState(this.finalFundamental, privateValue);
+    System.out.println(this.stateSpace.getStateSize());
     state.add(0);
     this.prev_obs.add("state1", state);
     this.prev_obs.addProperty("terminal", 1);
+    //this.prev_obs.addProperty("reward", profitDiff);
     this.prev_obs.addProperty("reward", estProfit);
     this.rl_observations.add(prev_obs);
   }

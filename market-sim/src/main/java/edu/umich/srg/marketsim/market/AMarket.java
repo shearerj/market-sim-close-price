@@ -363,6 +363,11 @@ abstract class AMarket implements Market, Serializable {
     }
     
     @Override
+    public List<Entry<TimeStamp, Price>> getCurrentTransactions() {
+    	return prices;
+    }
+    
+    @Override
     public ArrayList<Price> getBidVector() {
     	return orderbook.getBidVector();
     }
@@ -528,6 +533,11 @@ abstract class AMarket implements Market, Serializable {
     @Override
     public int getCurrentNumTransactions() {
     	return num_transactions;
+    }
+    
+    @Override
+    public List<Entry<TimeStamp, Price>> getCurrentTransactions() {
+    	return prices;
     }
     
     @Override
