@@ -43,7 +43,7 @@ def create_parser():
 
     return parser
 
-def writeConfigFile(conf, role_info, nb_states, nb_actions, policy_action):
+def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy_action):
     try:
         samp = {role:
                 {strat: int(count) for strat, count
@@ -55,6 +55,7 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, policy_action):
             conf['configuration']['policyAction'] = 'true'
             conf['configuration']['nbStates'] = nb_states
             conf['configuration']['nbActions'] = nb_actions
+            conf['configuration']['benchmarkModelPath'] = model_folder
         else:
             conf['configuration']['policyAction'] = 'false'
         conf_f= open("run_scripts/drl_conf.json","w")
