@@ -200,7 +200,6 @@ public class RLBenchmarkAgent implements Agent {
     double estProfit = market.getProfit();
     int market_h = market.getHoldings();
     double currBenchmark = market.getCurrentBenchmark();
-    int num_transactions = market.getCurrentNumTransactions();
     
     for (OrderType type : sides) {
       state.add(type.sign());
@@ -258,12 +257,7 @@ public class RLBenchmarkAgent implements Agent {
 	    }
 	  } else {
   	    for (int num = 0; num < ordersPerSide; num++) {
-  	      if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
-  	
-  	        //double privateBenefit = type.sign()
-  	        //    * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
-  	        //double estimatedValue = finalEstimate + privateBenefit;
-  	        
+  	      if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {  	        
   	        ContinuousUniform actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
   	        double alpha = actionsToSubmit.sample(rand);
   	        int alpha_sign = 1;
@@ -273,12 +267,9 @@ public class RLBenchmarkAgent implements Agent {
   	          continue;
   	        }
   	        long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
-  	        //Optional<Price> marketPrice = type == BUY ? quoteInfo.getQuote().getAskPrice() : quoteInfo.getQuote().getBidPrice();
   	
   	        if (rounded > 0) {
   	          market.submitOrder(type, Price.of(rounded), 1);
-  	          //orderSign = type.sign();
-  	            
   	          //action.addProperty("side", type.sign());
   	          action.addProperty("price", alpha);  	            
   	        }
@@ -292,7 +283,6 @@ public class RLBenchmarkAgent implements Agent {
     prev_obs.add("state1", state);
     prev_obs.addProperty("terminal", 0);
     
-    estProfit += market_h * finalEstimate;
     OrderType direction = market_h > 0 ? BUY : SELL;
     for (int pos = 0; pos != market_h; pos += direction.sign()) {
     	estProfit += this.payoffForExchange(pos, direction);
@@ -302,11 +292,11 @@ public class RLBenchmarkAgent implements Agent {
         firstArrival = false;
       } else {
         double benchDiff = currBenchmark - this.prevBenchmark;
-        //double profitDiff = estProfit - this.prevProfit;
-        //profitDiff += (benchDiff * this.benchmarkReward * this.benchmarkDir);
-        //this.prev_obs.addProperty("reward", profitDiff);
-        estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
-        this.prev_obs.addProperty("reward", estProfit);
+        double profitDiff = estProfit - this.prevProfit;
+        profitDiff += (benchDiff * this.benchmarkReward * this.benchmarkDir);
+        this.prev_obs.addProperty("reward", profitDiff);
+        //estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
+        //this.prev_obs.addProperty("reward", estProfit);
         this.rl_observations.add(prev_obs);
       }
     //double benchDiff = orderSign * (currBenchmark - this.prevBenchmark);
@@ -347,7 +337,6 @@ public class RLBenchmarkAgent implements Agent {
   private void finalRlObs() {
 	double estProfit = market.getProfit();
 	int market_h = market.getHoldings();
-	estProfit += market_h * this.finalFundamental;
     OrderType direction = market_h > 0 ? BUY : SELL;
     for (int pos = 0; pos != market_h; pos += direction.sign()) {
     	estProfit += this.payoffForExchange(pos, direction);
@@ -355,9 +344,9 @@ public class RLBenchmarkAgent implements Agent {
 
 	double finalBenchmark = market.getCurrentBenchmark();
 	double benchDiff = finalBenchmark - this.prevBenchmark;
-	//double profitDiff = estProfit - this.prevProfit;
-    //profitDiff += (benchDiff * this.benchmarkReward * this.benchmarkDir);
-    estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
+	double profitDiff = estProfit - this.prevProfit;
+    profitDiff += (benchDiff * this.benchmarkReward * this.benchmarkDir);
+    //estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
    
     JsonArray state = this.stateSpace.getState(this.finalFundamental, privateValue);
     System.out.println(this.stateSpace.getStateSize());

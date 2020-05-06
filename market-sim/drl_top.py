@@ -16,7 +16,7 @@ import torch
 from pytorch_ddpg.ddpg import DDPG
 from pytorch_ddpg.util import *
 
-from run_scripts.mse import getDataList, getStats
+from mse import getDataList, getStats
 
 
 def create_parser():
@@ -89,7 +89,7 @@ def main():
 
     while curr_arrivals < warmup:
         # Generate new mixed strategies for agents
-        writeConfigFile(conf, role_info, 0,0, False)
+        writeConfigFile(conf, role_info, 0, 0, model_folder, False)
 
         os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > drl_out.json")
         with open('drl_out.json') as json_file:
@@ -153,7 +153,7 @@ def main():
             # create new config file where update policy action to true, and feed in weights etc
 
             # Generate new mixed strategies for agents
-            writeConfigFile(conf, role_info, nb_states, nb_actions, True)
+            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, True)
 
             os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > train_out.json")
             with open('train_out.json') as json_file:
@@ -181,7 +181,7 @@ def main():
     stats = []
     testing_steps = int(drl_args["testingSteps"])
     for i in range(testing_steps):
-        writeConfigFile(conf, role_info, nb_states, nb_actions, True)
+        writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, True)
         os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > test_out.json")
         #os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c  '(.players[]), (.features) ' > test_out.json")
         with open('test_out.json') as f:
