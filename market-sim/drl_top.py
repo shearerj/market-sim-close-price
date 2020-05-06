@@ -124,6 +124,11 @@ def main():
     print(len(replay_buffer))
     assert bsize <= len(replay_buffer), "Mini batch is bigger than replay buffer."
 
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
+        with open(".gitignore", "a") as ignore_file:
+            ignore_file.write('\n/'+model_folder+'/*')
+
     training_steps = int(drl_args["trainingSteps"])
     for i in range(training_steps):
         print("Training step "+str(i))
@@ -144,8 +149,6 @@ def main():
         for j in range(int(drl_args["updateSteps"])):
             agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
 
-        if not os.path.exists(model_folder):
-            os.makedirs(model_folder)
         agent.save_model(model_folder)
 
         if i < training_steps - 1:

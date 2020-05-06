@@ -349,7 +349,6 @@ public class RLBenchmarkAgent implements Agent {
     //estProfit += (benchDiff * this.benchmarkReward * this.benchmarkDir);
    
     JsonArray state = this.stateSpace.getState(this.finalFundamental, privateValue);
-    System.out.println(this.stateSpace.getStateSize());
     state.add(0);
     this.prev_obs.add("state1", state);
     this.prev_obs.addProperty("terminal", 1);
