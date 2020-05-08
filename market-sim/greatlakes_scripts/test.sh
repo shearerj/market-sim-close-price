@@ -12,6 +12,7 @@
 #SBATCH --account=wellman1
 #SBATCH --partition=standard
 
+cd ../
 python3 drl_top.py -c run_scripts/HSLN_drl.json -m profiles/mani_HSLN_drl.json  -p run_scripts/drl_param.json -f test_model -o test_gl_out.txt
 
 echo $1
