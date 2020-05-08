@@ -66,6 +66,7 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy
         pass
 
 def main():
+    os.system("touch test2.json")
     args = create_parser().parse_args()
     model_folder = args.model_folder
     output_file = args.output_file
@@ -87,10 +88,12 @@ def main():
     curr_arrivals = 0
     replay_buffer = []
 
+    os.system("touch test3.json")
     while curr_arrivals < warmup:
         # Generate new mixed strategies for agents
         writeConfigFile(conf, role_info, 0, 0, model_folder, False)
 
+        os.system("touch test4.json")
         os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > drl_out.json")
         with open('drl_out.json') as json_file:
                 feat = json.load(json_file)
