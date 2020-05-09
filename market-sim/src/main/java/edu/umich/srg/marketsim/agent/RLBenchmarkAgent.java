@@ -29,6 +29,7 @@ import edu.umich.srg.marketsim.Keys.BenchmarkReward;
 import edu.umich.srg.marketsim.Keys.PolicyAction;
 import edu.umich.srg.marketsim.Keys.ActionCoefficient;
 import edu.umich.srg.marketsim.Keys.BenchmarkModelPath;
+import edu.umich.srg.marketsim.Keys.BenchmarkParamPath;
 import edu.umich.srg.marketsim.Keys.NbStates;
 import edu.umich.srg.marketsim.Keys.NbActions;
 import edu.umich.srg.marketsim.Price;
@@ -101,6 +102,7 @@ public class RLBenchmarkAgent implements Agent {
   private final boolean policyAction;
   private final double actionCoefficient;
   private final String benchmarkModelPath;
+  private final String benchmarkParamPath;
   private final int nbStates;
   private final int nbActions;
   
@@ -156,6 +158,7 @@ public class RLBenchmarkAgent implements Agent {
     this.policyAction = spec.get(PolicyAction.class);
     this.actionCoefficient = spec.get(ActionCoefficient.class);
     this.benchmarkModelPath =spec.get(BenchmarkModelPath.class).iterator().next();
+    this.benchmarkParamPath =spec.get(BenchmarkParamPath.class).iterator().next();
     this.nbStates = spec.get(NbStates.class);
     this.nbActions = spec.get(NbActions.class);
     
@@ -222,7 +225,8 @@ public class RLBenchmarkAgent implements Agent {
 				
 				//double toSubmit = PythonPolicyAction();
 				 
-				ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p","run_scripts/drl_param.json",
+				ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p",""+this.benchmarkParamPath,
+				//ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p","run_scripts/drl_param.json",
 						"-f","temp_state.json","-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,"-a",""+this.nbActions);
 				//		"-f","temp_state.json","-m",""+drl_model,"-s",""+nb_states,"-a",""+nb_actions);
 				Process p = pb.start();

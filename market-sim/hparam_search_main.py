@@ -68,7 +68,7 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         job_name = f"{name}_{len(jobs)}"
         job = experiment_template
         model_folder_string = "HSLN_env1-"+str(len(jobs))
-        conf_file_string = "drl_env1/drl_param-"+str(len(jobs))+".json"
+        conf_file_string = "drl_param-"+str(len(jobs))+".json"
         out_file_string = "drl_env1/output-"+str(len(jobs))
         job += f" -f {model_folder_string} -p {conf_file_string} -o {out_file_string}"
         conf_file= open(conf_file_string,"w")

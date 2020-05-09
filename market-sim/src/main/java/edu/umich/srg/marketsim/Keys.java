@@ -188,6 +188,10 @@ public interface Keys {
   @ValueHelp("The path for deep RL model when using policy-based action.")
   class BenchmarkModelPath extends StringsValue {
   }
+  
+  @ValueHelp("The path for deep RL paramters when using policy-based action.")
+  class BenchmarkParamPath extends StringsValue {
+  }
 
   
   @ValueHelp("Size of state space.")

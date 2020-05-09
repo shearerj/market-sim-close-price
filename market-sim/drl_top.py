@@ -55,7 +55,6 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy
             conf['configuration']['policyAction'] = 'true'
             conf['configuration']['nbStates'] = nb_states
             conf['configuration']['nbActions'] = nb_actions
-            conf['configuration']['benchmarkModelPath'] = model_folder
         else:
             conf['configuration']['policyAction'] = 'false'
         conf_f= open("run_scripts/drl_conf.json","w")
@@ -68,8 +67,10 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy
 def main():
     args = create_parser().parse_args()
     model_folder = args.model_folder
+    env_folder = args.env_folder
     output_file = args.output_file
-    drl_args = json.load(args.drl_param_file)
+    drl_param_file = args.drl_param_file
+    drl_args = json.load(drl_param_file)
     conf = json.load(args.configuration)
     roles = conf.pop('roles')
     mix = json.load(args.mixture)
@@ -78,6 +79,8 @@ def main():
     conf['configuration']['actionCoefficient'] = drl_args['actionCoefficient']
     conf['configuration']['viewBookDepth'] = drl_args['viewBookDepth']
     conf['configuration']['transactionDepth'] = drl_args['transactionDepth']
+    conf['configuration']['benchmarkModelPath'] = model_folder
+    conf['configuration']['benchmarkParamPath'] = drl_param_file.name
 
     keys = {key.lower(): key for key in conf['configuration']}
     if 'randomseed' in keys:
