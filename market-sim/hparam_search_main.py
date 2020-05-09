@@ -83,13 +83,13 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         submission += f" {submit_template}"
         submission += f" \"{job}\""
         # Launch job.
-        #_, output = subprocess.getstatusoutput(submission)
-        #_, _, _, job_num = output.split(' ')
-        #dependencies[index % num_parallel] = job_num
-        #print(f"{job_num}: {submission}")
+        _, output = subprocess.getstatusoutput(submission)
+        _, _, _, job_num = output.split(' ')
+        dependencies[index % num_parallel] = job_num
+        print(f"{job_num}: {submission}")
         # Pause between submissions, to go easy on scheduler.
-        #time.sleep(1)
-        print(submission)
+        time.sleep(1)
+        #print(submission)
 
 def main():
     """ Runs hyperparameter search. """
