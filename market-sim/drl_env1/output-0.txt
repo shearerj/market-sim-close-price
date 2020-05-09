@@ -1,0 +1,24 @@
+ZI
+	mean: 34812.68521174864
+	total: 34812.68521174864
+	sd: 0.0
+Benchmark Manipulator
+	mean: 39938690.914822206
+	total: 39938690.914822206
+	sd: 0.0
+Benchmark Manipulator Market Performance
+	mean: -80466.22803493589
+	total: -80466.22803493589
+	sd: 0.0
+Benchmark Manipulator Benchmark Performance
+	mean: 40019157.14285714
+	total: 40019157.14285714
+	sd: 0.0
+Total Surplus
+	mean: 39973503.600033954
+	total: 39973503.600033954
+	sd: 0.0
+Market Surplus
+	mean: -45653.54282318801
+	total: -45653.54282318801
+	sd: 0.0

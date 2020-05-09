@@ -67,7 +67,6 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy
 def main():
     args = create_parser().parse_args()
     model_folder = args.model_folder
-    env_folder = args.env_folder
     output_file = args.output_file
     drl_param_file = args.drl_param_file
     drl_args = json.load(drl_param_file)
