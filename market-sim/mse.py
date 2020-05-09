@@ -86,34 +86,36 @@ def getDataList(data, num_agents):
         return zi, bm, bmM, ts, tsM, h_zi, ah_zi, h_bm, ah_bm, bmB
 
 def getStats(agents):
-		print('\tmean: ' + str(np.mean(agents)))
-		print('\ttotal: ' + str(np.sum(agents)))
-		print('\tsd: ' + str(np.std(agents)))
+        stats = '\tmean: ' + str(np.mean(agents)) + '\n'
+        stats += '\ttotal: ' + str(np.sum(agents)) + '\n'
+        stats += '\tsd: ' + str(np.std(agents)) + '\n'
+        return stats
+
 
 def main():
         file = sys.argv[1]
         num_agents = int(sys.argv[2])
         zi, bm, bmM, ts, tsM, h_zi, ah_zi, h_bm, ah_bm, bmB = getData(file, num_agents)
         print('ZI')
-        getStats(zi)
+        print(getStats(zi))
         print('Benchmark Manipulator')
-        getStats(bm)
+        print(getStats(bm))
         print('Benchmark Manipulator Market Performance')
-        getStats(bmM)
+        print(getStats(bmM))
         print('Benchmark Manipulator Benchmark Performance')
-        getStats(bmB)
+        print(getStats(bmB))
         print('Total Surplus')
-        getStats(ts)
+        print(getStats(ts))
         print('Market Surplus')
-        getStats(tsM)
+        print(getStats(tsM))
         print('ZI Holdings')
-        getStats(h_zi)
+        print(getStats(h_zi))
         print('ZI Abs Holdings')
-        getStats(ah_zi)
+        print(getStats(ah_zi))
         print('Benchmark Holdings')
-        getStats(h_bm)
+        print(getStats(h_bm))
         print('Benchmark Abs Holdings')
-        getStats(ah_bm)
+        print(getStats(ah_bm))
         
 
 

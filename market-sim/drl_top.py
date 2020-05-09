@@ -196,26 +196,37 @@ def main():
         for j,s in enumerate(lines):
             stats.append(s)
 
-    with open(output_file, "w") as output:
-        output.write(str(stats))
-    output.close()
-
     num_agents = 0
     for key,value in roles.items():
         num_agents += value
     zi, bm, bmM, ts, tsM, h_zi, ah_zi, h_bm, ah_bm, bmB = getDataList(stats,num_agents)
-    print('ZI')
-    getStats(zi)
-    print('Benchmark Manipulator')
-    getStats(bm)
-    print('Benchmark Manipulator Market Performance')
-    getStats(bmM)
-    print('Benchmark Manipulator Benchmark Performance')
-    getStats(bmB)
-    print('Total Surplus')
-    getStats(ts)
-    print('Market Surplus')
-    getStats(tsM)
+    print('ZI\n')
+    print(getStats(zi))
+    print('Benchmark Manipulator\n')
+    print(getStats(bm))
+    print('Benchmark Manipulator Market Performance\n')
+    print(getStats(bmM))
+    print('Benchmark Manipulator Benchmark Performance\n')
+    print(getStats(bmB))
+    print('Total Surplus\n')
+    print(getStats(ts))
+    print('Market Surplus\n')
+    print(getStats(tsM))
+
+    stats_condensed = 'ZI\n' + getStats(zi)
+    stats_condensed += 'Benchmark Manipulator\n' + getStats(bm)
+    stats_condensed += 'Benchmark Manipulator Market Performance\n' + getStats(bmM)
+    stats_condensed += 'Benchmark Manipulator Benchmark Performance\n' + getStats(bmB)
+    stats_condensed += 'Total Surplus\n' + getStats(ts)
+    stats_condensed += 'Market Surplus\n' +getStats(tsM)
+
+    with open(output_file + '.txt', "w") as output:
+        output.write(str(stats_condensed))
+    output.close()
+
+    with open(output_file + '_full.txt', "w") as output:
+        output.write(str(stats))
+    output.close()
 
     #for i, ob in enumerate(replay_buffer):
         #json.dump(ob, replay_buffer_file)
