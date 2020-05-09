@@ -60,6 +60,10 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
             continue
         else:
             submitted_jobs.add(config_hash)
+
+        hidden_layers = config.pop('hidden_layers')
+        config['hidden1'] = hidden_layers[0]
+        config['hidden2'] = hidden_layers[1]
         # Construct job string.
         job_name = f"{name}_{len(jobs)}"
         job = experiment_template
