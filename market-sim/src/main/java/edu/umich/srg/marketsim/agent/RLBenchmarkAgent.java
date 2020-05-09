@@ -190,7 +190,7 @@ public class RLBenchmarkAgent implements Agent {
     
     JsonObject curr_obs = new JsonObject();
     JsonArray state = this.stateSpace.getState(this.getFinalFundamentalEstiamte(), privateValue);
-    System.out.println(this.stateSpace.getStateSize());
+    //System.out.println(this.stateSpace.getStateSize());
     JsonObject action = new JsonObject();
 
     Set<OrderType> sides = side.get();
@@ -214,7 +214,7 @@ public class RLBenchmarkAgent implements Agent {
 	        double alpha;
 	        //System.out.println(state.size());
 	        try {
-				FileWriter stateFile = new FileWriter("temp_state.json");
+				FileWriter stateFile = new FileWriter("temp_state.json",false);
 				JsonObject curr_state = new JsonObject();
 				curr_state.add("state0", state);
 				stateFile.write(curr_state.toString());
@@ -283,6 +283,7 @@ public class RLBenchmarkAgent implements Agent {
     prev_obs.add("state1", state);
     prev_obs.addProperty("terminal", 0);
     
+    estProfit += market_h * finalEstimate;
     OrderType direction = market_h > 0 ? BUY : SELL;
     for (int pos = 0; pos != market_h; pos += direction.sign()) {
     	estProfit += this.payoffForExchange(pos, direction);
@@ -337,6 +338,7 @@ public class RLBenchmarkAgent implements Agent {
   private void finalRlObs() {
 	double estProfit = market.getProfit();
 	int market_h = market.getHoldings();
+	estProfit += market_h * this.finalFundamental;
     OrderType direction = market_h > 0 ? BUY : SELL;
     for (int pos = 0; pos != market_h; pos += direction.sign()) {
     	estProfit += this.payoffForExchange(pos, direction);

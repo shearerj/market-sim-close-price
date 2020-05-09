@@ -1,0 +1,30 @@
+{
+  "submit_template": "greatlakes_scripts/run.sh",
+  "experiment_template": "python3 drl_top.py -c drl_env1/ms_config.json -m drl_env1/profile.json  -p drl_env1/drl_param.json -f HSLN_env1 -o drl_env1/output.txt",
+  "name": "market_sim_drl_hparam_search",
+  "num_jobs": 200,
+  "num_parallel": 30,
+  "options": {
+    "bsize": [32, 64],
+    "warmup": [50,100],
+    "rmsize": [300, 1000, 3000, 10000],
+    "hidden_layers": [[40,30], [80, 60], [120, 90]],
+    "rate": [1e-3, 3e-3, 1e-4, 3e-4],
+    "prate": [1e-3, 3e-3, 1e-4, 3e-4],
+    "discount": [0.95,0.99],
+    "tau": [0.001,0.0001],
+    "ou_theta": [0.1, 0.15, 0.3],
+    "ou_sigma": [0.1,0.2,0.5],
+    "ou_mu": [0.0],
+    "init_w": [1e-3, 3e-3, 1e-4],
+    "epsilon": [10000,50000,100000],
+    "trainingSteps": [100],
+    "updateSteps": [1,10,20],
+    "testingSteps": [10000],
+
+    "actionCoefficient": [100,500,1000],
+    "viewBookDepth": [3,5,10],
+    "transactionDepth": [5,10,15]
+
+  }
+}

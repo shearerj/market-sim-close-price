@@ -1,0 +1,233 @@
+[
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -2699.3018241195477,
+    "features": {
+      "count_shading": 7,
+      "mean_shading": 421.42857142857144,
+      "arrivals": 7,
+      "mean_fundamental_error": 2378841.502907837
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 2218.500967059641,
+    "features": {
+      "count_shading": 1,
+      "mean_shading": 323,
+      "arrivals": 1,
+      "mean_fundamental_error": 2378839.686679418
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -287.36022674472406,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 680,
+      "arrivals": 3,
+      "mean_fundamental_error": 2378839.690171006
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 868.3333333333334,
+      "arrivals": 3,
+      "mean_fundamental_error": 2378839.4120438704
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 4430.238414001004,
+    "features": {
+      "count_shading": 7,
+      "mean_shading": 704.8571428571428,
+      "arrivals": 7,
+      "mean_fundamental_error": 2378773.1222970746
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "features": {
+      "count_shading": 7,
+      "mean_shading": 570.1428571428571,
+      "arrivals": 7,
+      "mean_fundamental_error": 2379037.401821721
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 4886.024782229851,
+    "features": {
+      "count_shading": 7,
+      "mean_shading": 281.9234714929979,
+      "arrivals": 7,
+      "mean_fundamental_error": 2374908.9998512906
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 590.6666666666666,
+      "arrivals": 3,
+      "mean_fundamental_error": 2378839.6866791784
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 3984.484258599894,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 563.3342665790502,
+      "arrivals": 3,
+      "mean_fundamental_error": 2378617.606587426
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -2333.6935157269277,
+    "features": {
+      "count_shading": 2,
+      "mean_shading": 375,
+      "arrivals": 2,
+      "mean_fundamental_error": 2378839.683328779
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -655.7475413798836,
+    "features": {
+      "count_shading": 2,
+      "mean_shading": 815,
+      "arrivals": 2,
+      "mean_fundamental_error": 2378991.3681375077
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 14495.484147948424,
+    "features": {
+      "count_shading": 5,
+      "mean_shading": 449.4,
+      "arrivals": 5,
+      "mean_fundamental_error": 2378839.6867692666
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 3141.064857586582,
+    "features": {
+      "count_shading": 6,
+      "mean_shading": 502.8333333333333,
+      "arrivals": 6,
+      "mean_fundamental_error": 2369829.597460268
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -1292.1296901332198,
+    "features": {
+      "count_shading": 4,
+      "mean_shading": 478,
+      "arrivals": 4,
+      "mean_fundamental_error": 2378814.9605126036
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -783.0757332977319,
+    "features": {
+      "count_shading": 10,
+      "mean_shading": 556.0999999999999,
+      "arrivals": 10,
+      "mean_fundamental_error": 2378715.635150103
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "features": {
+      "count_shading": 0,
+      "mean_shading": 0,
+      "arrivals": 0,
+      "mean_fundamental_error": 0
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 1989.0420768955676,
+    "features": {
+      "count_shading": 3,
+      "mean_shading": 418.6666666666667,
+      "arrivals": 3,
+      "mean_fundamental_error": 2441454.9643379715
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 1127,
+    "features": {
+      "count_shading": 4,
+      "mean_shading": 675.5,
+      "arrivals": 4,
+      "mean_fundamental_error": 2236125.815031042
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": 0,
+    "features": {
+      "count_shading": 1,
+      "mean_shading": 190,
+      "arrivals": 1,
+      "mean_fundamental_error": 2378839.686679418
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "b",
+    "payoff": 2401.1061241824527,
+    "features": {
+      "count_shading": 2,
+      "mean_shading": 459,
+      "arrivals": 2,
+      "mean_fundamental_error": 2378979.431525562
+    }
+  },
+  {
+    "role": "role",
+    "strategy": "m",
+    "payoff": -904.4184923938162,
+    "features": {
+      "count_shading": 5,
+      "mean_shading": 763.8,
+      "arrivals": 5,
+      "mean_fundamental_error": 2378839.686307456
+    }
+  }
+]

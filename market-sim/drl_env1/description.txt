@@ -1,0 +1,21 @@
+HSLN
+
+State space:
+	Estimate of the final fundamental
+	Depth of bid
+	Depth of ask
+	Price of bids to depth X
+	Price of asks to depth X
+	Number of transactions
+	Contract holdings (benchmark direction * benchmark impact)
+	Holdings
+	Private value if buy
+	Private value if sell
+	Time til end
+	Side of order
+
+Action space:
+	Price
+
+Reward:
+	Difference between next arrival and submission arrival of holdings profit, cash profit, and benchmark profit.
