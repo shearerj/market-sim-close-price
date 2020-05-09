@@ -63,8 +63,9 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         # Construct job string.
         job_name = f"{name}_{len(jobs)}"
         job = experiment_template
-        #job += f" --experiment_name={job_name}"
-        conf_file= open("drl_env1/drl_param.json","w")
+        conf_file_string = "drl_env1/drl_param"+str(len(jobs))+".json"
+        job += f" -p {conf_file_string}"
+        conf_file= open(conf_file_string,"w")
         json.dump(config, conf_file, sort_keys=True)
         conf_file.close()
         jobs += [(job_name, job)]
@@ -82,12 +83,13 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         submission += f" {submit_template}"
         submission += f" \"{job}\""
         # Launch job.
-        _, output = subprocess.getstatusoutput(submission)
-        _, _, _, job_num = output.split(' ')
-        dependencies[index % num_parallel] = job_num
-        print(f"{job_num}: {submission}")
+        #_, output = subprocess.getstatusoutput(submission)
+        #_, _, _, job_num = output.split(' ')
+        #dependencies[index % num_parallel] = job_num
+        #print(f"{job_num}: {submission}")
         # Pause between submissions, to go easy on scheduler.
-        time.sleep(1)
+        #time.sleep(1)
+        print(submission)
 
 def main():
     """ Runs hyperparameter search. """
