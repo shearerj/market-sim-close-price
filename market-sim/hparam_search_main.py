@@ -67,10 +67,10 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         # Construct job string.
         job_name = f"{name}_{len(jobs)}"
         job = experiment_template
-        model_folder_string = "HSLN_env1-"+str(len(jobs))
-        conf_file_string = "drl_param-"+str(len(jobs))+".json"
-        out_file_string = "drl_env1/output-"+str(len(jobs))
-        job += f" -f {model_folder_string} -p {conf_file_string} -o {out_file_string}"
+        model_folder_string = f"HSLN_env1-{len(jobs)}"
+        conf_file_string = f"drl_param-{len(jobs)}.json"
+        out_file_string = f"drl_env1/output-{len(jobs)}"
+        job += f" -f {model_folder_string} -p {conf_file_string} -o {out_file_string} -j {len(jobs)}"
         conf_file= open(conf_file_string,"w")
         json.dump(config, conf_file, sort_keys=True)
         conf_file.close()
@@ -78,7 +78,7 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
     # Launch all of the jobs.
     dependencies = [None] * num_parallel
     for index, (job_name, job) in enumerate(jobs):
-        submission = "srun"
+        submission = "sbatch"
         # Add the necesssary slurm flags.
         submission += f" --job-name={job_name}"
         # Maybe add the dependency information.
@@ -90,13 +90,11 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         submission += f" \"{job}\""
         # Launch job.
         _, output = subprocess.getstatusoutput(submission)
-        print(submission)
         _, _, _, job_num = output.split(' ')
         dependencies[index % num_parallel] = job_num
         print(f"{job_num}: {submission}")
         # Pause between submissions, to go easy on scheduler.
         time.sleep(1)
-        #print(submission)
 
 def main():
     """ Runs hyperparameter search. """

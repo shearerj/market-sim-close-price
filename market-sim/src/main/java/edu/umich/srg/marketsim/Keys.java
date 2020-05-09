@@ -193,6 +193,9 @@ public interface Keys {
   class BenchmarkParamPath extends StringsValue {
   }
 
+  @ValueHelp("Job number for greatlakes, used only for file labels in python action.")
+  class GreatLakesJobNumber extends IntValue {
+  }
   
   @ValueHelp("Size of state space.")
   class NbStates extends IntValue {
@@ -383,6 +386,7 @@ public interface Keys {
       .put(BenchmarkThresh.class, 1d) // No threshold
       .put(ShareEstimates.class, false) // Don't share estimates unless explicit
       .put(PolicyAction.class, false) // Randomly generate action
+      .put(GreatLakesJobNumber.class, -1) // Randomly generate action
       .put(NbStates.class, 0) // Assign arbitrary number of states
       .put(NbActions.class, 0) // Assign arbitrary number of actions
       .build();

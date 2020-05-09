@@ -36,6 +36,8 @@ def create_parser():
     parser.add_argument('--drl-param-file', '-p', metavar='<drl-param-file>',
             type=argparse.FileType('r'), default=sys.stdin, help="""Json file
             with the deep RL parameters. (default: stdin)""")
+    parser.add_argument('--job_num', '-j', metavar='<job_num>',
+            type=int, default=-1, help="""The job number for greatlakes. (default: -1)""")
     parser.add_argument('--model-folder', '-f', metavar='<model-folder>',
              default="temp_model", help="""Folder to store model for later testing.""")
     parser.add_argument('--output-file', '-o', metavar='<output-file>',
@@ -43,7 +45,7 @@ def create_parser():
 
     return parser
 
-def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy_action):
+def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, policy_action):
     try:
         samp = {role:
                 {strat: int(count) for strat, count
@@ -57,7 +59,7 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, policy
             conf['configuration']['nbActions'] = nb_actions
         else:
             conf['configuration']['policyAction'] = 'false'
-        conf_f= open("run_scripts/drl_conf.json","w")
+        conf_f= open(config_path,"w")
         json.dump(conf, conf_f, sort_keys=True)
         conf_f.close()
 
@@ -71,6 +73,10 @@ def main():
     drl_param_file = args.drl_param_file
     drl_args = json.load(drl_param_file)
     conf = json.load(args.configuration)
+    config_split = args.configuration.name.split('.')
+    job_num = args.job_num
+    if (job_num >= 0): config_path = config_split[0] + '_' + str(job_num) + '.' + config_split[1]
+    else: config_path = 'run_scripts/drl_conf.json'
     roles = conf.pop('roles')
     mix = json.load(args.mixture)
     role_info = sorted((r, roles[r]) + tuple(zip(*sorted(s.items()))) for r, s in mix.items())
@@ -80,6 +86,7 @@ def main():
     conf['configuration']['transactionDepth'] = drl_args['transactionDepth']
     conf['configuration']['benchmarkModelPath'] = model_folder
     conf['configuration']['benchmarkParamPath'] = drl_param_file.name
+    conf['configuration']['greatLakesJobNumber'] = job_num
 
     keys = {key.lower(): key for key in conf['configuration']}
     if 'randomseed' in keys:
@@ -92,12 +99,18 @@ def main():
     curr_arrivals = 0
     replay_buffer = []
 
+    temp_out_path = 'drl_out'
+    if (job_num >= 0): temp_out_path = f'drl_out_{job_num}.json'
+    else: temp_out_path = 'drl_out.json'
+
     while curr_arrivals < warmup:
         # Generate new mixed strategies for agents
-        writeConfigFile(conf, role_info, 0, 0, model_folder, False)
+        writeConfigFile(conf, role_info, 0, 0, model_folder, config_path, False)
 
-        os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > drl_out.json")
-        with open('drl_out.json') as json_file:
+        #print(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+
+        os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+        with open(temp_out_path) as json_file:
                 feat = json.load(json_file)
         arr = feat['arrivals']
         curr_arrivals = curr_arrivals + arr
@@ -161,10 +174,10 @@ def main():
             # create new config file where update policy action to true, and feed in weights etc
 
             # Generate new mixed strategies for agents
-            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, True)
+            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, True)
 
-            os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > train_out.json")
-            with open('train_out.json') as json_file:
+            os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+            with open(temp_out_path) as json_file:
                     feat = json.load(json_file)
             arr = feat['arrivals']
             curr_arrivals = curr_arrivals + arr
@@ -189,10 +202,10 @@ def main():
     stats = []
     testing_steps = int(drl_args["testingSteps"])
     for i in range(testing_steps):
-        writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, True)
-        os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > test_out.json")
+        writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, True)
+        os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
         #os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c  '(.players[]), (.features) ' > test_out.json")
-        with open('test_out.json') as f:
+        with open(temp_out_path) as f:
             lines = [line.replace('\"', '').split() for line in f]
         f.close()
         for j,s in enumerate(lines):

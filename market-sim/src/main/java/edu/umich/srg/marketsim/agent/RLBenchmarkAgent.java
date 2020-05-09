@@ -30,6 +30,7 @@ import edu.umich.srg.marketsim.Keys.PolicyAction;
 import edu.umich.srg.marketsim.Keys.ActionCoefficient;
 import edu.umich.srg.marketsim.Keys.BenchmarkModelPath;
 import edu.umich.srg.marketsim.Keys.BenchmarkParamPath;
+import edu.umich.srg.marketsim.Keys.GreatLakesJobNumber;
 import edu.umich.srg.marketsim.Keys.NbStates;
 import edu.umich.srg.marketsim.Keys.NbActions;
 import edu.umich.srg.marketsim.Price;
@@ -103,14 +104,13 @@ public class RLBenchmarkAgent implements Agent {
   private final double actionCoefficient;
   private final String benchmarkModelPath;
   private final String benchmarkParamPath;
+  private final int glJobNum;
   private final int nbStates;
   private final int nbActions;
   
   private final StateSpace stateSpace;
   
   private Boolean firstArrival;
-  
-  private final double observationVar;
   
   private final JsonArray rl_observations;
   private JsonObject prev_obs;
@@ -154,11 +154,11 @@ public class RLBenchmarkAgent implements Agent {
     this.benchmarkDir = spec.get(BenchmarkDir.class);
     this.benchmarkReward = spec.get(BenchmarkReward.class);
     this.prevBenchmark = spec.get(FundamentalMean.class);
-    this.observationVar = spec.get(FundamentalObservationVariance.class);
     this.policyAction = spec.get(PolicyAction.class);
     this.actionCoefficient = spec.get(ActionCoefficient.class);
     this.benchmarkModelPath =spec.get(BenchmarkModelPath.class).iterator().next();
     this.benchmarkParamPath =spec.get(BenchmarkParamPath.class).iterator().next();
+    this.glJobNum = spec.get(GreatLakesJobNumber.class);
     this.nbStates = spec.get(NbStates.class);
     this.nbActions = spec.get(NbActions.class);
     
@@ -217,7 +217,14 @@ public class RLBenchmarkAgent implements Agent {
 	        double alpha;
 	        //System.out.println(state.size());
 	        try {
-				FileWriter stateFile = new FileWriter("temp_state.json",false);
+	        	String statePath;
+	        	if (this.glJobNum >= 0) {
+	        		statePath = "temp_state_" + glJobNum + ".json";
+	        	}
+	        	else {
+	        		statePath = "temp_state.json";
+	        	}
+				FileWriter stateFile = new FileWriter(statePath,false);
 				JsonObject curr_state = new JsonObject();
 				curr_state.add("state0", state);
 				stateFile.write(curr_state.toString());
@@ -227,7 +234,7 @@ public class RLBenchmarkAgent implements Agent {
 				 
 				ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p",""+this.benchmarkParamPath,
 				//ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p","run_scripts/drl_param.json",
-						"-f","temp_state.json","-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,"-a",""+this.nbActions);
+						"-f",""+statePath,"-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,"-a",""+this.nbActions);
 				//		"-f","temp_state.json","-m",""+drl_model,"-s",""+nb_states,"-a",""+nb_actions);
 				Process p = pb.start();
 				 
