@@ -74,7 +74,7 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
     # Launch all of the jobs.
     dependencies = [None] * num_parallel
     for index, (job_name, job) in enumerate(jobs):
-        submission = "sbatch"
+        submission = "srun"
         # Add the necesssary slurm flags.
         submission += f" --job-name={job_name}"
         # Maybe add the dependency information.
@@ -86,6 +86,7 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         submission += f" \"{job}\""
         # Launch job.
         _, output = subprocess.getstatusoutput(submission)
+        print(submission)
         _, _, _, job_num = output.split(' ')
         dependencies[index % num_parallel] = job_num
         print(f"{job_num}: {submission}")

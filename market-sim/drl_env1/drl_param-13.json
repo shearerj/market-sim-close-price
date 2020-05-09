@@ -1,0 +1,1 @@
+{"actionCoefficient": 1000, "bsize": 64, "discount": 0.95, "epsilon": 50000, "hidden_layers": [120, 90], "init_w": 0.0001, "ou_mu": 0.0, "ou_sigma": 0.2, "ou_theta": 0.15, "prate": 0.001, "rate": 0.001, "rmsize": 300, "tau": 0.001, "testingSteps": 10000, "trainingSteps": 100, "transactionDepth": 5, "updateSteps": 10, "viewBookDepth": 5, "warmup": 50}
