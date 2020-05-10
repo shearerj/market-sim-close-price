@@ -118,7 +118,7 @@ def main():
 
         obs = feat['rl_observations']
         for i, ob in enumerate(obs):
-            if 'price' in ob['action']:
+            if len(ob['action']) > 0:
                     replay_buffer.append(ob)
             else:
                 curr_arrivals = curr_arrivals - 1
@@ -159,7 +159,7 @@ def main():
         for j, ob in enumerate(mini_batch):
             state0_batch[j,:] = np.array(ob['state0'])
             state1_batch[j,:] = np.array(ob['state1'])
-            action_batch[j,:] = np.array(ob['action']['price'])
+            action_batch[j,:] = np.array(ob['action'])
             term_batch[j,:] = np.array(ob['terminal'])
             reward_batch[j,:] = np.array(ob['reward'])
         
@@ -187,7 +187,7 @@ def main():
             obs = feat['rl_observations']
             for i, ob in enumerate(obs):
                 # Hacky way to vefiy that action was selected
-                if 'price' in ob['action']:
+                if len(ob['action']) > 0:
                 #json.dump(ob, replay_buffer_file)
                     replay_buffer.append(ob)
                 else:

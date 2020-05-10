@@ -18,7 +18,7 @@ import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.TransactionDepth;
 
-public class StateSpace{
+public class BenchmarkState implements State{
 	
 	protected final Sim sim;
     private final MarketView market;
@@ -33,7 +33,7 @@ public class StateSpace{
 	
 	private int stateSize;
 	
-	public StateSpace(Sim sim, MarketView market, Spec spec) {
+	public BenchmarkState(Sim sim, MarketView market, Spec spec) {
 		
 		this.sim = sim;
 	    this.market = market;
@@ -50,10 +50,11 @@ public class StateSpace{
 		
 	}
 	
-	public static StateSpace create(Sim sim,  MarketView market, Spec spec) {
-		    return new StateSpace(sim, market, spec);
+	public static BenchmarkState create(Sim sim,  MarketView market, Spec spec) {
+		    return new BenchmarkState(sim, market, spec);
 		  }
 	
+	@Override
 	public JsonArray getState(double finalEstimate, PrivateValue privateValue) {
 		JsonArray state = new JsonArray();
 	
@@ -157,9 +158,9 @@ public class StateSpace{
 	    return state;
 	  }
 	
-	
+	@Override
 	public int getStateSize() {
 		return this.stateSize + 1; //add 1 for side as feature
 	}
-	
+
 }

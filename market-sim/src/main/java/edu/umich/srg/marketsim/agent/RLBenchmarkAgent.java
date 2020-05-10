@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.distributions.Uniform;
-import edu.umich.srg.distributions.Uniform.ContinuousUniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.OrderType;
@@ -27,12 +26,6 @@ import edu.umich.srg.marketsim.Keys.SubmitDepth;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.BenchmarkReward;
 import edu.umich.srg.marketsim.Keys.PolicyAction;
-import edu.umich.srg.marketsim.Keys.ActionCoefficient;
-import edu.umich.srg.marketsim.Keys.BenchmarkModelPath;
-import edu.umich.srg.marketsim.Keys.BenchmarkParamPath;
-import edu.umich.srg.marketsim.Keys.GreatLakesJobNumber;
-import edu.umich.srg.marketsim.Keys.NbStates;
-import edu.umich.srg.marketsim.Keys.NbActions;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -46,7 +39,9 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SharedGaussianView;
 import edu.umich.srg.util.SummStats;
-import edu.umich.srg.learning.StateSpace;
+import edu.umich.srg.learning.BenchmarkState;
+import edu.umich.srg.learning.ContinuousAction;
+import edu.umich.srg.learning.PythonContinuousAction;
 
 import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
@@ -58,10 +53,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Random;
 import java.util.Set;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -101,19 +92,16 @@ public class RLBenchmarkAgent implements Agent {
   private double prevProfit;
   private final int benchmarkReward;
   private final boolean policyAction;
-  private final double actionCoefficient;
-  private final String benchmarkModelPath;
-  private final String benchmarkParamPath;
-  private final int glJobNum;
-  private final int nbStates;
-  private final int nbActions;
   
-  private final StateSpace stateSpace;
+  private final BenchmarkState stateSpace;
+  private final ContinuousAction randomActionSpace;
+  private final PythonContinuousAction policyActionSpace;
   
   private Boolean firstArrival;
   
   private final JsonArray rl_observations;
   private JsonObject prev_obs;
+  private JsonArray action;
   
   /** Standard constructor for ZIR agent. */
   public RLBenchmarkAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
@@ -155,14 +143,10 @@ public class RLBenchmarkAgent implements Agent {
     this.benchmarkReward = spec.get(BenchmarkReward.class);
     this.prevBenchmark = spec.get(FundamentalMean.class);
     this.policyAction = spec.get(PolicyAction.class);
-    this.actionCoefficient = spec.get(ActionCoefficient.class);
-    this.benchmarkModelPath =spec.get(BenchmarkModelPath.class).iterator().next();
-    this.benchmarkParamPath =spec.get(BenchmarkParamPath.class).iterator().next();
-    this.glJobNum = spec.get(GreatLakesJobNumber.class);
-    this.nbStates = spec.get(NbStates.class);
-    this.nbActions = spec.get(NbActions.class);
     
-    this.stateSpace = StateSpace.create(this.sim,this.market,spec);
+    this.stateSpace = BenchmarkState.create(this.sim,this.market,spec);
+    this.randomActionSpace = ContinuousAction.create(spec,rand);
+    this.policyActionSpace = PythonContinuousAction.create(spec,rand);
   
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
@@ -171,6 +155,8 @@ public class RLBenchmarkAgent implements Agent {
     this.rl_observations = new JsonArray();
     this.firstArrival = true;
     this.prev_obs = new JsonObject();
+    
+    this.action = new JsonArray();
   
     this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
     double priceVarEst = spec.get(PriceVarEst.class);
@@ -193,8 +179,6 @@ public class RLBenchmarkAgent implements Agent {
     
     JsonObject curr_obs = new JsonObject();
     JsonArray state = this.stateSpace.getState(this.getFinalFundamentalEstiamte(), privateValue);
-    //System.out.println(this.stateSpace.getStateSize());
-    JsonObject action = new JsonObject();
 
     Set<OrderType> sides = side.get();
     double finalEstimate = getFinalFundamentalEstiamte();
@@ -206,91 +190,32 @@ public class RLBenchmarkAgent implements Agent {
     
     for (OrderType type : sides) {
       state.add(type.sign());
-      if(this.policyAction) {
-	    for (int num = 0; num < ordersPerSide; num++) {
-	      if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
+	  for (int num = 0; num < ordersPerSide; num++) {
+	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
 	
-	        double privateBenefit = type.sign()
-	            * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
-	        double estimatedValue = finalEstimate + privateBenefit;
-	
-	        double alpha;
-	        //System.out.println(state.size());
-	        try {
-	        	String statePath;
-	        	if (this.glJobNum >= 0) {
-	        		statePath = "temp_state_" + glJobNum + ".json";
-	        	}
-	        	else {
-	        		statePath = "temp_state.json";
-	        	}
-				FileWriter stateFile = new FileWriter(statePath,false);
-				JsonObject curr_state = new JsonObject();
-				curr_state.add("state0", state);
-				stateFile.write(curr_state.toString());
-				stateFile.close();
-				
-				//double toSubmit = PythonPolicyAction();
-				 
-				ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p",""+this.benchmarkParamPath,
-				//ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p","run_scripts/drl_param.json",
-						"-f",""+statePath,"-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,"-a",""+this.nbActions);
-				//		"-f","temp_state.json","-m",""+drl_model,"-s",""+nb_states,"-a",""+nb_actions);
-				Process p = pb.start();
-				 
-				BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-				alpha = new Double(in.readLine()).doubleValue();
-	  	        
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				ContinuousUniform actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
-	  	        alpha = actionsToSubmit.sample(rand);
-			}
-	        
-  	        //System.out.println(alpha);
-  	        int alpha_sign = 1;
-  	        if (alpha < 0) {alpha_sign = -1;};
-  	        double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(alpha);
-	        if (toSubmit < 0) { // Hacky patch to stop submitting
-	          continue;
-	        }
-	        long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
-	        shadingStats.accept(Math.abs(estimatedValue - toSubmit));
-	
-	        if (rounded > 0) {
-	          market.submitOrder(type, Price.of(rounded), 1);
-	            
-	          //action.addProperty("side", type.sign());
-	          action.addProperty("price", alpha);
-	        }
+	      double privateBenefit = type.sign()
+	          * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
+	      double estimatedValue = finalEstimate + privateBenefit;
+ 
+	      JsonObject curr_state = new JsonObject();
+	      curr_state.add("state0", state);
+	      double toSubmit = this.getAction(finalEstimate, curr_state.toString());
+	      if (toSubmit < 0) { // Hacky patch to stop submiting
+	        continue;
 	      }
-	    }
-	  } else {
-  	    for (int num = 0; num < ordersPerSide; num++) {
-  	      if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {  	        
-  	        ContinuousUniform actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
-  	        double alpha = actionsToSubmit.sample(rand);
-  	        int alpha_sign = 1;
-  	        if (alpha < 0) {alpha_sign = -1;};
-  	        double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(alpha);
-  	        if (toSubmit < 0) { // Hacky patch to stop submiting
-  	          continue;
-  	        }
-  	        long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
-  	
-  	        if (rounded > 0) {
-  	          market.submitOrder(type, Price.of(rounded), 1);
-  	          //action.addProperty("side", type.sign());
-  	          action.addProperty("price", alpha);  	            
-  	        }
-  	      }
+	      long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
+	      shadingStats.accept(Math.abs(estimatedValue - toSubmit));
+	
+	      if (rounded > 0) {
+	        market.submitOrder(type, Price.of(rounded), 1);
+	        //action.addProperty("side", type.sign());
+	      }
   	    }
   	  }
     }
     
     curr_obs.add("state0", state);
-    curr_obs.add("action", action);
+    curr_obs.add("action", this.action);
     prev_obs.add("state1", state);
     prev_obs.addProperty("terminal", 0);
     
@@ -322,6 +247,20 @@ public class RLBenchmarkAgent implements Agent {
     this.prev_obs = curr_obs;
 
     scheduleNextArrival();
+  }
+ 
+  private double getAction(double finalEstimate, String curr_state) {
+      double toSubmit = 0;
+      
+      if(this.policyAction) {
+    	  this.action = this.policyActionSpace.getAction(curr_state);
+    	  toSubmit = this.policyActionSpace.actionToPrice(finalEstimate);
+      }
+      else { 
+    	  this.action = this.randomActionSpace.getAction();
+    	  toSubmit = this.randomActionSpace.actionToPrice(finalEstimate);
+	  }
+	  return toSubmit;
   }
 
   @Override
@@ -365,8 +304,8 @@ public class RLBenchmarkAgent implements Agent {
     state.add(0);
     this.prev_obs.add("state1", state);
     this.prev_obs.addProperty("terminal", 1);
-    //this.prev_obs.addProperty("reward", profitDiff);
-    this.prev_obs.addProperty("reward", estProfit);
+    this.prev_obs.addProperty("reward", profitDiff);
+    //this.prev_obs.addProperty("reward", estProfit);
     this.rl_observations.add(prev_obs);
   }
 
