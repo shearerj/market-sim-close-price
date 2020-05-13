@@ -91,6 +91,13 @@ def getStats(agents):
         stats += '\tsd: ' + str(np.std(agents)) + '\n'
         return stats
 
+def getStatsJson(agents):
+        stats = {}
+        stats['mean']=np.mean(agents)
+        stats['total']=np.sum(agents)
+        stats['sd']=np.std(agents)
+        return stats
+
 
 def main():
         file = sys.argv[1]

@@ -16,7 +16,7 @@ import torch
 from pytorch_ddpg.ddpg import DDPG
 from pytorch_ddpg.util import *
 
-from mse import getDataList, getStats
+from mse import getDataList, getStats, getStatsJson
 
 
 def create_parser():
@@ -246,12 +246,12 @@ def main():
     print(getStats(tsM))
 
     stats_condensed = {}
-    stats_condensed['ZI'] = getStats(zi)
-    stats_condensed['Benchmark-Manipulator'] = getStats(bm)
-    stats_condensed['Benchmark-Manipulator-Market-Performance'] = getStats(bmM)
-    stats_condensed['Benchmark-Manipulator-Benchmark-Performance'] = getStats(bmB)
-    stats_condensed['Total-Surplus'] = getStats(ts)
-    stats_condensed['Market-Surplus'] = getStats(tsM)
+    stats_condensed['ZI'] = getStatsJson(zi)
+    stats_condensed['Benchmark-Manipulator'] = getStatsJson(bm)
+    stats_condensed['Benchmark-Manipulator-Market-Performance'] = getStatsJson(bmM)
+    stats_condensed['Benchmark-Manipulator-Benchmark-Performance'] = getStatsJson(bmB)
+    stats_condensed['Total-Surplus'] = getStatsJson(ts)
+    stats_condensed['Market-Surplus'] = getStatsJson(tsM)
 
     output= open(output_file + '.json',"w")
     json.dump(stats_condensed, output)
