@@ -45,7 +45,7 @@ def create_parser():
 
     return parser
 
-def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, policy_action):
+def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = {}, policy_action = False):
     try:
         samp = {role:
                 {strat: int(count) for strat, count
@@ -53,6 +53,7 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config
                 if count > 0}
                 for role, c, s, probs in role_info}
         conf['assignment'] = samp
+        conf['configuration']['actorWeights'] = str(actor_weights)
         if policy_action:
             conf['configuration']['policyAction'] = 'true'
             conf['configuration']['nbStates'] = nb_states
@@ -81,12 +82,19 @@ def main():
     mix = json.load(args.mixture)
     role_info = sorted((r, roles[r]) + tuple(zip(*sorted(s.items()))) for r, s in mix.items())
 
+    conf['configuration']['hiddenLayer1'] = drl_args['hidden1']
+    conf['configuration']['hiddenLayer2'] = drl_args['hidden2']
     conf['configuration']['actionCoefficient'] = drl_args['actionCoefficient']
     conf['configuration']['viewBookDepth'] = drl_args['viewBookDepth']
     conf['configuration']['transactionDepth'] = drl_args['transactionDepth']
-    conf['configuration']['benchmarkModelPath'] = model_folder
-    conf['configuration']['benchmarkParamPath'] = drl_param_file.name
-    conf['configuration']['greatLakesJobNumber'] = job_num
+    #conf['configuration']['benchmarkModelPath'] = model_folder
+    #conf['configuration']['benchmarkParamPath'] = drl_param_file.name
+    #conf['configuration']['greatLakesJobNumber'] = job_num
+    conf['configuration']['OUMu'] = drl_args['ou_mu']
+    conf['configuration']['OUSigma'] = drl_args['ou_sigma']
+    conf['configuration']['OUTheta'] = drl_args['ou_theta']
+    print(drl_args['epsilon'])
+    conf['configuration']['EpsilonDecay'] = drl_args['epsilon']
 
     keys = {key.lower(): key for key in conf['configuration']}
     if 'randomseed' in keys:
@@ -105,7 +113,7 @@ def main():
 
     while curr_arrivals < warmup:
         # Generate new mixed strategies for agents
-        writeConfigFile(conf, role_info, 0, 0, model_folder, config_path, False)
+        writeConfigFile(conf, role_info, 0, 0, model_folder, config_path)
 
         #print(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
 
@@ -142,10 +150,10 @@ def main():
     print(len(replay_buffer))
     assert bsize <= len(replay_buffer), "Mini batch is bigger than replay buffer."
 
-    if not os.path.exists(model_folder):
-        os.makedirs(model_folder)
-        with open(".gitignore", "a") as ignore_file:
-            ignore_file.write('\n/'+model_folder+'/*')
+    #if not os.path.exists(model_folder):
+    #    os.makedirs(model_folder)
+    #    with open(".gitignore", "a") as ignore_file:
+    #        ignore_file.write('\n/'+model_folder+'/*')
 
     training_steps = int(drl_args["trainingSteps"])
     for i in range(training_steps):
@@ -167,14 +175,23 @@ def main():
         for j in range(int(drl_args["updateSteps"])):
             agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
 
-        agent.save_model(model_folder)
+        #agent.save_model(model_folder)
+
+        actor_weights = {}
+        actor_weights['weightMtx1'] = to_numpy(agent.actor.fc1.weight).tolist()
+        actor_weights['biasMtx1'] = to_numpy(agent.actor.fc1.bias).tolist()
+        actor_weights['weightMtx2'] = to_numpy(agent.actor.fc2.weight).tolist()
+        actor_weights['biasMtx2'] = to_numpy(agent.actor.fc2.bias).tolist()
+        actor_weights['weightMtx3'] = to_numpy(agent.actor.fc3.weight).tolist()
+        actor_weights['biasMtx3'] = to_numpy(agent.actor.fc3.bias).tolist()
+        print(len(actor_weights))
 
         if i < training_steps - 1:
             # get weights and bias for policy actions
             # create new config file where update policy action to true, and feed in weights etc
 
             # Generate new mixed strategies for agents
-            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, True)
+            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True)
 
             os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
             with open(temp_out_path) as json_file:
@@ -202,7 +219,7 @@ def main():
     stats = []
     testing_steps = int(drl_args["testingSteps"])
     for i in range(testing_steps):
-        writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, True)
+        writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True)
         os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
         #os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c  '(.players[]), (.features) ' > test_out.json")
         with open(temp_out_path) as f:
@@ -228,15 +245,16 @@ def main():
     print('Market Surplus\n')
     print(getStats(tsM))
 
-    stats_condensed = 'ZI\n' + getStats(zi)
-    stats_condensed += 'Benchmark Manipulator\n' + getStats(bm)
-    stats_condensed += 'Benchmark Manipulator Market Performance\n' + getStats(bmM)
-    stats_condensed += 'Benchmark Manipulator Benchmark Performance\n' + getStats(bmB)
-    stats_condensed += 'Total Surplus\n' + getStats(ts)
-    stats_condensed += 'Market Surplus\n' +getStats(tsM)
+    stats_condensed = {}
+    stats_condensed['ZI'] = getStats(zi)
+    stats_condensed['Benchmark-Manipulator'] = getStats(bm)
+    stats_condensed['Benchmark-Manipulator-Market-Performance'] = getStats(bmM)
+    stats_condensed['Benchmark-Manipulator-Benchmark-Performance'] = getStats(bmB)
+    stats_condensed['Total-Surplus'] = getStats(ts)
+    stats_condensed['Market-Surplus'] = getStats(tsM)
 
-    with open(output_file + '.txt', "w") as output:
-        output.write(str(stats_condensed))
+    output= open(output_file + '.json',"w")
+    json.dump(stats_condensed, output)
     output.close()
 
     with open(output_file + '_full.txt', "w") as output:

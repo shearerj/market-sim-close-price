@@ -1,6 +1,6 @@
 {
 "bench_mani": {
-	"rlb:Rmin_0_Rmax_1000_benchmarkThresh_0.8_benchmarkImpact_2500_benchmarkReward_1": 1.0
+	"rlb:Rmin_0_Rmax_1000_benchmarkThresh_0.8_benchmarkImpact_2500": 1.0
 	},
 "zi": {
 	"markov:Rmin_0_Rmax_1000_Thresh_0.1": 0.4639597514734377, 

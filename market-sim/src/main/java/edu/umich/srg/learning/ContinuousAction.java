@@ -3,6 +3,7 @@ package edu.umich.srg.learning;
 import java.util.Random;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.ContinuousUniform;
@@ -57,7 +58,7 @@ public class ContinuousAction implements Action {
 	}
 
 	@Override
-	public JsonArray getAction(String curr_state) {
+	public JsonArray getAction(JsonObject state) {
 		// TODO Auto-generated method stub
 		return null;
 	}

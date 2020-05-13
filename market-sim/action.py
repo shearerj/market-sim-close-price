@@ -33,6 +33,8 @@ def create_parser():
             type=int, help="""Size of action space""")
     parser.add_argument('--model-path', '-m', metavar='<model-path>', 
             help="""Path of saved model""")
+    parser.add_argument('--is-training', '-t', metavar='<is-training>', type = int, 
+            default = 1, help="""Whether agents is training or not.""")
 
     return parser
 
@@ -42,8 +44,11 @@ def main():
     drl_args = json.load(args.drl_param_file)
     state = json.load(args.state_file)
     model_path = args.model_path
+    is_training = args.is_training
 
     agent = DDPG(args.nb_states, args.nb_actions, drl_args)
+    print(is_training)
+    if is_training == 0: agent.is_training = False
 
     try:
         os.path.exists(model_path)

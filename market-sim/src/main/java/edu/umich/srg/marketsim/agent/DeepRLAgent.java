@@ -36,7 +36,8 @@ import edu.umich.srg.marketsim.strategy.SharedGaussianView;
 import edu.umich.srg.util.SummStats;
 import edu.umich.srg.learning.SimpleState;
 import edu.umich.srg.learning.ContinuousAction;
-import edu.umich.srg.learning.PythonContinuousAction;
+//import edu.umich.srg.learning.PythonContinuousAction;
+import edu.umich.srg.learning.JavaContinuousAction;
 
 import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
@@ -86,7 +87,8 @@ public class DeepRLAgent implements Agent {
   //private final BenchmarkState stateSpace;
   private final SimpleState stateSpace;
   private final ContinuousAction randomActionSpace;
-  private final PythonContinuousAction policyActionSpace;
+  //private final PythonContinuousAction policyActionSpace;
+  private final JavaContinuousAction policyActionSpace;
   
   private Boolean firstArrival;
   
@@ -132,7 +134,8 @@ public class DeepRLAgent implements Agent {
     //this.stateSpace = BenchmarkState.create(this.sim,market,spec);
     this.stateSpace = SimpleState.create(this.sim,this.market,spec);
     this.randomActionSpace = ContinuousAction.create(spec,rand);
-    this.policyActionSpace = PythonContinuousAction.create(spec,rand);
+    //this.policyActionSpace = PythonContinuousAction.create(spec,rand);
+    this.policyActionSpace = JavaContinuousAction.create(this.sim,spec,rand);
   
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
@@ -184,7 +187,7 @@ public class DeepRLAgent implements Agent {
  
 	      JsonObject curr_state = new JsonObject();
 	      curr_state.add("state0", state);
-	      double toSubmit = this.getAction(finalEstimate, curr_state.toString());
+	      double toSubmit = this.getAction(finalEstimate, curr_state);
 	      if (toSubmit < 0) { // Hacky patch to stop submiting
 	        continue;
 	      }
@@ -200,7 +203,6 @@ public class DeepRLAgent implements Agent {
     }
     
     curr_obs.add("state0", state);
-    //curr_obs.add("state2", state2);
     curr_obs.add("action", this.action);
     prev_obs.add("state1", state);
     prev_obs.addProperty("terminal", 0);
@@ -218,12 +220,12 @@ public class DeepRLAgent implements Agent {
 
     scheduleNextArrival();
   }
-  
-  protected JsonArray getState(double finalEstimate) {
+
+protected JsonArray getState(double finalEstimate) {
 	  return this.stateSpace.getState(finalEstimate, privateValue);
   }
  
-  protected double getAction(double finalEstimate, String curr_state) {
+  protected double getAction(double finalEstimate, JsonObject curr_state) {
       double toSubmit = 0;
       
       if(this.policyAction) {

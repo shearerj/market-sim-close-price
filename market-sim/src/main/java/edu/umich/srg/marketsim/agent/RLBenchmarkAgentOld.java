@@ -195,7 +195,7 @@ public class RLBenchmarkAgentOld implements Agent {
  
 	      JsonObject curr_state = new JsonObject();
 	      curr_state.add("state0", state);
-	      double toSubmit = this.getAction(finalEstimate, curr_state.toString());
+	      double toSubmit = this.getAction(finalEstimate, curr_state);
 	      if (toSubmit < 0) { // Hacky patch to stop submiting
 	        continue;
 	      }
@@ -230,7 +230,7 @@ public class RLBenchmarkAgentOld implements Agent {
     scheduleNextArrival();
   }
   
-  protected double getAction(double finalEstimate, String curr_state) {
+  protected double getAction(double finalEstimate, JsonObject curr_state) {
       double toSubmit = 0;
       
       if(this.policyAction) {

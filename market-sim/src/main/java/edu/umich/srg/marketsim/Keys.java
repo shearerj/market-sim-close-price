@@ -173,10 +173,6 @@ public interface Keys {
   class TransactionDepth extends IntValue {
   }
   
-  @ValueHelp("Determines if the agent's payoff from the benchmark will contribute to the deep RL reward, must be 0 or 1.")
-  class BenchmarkReward extends IntValue {
-  }
-  
   @ValueHelp("Boolean value which determines whether the deep RL benchmark agent chooses its action by a policy or randomly.")
   class PolicyAction extends BoolValue {
   }
@@ -204,6 +200,38 @@ public interface Keys {
   
   @ValueHelp("Size of action space.")
   class NbActions extends IntValue {
+  }
+  
+  @ValueHelp("Size of first hidden layer")
+  class HiddenLayer1 extends IntValue {
+  }
+  
+  @ValueHelp("Size of second hidden layer")
+  class HiddenLayer2 extends IntValue {
+  }
+  
+  @ValueHelp("Weight matrices for DRL model.")
+  class ActorWeights extends StringsValue {
+  }
+  
+  @ValueHelp("Is a Deep RL agent training or not.")
+  class IsTraining extends BoolValue {
+  }
+  
+  @ValueHelp("Mu parameter for OU noise.")
+  class OUMu extends DoubleValue {
+  }
+  
+  @ValueHelp("Sigma parameter for OU noise.")
+  class OUSigma extends DoubleValue {
+  }
+  
+  @ValueHelp("Theta parameter for OU noise.")
+  class OUTheta extends DoubleValue {
+  }
+  
+  @ValueHelp("Parameter for noise decay.")
+  class EpsilonDecay extends DoubleValue {
   }
 
   // ------------
@@ -389,6 +417,13 @@ public interface Keys {
       .put(GreatLakesJobNumber.class, -1) // Randomly generate action
       .put(NbStates.class, 0) // Assign arbitrary number of states
       .put(NbActions.class, 0) // Assign arbitrary number of actions
+      .put(HiddenLayer1.class, 0) // Assign arbitrary size of first hidden layer
+      .put(HiddenLayer2.class, 0) // Assign arbitrary size of second hidden layer
+      .put(IsTraining.class, true) // Assumes that model is training when generating actions
+      .put(OUMu.class, 0.0) // Assign arbitrary number for OU parameter mu
+      .put(OUSigma.class, 0.0) // Assign arbitrary number for OU parameter sigma
+      .put(OUTheta.class, 0.0) // Assign arbitrary number for OU parameter theta
+      .put(EpsilonDecay.class, 0.0) // Assign arbitrary number for epsilon decay for DRL
       .build();
 
 }

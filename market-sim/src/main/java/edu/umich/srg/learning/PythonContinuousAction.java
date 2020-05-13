@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.util.Random;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.ContinuousUniform;
@@ -16,6 +17,7 @@ import edu.umich.srg.marketsim.Keys.BenchmarkParamPath;
 import edu.umich.srg.marketsim.Keys.GreatLakesJobNumber;
 import edu.umich.srg.marketsim.Keys.NbActions;
 import edu.umich.srg.marketsim.Keys.NbStates;
+import edu.umich.srg.marketsim.Keys.IsTraining;
 
 public class PythonContinuousAction extends ContinuousAction {
 	
@@ -28,10 +30,10 @@ public class PythonContinuousAction extends ContinuousAction {
 	private final int glJobNum;
 	private final int nbStates;
 	private final int nbActions;
+	private final Boolean isTraining;
 
 	public PythonContinuousAction(Spec spec, Random rand) {
 		super(spec, rand);
-		
 		this.rand = rand;
 		this.actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
 		this.alpha = 0;
@@ -40,6 +42,7 @@ public class PythonContinuousAction extends ContinuousAction {
 	    this.glJobNum = spec.get(GreatLakesJobNumber.class);
 	    this.nbStates = spec.get(NbStates.class);
 	    this.nbActions = spec.get(NbActions.class);
+	    this.isTraining = spec.get(IsTraining.class);
 			
 	}
 		
@@ -48,7 +51,7 @@ public class PythonContinuousAction extends ContinuousAction {
 	}
 
 	@Override
-	public JsonArray getAction(String curr_state) {
+	public JsonArray getAction(JsonObject state) {
 		JsonArray action = new JsonArray();
 		
 		try {
@@ -60,13 +63,18 @@ public class PythonContinuousAction extends ContinuousAction {
 	    		statePath = "temp_state.json";
 	    	}
 			FileWriter stateFile = new FileWriter(statePath,false);
-			stateFile.write(curr_state);
+			stateFile.write(state.toString());
 			stateFile.close();
 			
 			//double toSubmit = PythonPolicyAction();
-			 
+			
+			int training  = 0;
+			if (this.isTraining) {
+				training = 1;
+			} 
 			ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p",""+this.benchmarkParamPath,
-					"-f",""+statePath,"-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,"-a",""+this.nbActions);
+					"-f",""+statePath,"-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,
+					"-a",""+this.nbActions,"-t",""+training);
 			Process p = pb.start();
 			 
 			BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
