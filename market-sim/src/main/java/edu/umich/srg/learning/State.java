@@ -8,6 +8,8 @@ public interface State{
 		
 	JsonArray getState (double finalEstimate, PrivateValue privateValue);
 	
+	JsonArray getNormState(JsonArray state);
+	
 	int getStateSize ();
 	
 }

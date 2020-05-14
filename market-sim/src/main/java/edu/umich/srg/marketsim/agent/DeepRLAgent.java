@@ -178,6 +178,7 @@ public class DeepRLAgent implements Agent {
     
     for (OrderType type : sides) {
       state.add(type.sign());
+      state = this.stateSpace.getNormState(state);
 	  for (int num = 0; num < ordersPerSide; num++) {
 	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
 	
@@ -201,7 +202,6 @@ public class DeepRLAgent implements Agent {
   	    }
   	  }
     }
-    
     curr_obs.add("state0", state);
     curr_obs.add("action", this.action);
     prev_obs.add("state1", state);

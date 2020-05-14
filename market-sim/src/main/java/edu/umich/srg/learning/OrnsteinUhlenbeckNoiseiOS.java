@@ -5,13 +5,14 @@ import java.util.Random;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Sim;
+import no.uib.cipr.matrix.DenseMatrix;
 
 import edu.umich.srg.marketsim.Keys.OUMu;
 import edu.umich.srg.marketsim.Keys.OUSigma;
 import edu.umich.srg.marketsim.Keys.OUTheta;
 import edu.umich.srg.marketsim.Keys.SimLength;
 
-public class OrnsteinUhlenbeckNoise{
+public class OrnsteinUhlenbeckNoiseiOS{
 	
 	private Sim sim;
 	private Gaussian nNoise;
@@ -23,7 +24,7 @@ public class OrnsteinUhlenbeckNoise{
 	private double prevNoise;
 	private long simLength;
 	
-	public OrnsteinUhlenbeckNoise(Sim sim, Spec spec, Random rand) {
+	public OrnsteinUhlenbeckNoiseiOS(Sim sim, Spec spec, Random rand) {
 	    
 	    this.sim = sim;
 	    this.rand = rand;
@@ -37,8 +38,8 @@ public class OrnsteinUhlenbeckNoise{
 			
 	}
 		
-	public static OrnsteinUhlenbeckNoise create(Sim sim, Spec spec, Random rand) {
-		return new OrnsteinUhlenbeckNoise(sim, spec, rand);
+	public static OrnsteinUhlenbeckNoiseiOS create(Sim sim, Spec spec, Random rand) {
+		return new OrnsteinUhlenbeckNoiseiOS(sim, spec, rand);
 	}
 	
 	public double ouNoise() {
@@ -53,10 +54,10 @@ public class OrnsteinUhlenbeckNoise{
 		return noise;
 	}
 	
-	public double[][] ouNoiseMtx(int c) {
-		double[][] noise = new double[1][c];
+	public DenseMatrix ouNoiseMtx(int c) {
+		DenseMatrix noise = new DenseMatrix(1,c);
 		for(int j=0; j<c; j++) {
-			noise[0][j] = this.ouNoise();
+			noise.add(0, j, this.ouNoise());
 		}
 		return noise;
 	}

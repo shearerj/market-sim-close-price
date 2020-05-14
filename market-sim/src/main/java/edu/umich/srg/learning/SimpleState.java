@@ -38,6 +38,8 @@ public class SimpleState implements State{
 	protected ArrayList<Price> ask_vector;
 	protected ArrayList<Price> transactions;
 	
+	protected MatrixLibrary mtxLib;
+	
 	public SimpleState(Sim sim, MarketView market, Spec spec) {
 		
 		this.sim = sim;
@@ -54,6 +56,8 @@ public class SimpleState implements State{
 	    this.bid_vector = new ArrayList<Price>();
 	    this.ask_vector = new ArrayList<Price>();
 	    this.transactions = new ArrayList<Price>();
+	    
+	    this.mtxLib = new MatrixLibrary();
 		
 	}
 	
@@ -117,6 +121,12 @@ public class SimpleState implements State{
 	    
 	    return state;
 	  }
+	
+	public JsonArray getNormState(JsonArray state) {
+		double[][] stateMtx = mtxLib.jsonToVector(state, state.size());
+		stateMtx = mtxLib.norm(stateMtx, state.size());
+		return mtxLib.vectorToJson(stateMtx, state.size());
+	}
 	
 	protected void getBidVector(MarketView market, double finalEstimate) {
 	    

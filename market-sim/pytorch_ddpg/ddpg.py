@@ -108,11 +108,9 @@ class DDPG(object):
         self.critic_target.cuda()
 
     def select_action(self, s_t, decay_epsilon=True):
-        #s_t = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
         action = to_numpy(
             self.actor(to_tensor(np.array([s_t])))
         ).squeeze(0)
-        print(self.is_training)
         action += self.is_training*max(self.epsilon, 0)*self.random_process.sample()
         action = np.clip(action, -1., 1.)
 

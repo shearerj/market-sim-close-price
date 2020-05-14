@@ -45,7 +45,7 @@ def create_parser():
 
     return parser
 
-def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = {}, policy_action = False):
+def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = {}, policy_action = False, isTraining = False):
     try:
         samp = {role:
                 {strat: int(count) for strat, count
@@ -54,6 +54,8 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config
                 for role, c, s, probs in role_info}
         conf['assignment'] = samp
         conf['configuration']['actorWeights'] = str(actor_weights)
+        isTraining = False
+        conf['configuration']['isTraining'] = isTraining
         if policy_action:
             conf['configuration']['policyAction'] = 'true'
             conf['configuration']['nbStates'] = nb_states
@@ -175,7 +177,7 @@ def main():
         for j in range(int(drl_args["updateSteps"])):
             agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
 
-        #agent.save_model(model_folder)
+        agent.save_model(model_folder)
 
         actor_weights = {}
         actor_weights['weightMtx1'] = to_numpy(agent.actor.fc1.weight).tolist()
@@ -191,7 +193,7 @@ def main():
             # create new config file where update policy action to true, and feed in weights etc
 
             # Generate new mixed strategies for agents
-            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True)
+            writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True, isTraining = True)
 
             os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
             with open(temp_out_path) as json_file:

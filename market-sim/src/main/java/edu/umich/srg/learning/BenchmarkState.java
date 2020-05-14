@@ -39,10 +39,5 @@ public class BenchmarkState extends SimpleState{
 	    
 	    return state;
 	  }
-	
-	@Override
-	public int getStateSize() {
-		return this.stateSize + 1; //add 1 for side as feature
-	}
 
 }

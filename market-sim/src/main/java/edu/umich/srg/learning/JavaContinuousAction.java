@@ -2,7 +2,7 @@ package edu.umich.srg.learning;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import no.uib.cipr.matrix.DenseMatrix;
+//import no.uib.cipr.matrix.DenseMatrix;
 
 import java.util.Random;
 
@@ -18,27 +18,37 @@ import edu.umich.srg.marketsim.Keys.ActorWeights;
 import edu.umich.srg.marketsim.Keys.IsTraining;
 import edu.umich.srg.marketsim.Keys.EpsilonDecay;
 
-import edu.umich.srg.learning.MatrixLibrary;
-
 public class JavaContinuousAction extends ContinuousAction {
 	
 	protected final int nbStates;
 	protected final int nbActions;
 	protected final int hidden1;
 	protected final int hidden2;
-	protected MatrixLibrary mtxLib;
 	
 	private final Boolean isTraining;
 	private double epsilon;
 	
-	protected DenseMatrix weight1;
-	protected DenseMatrix weight2;
-	protected DenseMatrix weight3;
-	protected DenseMatrix bias1;
-	protected DenseMatrix bias2;
-	protected DenseMatrix bias3;
+	protected double[][] weight1;
+	protected double[][] weight2;
+	protected double[][] weight3;
+	protected double[][] bias1;
+	protected double[][] bias2;
+	protected double[][] bias3;
+	
+	/*
+	protected DenseMatrix weight1_iOS;
+	protected DenseMatrix weight2_iOS;
+	protected DenseMatrix weight3_iOS;
+	protected DenseMatrix bias1_iOS;
+	protected DenseMatrix bias2_iOS;
+	protected DenseMatrix bias3_iOS;
+	*/
 	
 	private OrnsteinUhlenbeckNoise ouNoise;
+	protected MatrixLibrary mtxLib;
+	
+	//private OrnsteinUhlenbeckNoiseiOS ouNoise_iOS;
+	//protected MatrixLibraryiOS mtxLib_iOS;
 
 	public JavaContinuousAction(Sim sim, Spec spec, Random rand) {
 		super(spec, rand);
@@ -47,12 +57,15 @@ public class JavaContinuousAction extends ContinuousAction {
 	    this.nbActions = spec.get(NbActions.class);
 	    this.hidden1 = spec.get(HiddenLayer1.class);
 	    this.hidden2 = spec.get(HiddenLayer2.class);
-	    this.mtxLib = new MatrixLibrary();
 	    
 	    this.isTraining = spec.get(IsTraining.class);
 	    this.epsilon = spec.get(EpsilonDecay.class);
-
+	    
+	    this.mtxLib = new MatrixLibrary();
 	    this.ouNoise = new OrnsteinUhlenbeckNoise(sim,spec,rand);
+
+	    //this.mtxLib_iOS = new MatrixLibraryiOS();
+	    //this.ouNoise_iOS = new OrnsteinUhlenbeckNoiseiOS(sim,spec,rand);
 	    
 	    String weightMtxString = spec.get(ActorWeights.class).iterator().next();
 	    JsonParser parser = new JsonParser();
@@ -73,41 +86,69 @@ public class JavaContinuousAction extends ContinuousAction {
 		    JsonArray biasJson1 = weightMatrices.get("biasMtx1").getAsJsonArray();
 		    JsonArray biasJson2 = weightMatrices.get("biasMtx2").getAsJsonArray();
 		    JsonArray biasJson3 = weightMatrices.get("biasMtx3").getAsJsonArray();
+		    
 		    this.weight1 = mtxLib.jsonToMtx(weightJson1, this.hidden1, this.nbStates);
 		    this.weight2 = mtxLib.jsonToMtx(weightJson2, this.hidden2, this.hidden1);
 		    this.weight3 = mtxLib.jsonToMtx(weightJson3, this.nbActions, this.hidden2);
 		    this.bias1 = mtxLib.jsonToVector(biasJson1, this.hidden1);
 		    this.bias2 = mtxLib.jsonToVector(biasJson2, this.hidden2);
 		    this.bias3 = mtxLib.jsonToVector(biasJson3, this.nbActions);
+		    
+		    /*
+		    this.weight1_iOS = mtxLib_iOS.jsonToMtx(weightJson1, this.hidden1, this.nbStates);
+		    this.weight2_iOS = mtxLib_iOS.jsonToMtx(weightJson2, this.hidden2, this.hidden1);
+		    this.weight3_iOS = mtxLib_iOS.jsonToMtx(weightJson3, this.nbActions, this.hidden2);
+		    this.bias1_iOS = mtxLib_iOS.jsonToVector(biasJson1, this.hidden1);
+		    this.bias2_iOS = mtxLib_iOS.jsonToVector(biasJson2, this.hidden2);
+		    this.bias3_iOS = mtxLib_iOS.jsonToVector(biasJson3, this.nbActions);
+		    */
 		}
 	}
 
 	@Override
 	public JsonArray getAction(JsonObject state) {
-		DenseMatrix stateMtx = mtxLib.jsonToVector(state.get("state0").getAsJsonArray(), this.nbStates);
-		for (int i=0; i < stateMtx.numColumns(); i++) {
-			stateMtx.set(0, i, 1);
+		double[][] stateMtx = mtxLib.jsonToVector(state.get("state0").getAsJsonArray(), this.nbStates);
+		/*
+		for(int i=0; i < this.nbStates; i++) {
+			stateMtx[0][i] = 1;
 		}
+		*/
+		//stateMtx = mtxLib.norm(stateMtx, this.nbStates);
 		
-		//DenseMatrix out1 = new DenseMatrix(1, this.hidden1);
-		//DenseMatrix out2 = new DenseMatrix(1, this.hidden2);
-		//DenseMatrix out3 = new DenseMatrix(1, this.nbActions);
+		double[][] out1 = mtxLib.nnLinearRelu(stateMtx, this.weight1, this.bias1, 1, this.hidden1, this.nbStates);
 		
-		DenseMatrix out1 = mtxLib.nnLinear(stateMtx, this.weight1, this.bias1);
-		out1 = mtxLib.nnReLu(out1);
+		double[][] out2 = mtxLib.nnLinearRelu(out1, this.weight2, this.bias2, 1, this.hidden2, this.hidden1);
 		
-		DenseMatrix out2 = mtxLib.nnLinear(out1, this.weight2, this.bias2);
-		out2 = mtxLib.nnReLu(out2);
-		
-		DenseMatrix out3 = mtxLib.nnLinear(out2, this.weight3, this.bias3);
-		out3 = mtxLib.nnTanh(out3);
+		double[][] out3 = mtxLib.nnLinearTanh(out2, this.weight3, this.bias3, 1, this.nbActions, this.hidden2);
 
 		if(this.isTraining) {
-			DenseMatrix noise = ouNoise.ouNoiseMtx(this.nbActions);
-			noise = (DenseMatrix) noise.scale(this.epsilon);
-			out3 = (DenseMatrix) out3.add(noise);
+			double[][] noise = ouNoise.ouNoiseMtx(this.nbActions);
+			out3 = mtxLib.scaleAdd(out3, noise, this.epsilon, 1, this.nbActions);
 			if(this.epsilon > 0 ) {this.epsilon -= 1.0 / this.epsilon;}
 		}
+		
+		out3 = mtxLib.clip(out3, this.nbActions, -1.0, 1.0);
+		
+		/*
+		DenseMatrix stateMtx_iOS = mtxLib_iOS.jsonToVector(state.get("state0").getAsJsonArray(), this.nbStates);
+		
+		DenseMatrix out1_iOS = mtxLib_iOS.nnLinear(stateMtx_iOS, this.weight1_iOS, this.bias1_iOS);
+		out1_iOS = mtxLib_iOS.nnReLu(out1_iOS);
+		
+		DenseMatrix out2_iOS = mtxLib_iOS.nnLinear(out1_iOS, this.weight2_iOS, this.bias2_iOS);
+		out2_iOS = mtxLib_iOS.nnReLu(out2_iOS);
+		
+		DenseMatrix out3_iOS = mtxLib_iOS.nnLinear(out2_iOS, this.weight3_iOS, this.bias3_iOS);
+		out3_iOS = mtxLib_iOS.nnTanh(out3_iOS);
+
+		if(this.isTraining) {
+			DenseMatrix noise_iOS = ouNoise_iOS.ouNoiseMtx(this.nbActions);
+			noise_iOS = (DenseMatrix) noise_iOS.scale(this.epsilon);
+			out3_iOS = (DenseMatrix) out3_iOS.add(noise_iOS);
+			if(this.epsilon > 0 ) {this.epsilon -= 1.0 / this.epsilon;}
+		}
+		*/
+		
 
 		return mtxLib.vectorToJson(out3, this.nbActions);
 	}
