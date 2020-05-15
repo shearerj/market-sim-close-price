@@ -91,6 +91,7 @@ def main():
     conf['configuration']['hiddenLayer2'] = drl_args['hidden2']
     conf['configuration']['actionCoefficient'] = drl_args['actionCoefficient']
     conf['configuration']['viewBookDepth'] = drl_args['viewBookDepth']
+    conf['configuration']['omegaDepth'] = drl_args['omegaDepth']
     conf['configuration']['transactionDepth'] = drl_args['transactionDepth']
     #conf['configuration']['benchmarkModelPath'] = model_folder
     #conf['configuration']['benchmarkParamPath'] = drl_param_file.name
