@@ -181,11 +181,11 @@ public class RLBenchmarkAgentOld implements Agent {
     double finalEstimate = getFinalFundamentalEstiamte();
     fundamentalError.accept(Math.pow(finalEstimate - finalFundamental, 2));
     
-    JsonArray state = this.stateSpace.getState(finalEstimate, privateValue);
+    JsonArray state = new JsonArray();
     double currProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
-      state.add(type.sign());
+      state = this.stateSpace.getState(finalEstimate, type.sign(), privateValue);
 	  for (int num = 0; num < ordersPerSide; num++) {
 	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
 	
@@ -311,8 +311,7 @@ public class RLBenchmarkAgentOld implements Agent {
     double currProfit = this.calculateReward(this.finalFundamental);
     double reward = currProfit - this.prevProfit;
    
-    JsonArray state = this.stateSpace.getState(this.finalFundamental, privateValue);
-    state.add(0);
+    JsonArray state = this.stateSpace.getState(this.finalFundamental, 0, privateValue);
     this.prev_obs.add("state1", state);
     this.prev_obs.addProperty("terminal", 1);
     this.prev_obs.addProperty("reward", reward);

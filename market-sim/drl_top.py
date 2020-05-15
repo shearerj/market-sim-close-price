@@ -36,6 +36,9 @@ def create_parser():
     parser.add_argument('--drl-param-file', '-p', metavar='<drl-param-file>',
             type=argparse.FileType('r'), default=sys.stdin, help="""Json file
             with the deep RL parameters. (default: stdin)""")
+    parser.add_argument('--state-flags-file', '-s', metavar='<state-flags-file>',
+            type=argparse.FileType('r'), default=sys.stdin, help="""Json file
+            with the state space flags. (default: stdin)""")
     parser.add_argument('--job_num', '-j', metavar='<job_num>',
             type=int, default=-1, help="""The job number for greatlakes. (default: -1)""")
     parser.add_argument('--model-folder', '-f', metavar='<model-folder>',
@@ -54,7 +57,6 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config
                 for role, c, s, probs in role_info}
         conf['assignment'] = samp
         conf['configuration']['actorWeights'] = str(actor_weights)
-        isTraining = False
         conf['configuration']['isTraining'] = isTraining
         if policy_action:
             conf['configuration']['policyAction'] = 'true'
@@ -74,6 +76,7 @@ def main():
     model_folder = args.model_folder
     output_file = args.output_file
     drl_param_file = args.drl_param_file
+    state_flags = json.load(args.state_flags_file)
     drl_args = json.load(drl_param_file)
     conf = json.load(args.configuration)
     config_split = args.configuration.name.split('.')
@@ -92,6 +95,7 @@ def main():
     #conf['configuration']['benchmarkModelPath'] = model_folder
     #conf['configuration']['benchmarkParamPath'] = drl_param_file.name
     #conf['configuration']['greatLakesJobNumber'] = job_num
+    conf['configuration']['stateSpaceFlags'] = str(state_flags)
     conf['configuration']['OUMu'] = drl_args['ou_mu']
     conf['configuration']['OUSigma'] = drl_args['ou_sigma']
     conf['configuration']['OUTheta'] = drl_args['ou_theta']
@@ -177,7 +181,7 @@ def main():
         for j in range(int(drl_args["updateSteps"])):
             agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
 
-        agent.save_model(model_folder)
+        #agent.save_model(model_folder)
 
         actor_weights = {}
         actor_weights['weightMtx1'] = to_numpy(agent.actor.fc1.weight).tolist()

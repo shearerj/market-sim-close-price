@@ -173,12 +173,11 @@ public class DeepRLAgent implements Agent {
     fundamentalError.accept(Math.pow(finalEstimate - finalFundamental, 2));
     
     //JsonArray state = this.stateSpace.getState(finalEstimate, privateValue);
-    JsonArray state = this.getState(finalEstimate);
+    JsonArray state = new JsonArray();
     double currProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
-      state.add(type.sign());
-      state = this.stateSpace.getNormState(state);
+      state = this.getNormState(finalEstimate,type.sign());
 	  for (int num = 0; num < ordersPerSide; num++) {
 	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
 	
@@ -221,8 +220,13 @@ public class DeepRLAgent implements Agent {
     scheduleNextArrival();
   }
 
-protected JsonArray getState(double finalEstimate) {
-	  return this.stateSpace.getState(finalEstimate, privateValue);
+  protected JsonArray getState(double finalEstimate, int side) {
+	  return this.stateSpace.getState(finalEstimate, side, privateValue);
+  }
+  
+  protected JsonArray getNormState(double finalEstimate, int side) {
+	  JsonArray fullState = this.stateSpace.getState(finalEstimate, side, privateValue);
+	  return this.stateSpace.getNormState(fullState);
   }
  
   protected double getAction(double finalEstimate, JsonObject curr_state) {
@@ -279,8 +283,7 @@ protected JsonArray getState(double finalEstimate) {
     double currProfit = this.calculateReward(this.finalFundamental);
     double reward = currProfit - this.prevProfit;
    
-    JsonArray state = this.getState(this.finalFundamental);
-    state.add(0);
+    JsonArray state = this.getNormState(this.finalFundamental,0);
     this.prev_obs.add("state1", state);
     this.prev_obs.addProperty("terminal", 1);
     this.prev_obs.addProperty("reward", reward);

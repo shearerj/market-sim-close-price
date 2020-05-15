@@ -6,7 +6,7 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 
 public interface State{
 		
-	JsonArray getState (double finalEstimate, PrivateValue privateValue);
+	JsonArray getState (double finalEstimate, int side, PrivateValue privateValue);
 	
 	JsonArray getNormState(JsonArray state);
 	

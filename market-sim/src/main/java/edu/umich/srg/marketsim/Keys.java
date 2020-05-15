@@ -173,6 +173,10 @@ public interface Keys {
   class TransactionDepth extends IntValue {
   }
   
+  @ValueHelp("The fixed length of obsevable transactions for omega ratio when training in deep RL.")
+  class OmegaDepth extends IntValue {
+  }
+  
   @ValueHelp("Boolean value which determines whether the deep RL benchmark agent chooses its action by a policy or randomly.")
   class PolicyAction extends BoolValue {
   }
@@ -212,6 +216,10 @@ public interface Keys {
   
   @ValueHelp("Weight matrices for DRL model.")
   class ActorWeights extends StringsValue {
+  }
+  
+  @ValueHelp("Flags for state space to determine which features are included.")
+  class StateSpaceFlags extends StringsValue {
   }
   
   @ValueHelp("Is a Deep RL agent training or not.")

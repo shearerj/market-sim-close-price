@@ -39,13 +39,22 @@ public class RLBenchmarkAgent extends DeepRLAgent {
   }
   
   public static RLBenchmarkAgent createFromSpec(Sim sim, Fundamental fundamental,
-	      Collection<Market> markets, Market market, Spec spec, Random rand) {
-	    return new RLBenchmarkAgent(sim, market, fundamental, spec, rand);
-	  }
-  protected JsonArray getState(double finalEstimate) {
-	  return this.stateSpace.getState(finalEstimate, privateValue);
+      Collection<Market> markets, Market market, Spec spec, Random rand) {
+    return new RLBenchmarkAgent(sim, market, fundamental, spec, rand);
+  }
+  
+  @Override
+  protected JsonArray getState(double finalEstimate, int side) {
+	  return this.stateSpace.getState(finalEstimate, side, privateValue);
+  }
+  
+  @Override
+  protected JsonArray getNormState(double finalEstimate, int side) {
+	  JsonArray fullState = this.stateSpace.getState(finalEstimate, side, privateValue);
+	  return this.stateSpace.getNormState(fullState);
   }
  
+  @Override
   protected double calculateReward(double finalEstimate) {
 	  double currProfit = super.calculateReward(finalEstimate);
 	  double currBenchmark = market.getCurrentBenchmark();

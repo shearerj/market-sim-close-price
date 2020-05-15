@@ -26,14 +26,18 @@ public class BenchmarkState extends SimpleState{
 		  }
 	
 	@Override
-	public JsonArray getState(double finalEstimate, PrivateValue privateValue) {
-		JsonArray state = super.getState(finalEstimate, privateValue);
+	public JsonArray getState(double finalEstimate, int side, PrivateValue privateValue) {
+		JsonArray state = super.getState(finalEstimate, side, privateValue);
 	    
-	    int num_transactions = market.getCurrentNumTransactions();
-	    state.add(num_transactions);
+		if(stateFlags.get("numTransactions").getAsBoolean()) {
+			int num_transactions = market.getCurrentNumTransactions();
+		    state.add(num_transactions);
+		}
 	    
-	    int contract_h = this.benchmarkDir * this.benchmarkImpact;
-	    state.add(contract_h);
+	    if(stateFlags.get("contractHoldings").getAsBoolean()) {
+	    	int contract_h = this.benchmarkDir * this.benchmarkImpact;
+		    state.add(contract_h);
+		}
 	    
 	    this.stateSize = state.size();
 	    

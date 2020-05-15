@@ -21,11 +21,14 @@ def create_parser():
             metavar='<configuration-file>', type=argparse.FileType('r'),
             default=sys.stdin, help="""Json file with the hparam configuration.
            	(default: stdin)""")
+    parser.add_argument('--environment-path', '-e',
+            metavar='<environment-path>', default=sys.stdin, 
+            help="""Path of environment. (default: stdin)""")
 
     return parser
 
 
-def submit_jobs(submit_template: str, experiment_template: str, name: str, options: Dict[str, Sequence], num_jobs: int=1, num_parallel: int=1):
+def submit_jobs(env, submit_template: str, experiment_template: str, name: str, options: Dict[str, Sequence], num_jobs: int=1, num_parallel: int=1):
     """ Perform a random hyperparameter search for an experiment.
     Runs a hyperparameter search for an experiment. A default experimental gin configuration
     must be specified via the template job script, and then the hparam search options are used
@@ -67,9 +70,9 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         # Construct job string.
         job_name = f"{name}_{len(jobs)}"
         job = experiment_template
-        model_folder_string = f"HSLN_env1-{len(jobs)}"
-        conf_file_string = f"drl_param-{len(jobs)}.json"
-        out_file_string = f"drl_env1/output-{len(jobs)}"
+        model_folder_string = f"{env}/HSLN-{len(jobs)}"
+        conf_file_string = f"{env}/drl_param-{len(jobs)}.json"
+        out_file_string = f"{env}/output-{len(jobs)}"
         job += f" -f {model_folder_string} -p {conf_file_string} -o {out_file_string} -j {len(jobs)}"
         conf_file= open(conf_file_string,"w")
         json.dump(config, conf_file, sort_keys=True)
@@ -88,6 +91,7 @@ def submit_jobs(submit_template: str, experiment_template: str, name: str, optio
         # Add the experiment's executable and flags.        
         submission += f" {submit_template}"
         submission += f" \"{job}\""
+        print(submission)
         # Launch job.
         _, output = subprocess.getstatusoutput(submission)
         _, _, _, job_num = output.split(' ')
@@ -100,7 +104,8 @@ def main():
     """ Runs hyperparameter search. """
     args = create_parser().parse_args()
     conf = json.load(args.configuration_file)
-    submit_jobs(conf['submit_template'], conf['experiment_template'], conf['name'], conf['options'], conf['num_jobs'], conf['num_parallel'])
+    env = args.environment_path
+    submit_jobs(env, conf['submit_template'], conf['experiment_template'], conf['name'], conf['options'], conf['num_jobs'], conf['num_parallel'])
 
 if __name__ == "__main__":
 	main()
