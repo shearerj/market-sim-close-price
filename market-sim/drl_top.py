@@ -114,9 +114,7 @@ def main():
     curr_arrivals = 0
     replay_buffer = []
 
-    temp_out_path = 'drl_out'
-    if (job_num >= 0): temp_out_path = f'drl_out_{job_num}.json'
-    else: temp_out_path = 'drl_out.json'
+    temp_out_path = f'{output_file}_temp.json'
 
     while curr_arrivals < warmup:
         # Generate new mixed strategies for agents
