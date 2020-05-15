@@ -1,7 +1,7 @@
 {
   "submit_template": "greatlakes_scripts/run.sh",
-  "experiment_template": "python3 drl_top.py -c drl_env1/ms_config.json -m drl_env1/profile.json",
-  "name": "market_sim_drl_hparam_search",
+  "experiment_template": "python3 drl_top.py -c drl_env2/ms_config.json -m drl_env2/profile.json -s drl_env2/state_flags.json",
+  "name": "ms_env2_hparam_search",
   "num_jobs": 200,
   "num_parallel": 30,
   "options": {
