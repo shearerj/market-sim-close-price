@@ -6,7 +6,7 @@ def main():
 
     for i in range(200):
     	entry = f'out-{i}'
-        stats[entry] = json.load(f'drl_env1/output-{i}.json')
+    	stats[entry] = json.load(f'drl_env1/output-{i}.json')
 
     print(stats)
 
