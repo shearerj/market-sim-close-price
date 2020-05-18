@@ -82,7 +82,7 @@ public class SimpleState implements State{
 		JsonArray state = new JsonArray();
 	
 		if(stateFlags.get("finalFundamentalEstimate").getAsBoolean()) {
-			state.add(finalEstimate);
+			state.add(Math.log(finalEstimate));
 		}
 	    
 		if(stateFlags.get("side").getAsBoolean()) {
@@ -102,21 +102,21 @@ public class SimpleState implements State{
 	    if(stateFlags.get("bidVector").getAsBoolean()) {
 	    	this.getBidVector(market, finalEstimate);
 		    for(int i = this.bid_vector.size() - 1; i>=0; i--) {
-		    	state.add(this.bid_vector.get(i).doubleValue());
+		    	state.add(Math.log(this.bid_vector.get(i).doubleValue()));
 		    }	
 		}
 	    
 	    if(stateFlags.get("askVector").getAsBoolean()) {
 	    	this.getAskVector(market, finalEstimate);
 		    for(int i = 0; i< this.ask_vector.size(); i++) {
-		    	state.add(this.ask_vector.get(i).doubleValue());
+		    	state.add(Math.log(this.ask_vector.get(i).doubleValue()));
 		    }
 		}
 	    
 	    if(stateFlags.get("transactionHistory").getAsBoolean()) {
 	    	this.getTransactionHistory(finalEstimate);
 		    for(int i = 0; i < transactions.size();i++) {
-		    	state.add(transactions.get(i).doubleValue());
+		    	state.add(Math.log(transactions.get(i).doubleValue()));
 		    }
 		}
 	    
@@ -143,26 +143,23 @@ public class SimpleState implements State{
 	    }
 	    
 	    if(stateFlags.get("privateBid").getAsBoolean()) {
-	    	state.add(privateBidBenefit);
+	    	state.add(privateBidBenefit/1000);
 		}
 	    
 	    if(stateFlags.get("privateAsk").getAsBoolean()) {
-	    	state.add(privateAskBenefit);
+	    	state.add(privateAskBenefit/1000);
 		}
 	    
-	    if(stateFlags.get("omegaBid").getAsBoolean()) {
+	    if(stateFlags.get("omegaRatio").getAsBoolean()) {
 	    	double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit);
-	    	state.add(omega_bid);
-		}
-	    
-	    if(stateFlags.get("omegaAsk").getAsBoolean()) {
 	    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
-		    state.add(omega_ask);
+	    	state.add(omega_bid/(omega_bid + omega_ask));
+		    state.add(omega_ask/(omega_bid + omega_ask));
 		}
 	    
 	    if(stateFlags.get("timeTilEnd").getAsBoolean()) {
 	    	long timeTilEnd = this.timeHorizon - sim.getCurrentTime().get();
-		    state.add(timeTilEnd);
+		    state.add(((double)timeTilEnd)/((double)this.timeHorizon));
 		}
 	    
 	    this.stateSize = state.size();

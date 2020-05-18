@@ -36,7 +36,7 @@ public class BenchmarkState extends SimpleState{
 	    
 	    if(stateFlags.get("contractHoldings").getAsBoolean()) {
 	    	int contract_h = this.benchmarkDir * this.benchmarkImpact;
-		    state.add(contract_h);
+		    state.add(Math.log(contract_h));
 		}
 	    
 	    this.stateSize = state.size();
