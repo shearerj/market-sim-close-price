@@ -12,7 +12,6 @@ def main():
     		stats[entry] = json.load(json_file)
     		paths[entry] = ['Benchmark-Manipulator', 'mean']
 
-
 	print(max(stats, key=lambda k: value(k, stats, paths[k])))
 
 
