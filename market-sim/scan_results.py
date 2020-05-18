@@ -9,7 +9,8 @@ def main():
     	with open(f'drl_env1/output-{i}.json') as json_file:
     		stats[entry] = json.load(json_file)
 
-    print(stats)
+    print(max(dict, key=lambda x: (dict[x].get('Benchmark-Manipulator')).get('mean')))
+    #print(stats)
 
 
 if __name__ == '__main__':
