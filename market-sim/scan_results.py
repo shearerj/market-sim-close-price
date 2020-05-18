@@ -11,7 +11,7 @@ def main():
     	with open(f'drl_env1/output-{i}.json') as json_file:
     		stats[entry] = json.load(json_file)
     		paths[entry] = ['Benchmark-Manipulator', 'mean']
-    print(max(stats, key=lambda k: value(k,stats,paths[k])))
+    print(max(stats, key=lambda k: stats['Benchmark-Manipulator']['mean']))
 
 
 if __name__ == '__main__':
