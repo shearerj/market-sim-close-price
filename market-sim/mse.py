@@ -102,7 +102,7 @@ def getStatsJson(agents):
 def main():
         file = sys.argv[1]
         num_agents = int(sys.argv[2])
-        zi, bm, bmM, ts, tsM, h_zi, ah_zi, h_bm, ah_bm, bmB = getData(file, num_agents)
+        zi, bm, bmM, ts, tsM, h_zi, ah_zi, h_bm, ah_bm, bmB = getDataFile(file, num_agents)
         print('ZI')
         print(getStats(zi))
         print('Benchmark Manipulator')

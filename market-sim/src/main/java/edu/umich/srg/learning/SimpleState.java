@@ -153,8 +153,14 @@ public class SimpleState implements State{
 	    if(stateFlags.get("omegaRatio").getAsBoolean()) {
 	    	double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit);
 	    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
-	    	state.add(omega_bid/(omega_bid + omega_ask));
-		    state.add(omega_ask/(omega_bid + omega_ask));
+	    	if ((omega_bid == 0) && (omega_ask == 0)) {
+	    		state.add(omega_bid);
+			    state.add(omega_ask);
+	    	}
+	    	else {
+	    		state.add(omega_bid/(omega_bid + omega_ask));
+			    state.add(omega_ask/(omega_bid + omega_ask));
+	    	}
 		}
 	    
 	    if(stateFlags.get("timeTilEnd").getAsBoolean()) {
