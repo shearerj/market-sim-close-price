@@ -189,7 +189,6 @@ def main():
         actor_weights['biasMtx2'] = to_numpy(agent.actor.fc2.bias).tolist()
         actor_weights['weightMtx3'] = to_numpy(agent.actor.fc3.weight).tolist()
         actor_weights['biasMtx3'] = to_numpy(agent.actor.fc3.bias).tolist()
-        print(len(actor_weights))
 
         if i < training_steps - 1:
             # get weights and bias for policy actions

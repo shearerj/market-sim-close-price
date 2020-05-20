@@ -53,7 +53,8 @@ public class ContinuousAction implements Action {
 	public double actionToPrice(double finalEstimate) {
 		int alpha_sign = 1;
 	  	if (this.alpha < 0) {alpha_sign = -1;};
-	    double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(this.alpha);
+	  	double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(Math.abs(this.alpha));
+	    //double toSubmit = finalEstimate + alpha_sign * this.actionCoefficient * Math.exp(this.alpha);
 		return toSubmit;
 	}
 
