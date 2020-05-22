@@ -124,7 +124,6 @@ public class JavaContinuousAction extends ContinuousAction {
 		if(this.isTraining) {
 			double[][] noise = ouNoise.ouNoiseMtx(this.nbActions);
 			out3 = mtxLib.scaleAdd(out3, noise, this.epsilon, 1, this.nbActions);
-			System.out.println(out3[0][0]);
 			if(this.epsilon > 0 ) {this.epsilon -= 1.0 / this.epsilon;}
 		}
 		

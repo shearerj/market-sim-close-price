@@ -174,7 +174,9 @@ public class DeepRLAgent implements Agent {
     
     //JsonArray state = this.stateSpace.getState(finalEstimate, privateValue);
     JsonArray state = new JsonArray();
-    double currProfit = this.calculateReward(finalEstimate);
+    JsonArray state1 = new JsonArray();
+    //double currProfit = this.calculateReward(finalEstimate);
+    double startProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
       state = this.getNormState(finalEstimate,type.sign());
@@ -200,7 +202,18 @@ public class DeepRLAgent implements Agent {
 	      }
   	    }
   	  }
+	  state1 = this.getNormState(finalEstimate,type.sign());
     }
+    
+    double endProfit = this.calculateReward(finalEstimate);
+    curr_obs.add("state0", state);
+    curr_obs.add("action", this.action);
+    curr_obs.add("state1", state);
+    curr_obs.addProperty("terminal", 0);
+    double reward = endProfit - startProfit;
+    curr_obs.addProperty("reward", reward);
+    this.rl_observations.add(curr_obs);
+    /*
     curr_obs.add("state0", state);
     curr_obs.add("action", this.action);
     prev_obs.add("state1", state);
@@ -216,6 +229,7 @@ public class DeepRLAgent implements Agent {
     this.prevProfit = currProfit;
     
     this.prev_obs = curr_obs;
+    */
 
     scheduleNextArrival();
   }
@@ -274,7 +288,7 @@ public class DeepRLAgent implements Agent {
     feats.addProperty("mean_shading", shadingStats.getAverage().orElse(0.0));
     feats.addProperty("arrivals", fundamentalError.getCount());
     feats.addProperty("mean_fundamental_error", fundamentalError.getAverage().orElse(0.0));
-    this.finalRlObs();
+    //this.finalRlObs();
     feats.add("rl_observations", this.rl_observations);
     return feats;
   }
