@@ -96,6 +96,8 @@ public class DeepRLAgent implements Agent {
   private JsonObject prev_obs;
   private JsonArray action;
   
+  private double runningPayoff;
+  
   public DeepRLAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     this.sim = sim;
     this.id = rand.nextInt();
@@ -145,6 +147,8 @@ public class DeepRLAgent implements Agent {
     this.firstArrival = true;
     this.prev_obs = new JsonObject();
     
+    this.runningPayoff = 0;
+    
     this.action = new JsonArray();
   
     this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
@@ -175,7 +179,7 @@ public class DeepRLAgent implements Agent {
     //JsonArray state = this.stateSpace.getState(finalEstimate, privateValue);
     JsonArray state = new JsonArray();
     JsonArray state1 = new JsonArray();
-    //double currProfit = this.calculateReward(finalEstimate);
+    double currProfit = this.calculateReward(finalEstimate);
     double startProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
@@ -206,30 +210,34 @@ public class DeepRLAgent implements Agent {
     }
     
     double endProfit = this.calculateReward(finalEstimate);
+    /*
     curr_obs.add("state0", state);
     curr_obs.add("action", this.action);
-    curr_obs.add("state1", state);
+    curr_obs.add("state1", state1);
     curr_obs.addProperty("terminal", 0);
     double reward = endProfit - startProfit;
     curr_obs.addProperty("reward", reward);
     this.rl_observations.add(curr_obs);
-    /*
+    */
+    
     curr_obs.add("state0", state);
     curr_obs.add("action", this.action);
     prev_obs.add("state1", state);
     prev_obs.addProperty("terminal", 0);
     
-    if (firstArrival) {
-        firstArrival = false;
-      } else {
+    if (!firstArrival) {
         double reward = currProfit - this.prevProfit;
+        this.runningPayoff += reward;
         this.prev_obs.addProperty("reward", reward);
         this.rl_observations.add(prev_obs);
+        this.prevProfit = currProfit;
+      } else {
+    	firstArrival = false;
+    	this.prevProfit = 0;
       }
-    this.prevProfit = currProfit;
     
     this.prev_obs = curr_obs;
-    */
+    
 
     scheduleNextArrival();
   }
@@ -288,14 +296,16 @@ public class DeepRLAgent implements Agent {
     feats.addProperty("mean_shading", shadingStats.getAverage().orElse(0.0));
     feats.addProperty("arrivals", fundamentalError.getCount());
     feats.addProperty("mean_fundamental_error", fundamentalError.getAverage().orElse(0.0));
-    //this.finalRlObs();
+    this.finalRlObs();
     feats.add("rl_observations", this.rl_observations);
     return feats;
   }
   
-  private void finalRlObs() {
+  protected void finalRlObs() {
     double currProfit = this.calculateReward(this.finalFundamental);
     double reward = currProfit - this.prevProfit;
+
+    this.runningPayoff += reward;
    
     JsonArray state = this.getNormState(this.finalFundamental,0);
     this.prev_obs.add("state1", state);

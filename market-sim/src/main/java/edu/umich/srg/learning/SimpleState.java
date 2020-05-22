@@ -82,7 +82,8 @@ public class SimpleState implements State{
 		JsonArray state = new JsonArray();
 	
 		if(stateFlags.get("finalFundamentalEstimate").getAsBoolean()) {
-			state.add(Math.log(finalEstimate));
+			//state.add(Math.log(finalEstimate));
+			state.add(finalEstimate);
 		}
 	    
 		if(stateFlags.get("side").getAsBoolean()) {
