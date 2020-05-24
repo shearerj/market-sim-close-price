@@ -16,7 +16,7 @@
     "ou_theta": [0.0015, 0.015, 0.15],
     "ou_sigma": [0.001,0.01,0.1],
     "ou_mu": [0.0],
-    "init_w": [1e-3, 5e-3, 1e-2],
+    "init_w": [30,50,70,90],
     "epsilon": [3, 5, 7],
     "trainingSteps": [1000],
     "updateSteps": [10,20,50],
