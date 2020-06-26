@@ -36,4 +36,6 @@ public interface Agent {
   /** Called when one of an agent's existing orders transacts. */
   default void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {}
 
+  double getRunningPayoff();
+
 }

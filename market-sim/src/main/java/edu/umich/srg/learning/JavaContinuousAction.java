@@ -129,28 +129,40 @@ public class JavaContinuousAction extends ContinuousAction {
 		
 		out3 = mtxLib.clip(out3, this.nbActions, -1.0, 1.0);
 		
-		/*
-		DenseMatrix stateMtx_iOS = mtxLib_iOS.jsonToVector(state.get("state0").getAsJsonArray(), this.nbStates);
-		
-		DenseMatrix out1_iOS = mtxLib_iOS.nnLinear(stateMtx_iOS, this.weight1_iOS, this.bias1_iOS);
-		out1_iOS = mtxLib_iOS.nnReLu(out1_iOS);
-		
-		DenseMatrix out2_iOS = mtxLib_iOS.nnLinear(out1_iOS, this.weight2_iOS, this.bias2_iOS);
-		out2_iOS = mtxLib_iOS.nnReLu(out2_iOS);
-		
-		DenseMatrix out3_iOS = mtxLib_iOS.nnLinear(out2_iOS, this.weight3_iOS, this.bias3_iOS);
-		out3_iOS = mtxLib_iOS.nnTanh(out3_iOS);
-
-		if(this.isTraining) {
-			DenseMatrix noise_iOS = ouNoise_iOS.ouNoiseMtx(this.nbActions);
-			noise_iOS = (DenseMatrix) noise_iOS.scale(this.epsilon);
-			out3_iOS = (DenseMatrix) out3_iOS.add(noise_iOS);
-			if(this.epsilon > 0 ) {this.epsilon -= 1.0 / this.epsilon;}
-		}
-		*/
-		
 
 		return mtxLib.vectorToJson(out3, this.nbActions);
+	}
+	
+	@Override
+	public JsonObject getActionDict(JsonObject state, double finalEstimate) {
+		double[][] stateMtx = mtxLib.jsonToVector(state.get("state0").getAsJsonArray(), this.nbStates);
+		/*
+		for(int i=0; i < this.nbStates; i++) {
+			stateMtx[0][i] = 1;
+		}
+		*/
+		//stateMtx = mtxLib.norm(stateMtx, this.nbStates);
+		
+		double[][] out1 = mtxLib.nnLinearRelu(stateMtx, this.weight1, this.bias1, 1, this.hidden1, this.nbStates);
+		
+		double[][] out2 = mtxLib.nnLinearRelu(out1, this.weight2, this.bias2, 1, this.hidden2, this.hidden1);
+		
+		double[][] out3 = mtxLib.nnLinearTanh(out2, this.weight3, this.bias3, 1, this.nbActions, this.hidden2);
+
+		if(this.isTraining) {
+			double[][] noise = ouNoise.ouNoiseMtx(this.nbActions);
+			out3 = mtxLib.scaleAdd(out3, noise, this.epsilon, 1, this.nbActions);
+			if(this.epsilon > 0 ) {this.epsilon -= 1.0 / this.epsilon;}
+		}
+		
+		out3 = mtxLib.clip(out3, this.nbActions, -1.0, 1.0);
+		
+		JsonObject action = new JsonObject();
+		
+		action.addProperty("alpha", out3[0][0]);
+		action.addProperty("price", this.actionToPrice(finalEstimate));
+
+		return action;
 	}
 	
 }

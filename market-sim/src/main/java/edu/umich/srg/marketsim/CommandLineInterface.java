@@ -111,9 +111,13 @@ public class CommandLineInterface extends CommandLineOptions {
       //System.out.println(6666666);
   	  //System.out.println(info.payoff);
       info.features = info.agent.getFeatures();
-      //add final rl obs here
       info.features.addProperty("holdings", pays.getHoldings());
       info.features.addProperty("holdings_abs", Math.abs(pays.getHoldings()));
+      
+      double runningReward = info.agent.getRunningPayoff();
+      if (runningReward != info.payoff && runningReward != -1) {
+      	System.exit(0);
+      }
     }
 
     return new Observation() {

@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import random
+#import matplotlib.pyplot as plt
 
 import numpy.random as rand
 
@@ -120,7 +121,7 @@ def main():
         # Generate new mixed strategies for agents
         writeConfigFile(conf, role_info, 0, 0, model_folder, config_path)
 
-        #print(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+        #  print(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
 
         os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
         with open(temp_out_path) as json_file:
@@ -132,7 +133,8 @@ def main():
         obs = feat['rl_observations']
         for i, ob in enumerate(obs):
             if len(ob['action']) > 0:
-                    replay_buffer.append(ob)
+                ob['action'] =  ob['action']['alpha']
+                replay_buffer.append(ob)
             else:
                 curr_arrivals = curr_arrivals - 1
             #replay_buffer.append(ob)
@@ -210,6 +212,7 @@ def main():
                 # Hacky way to vefiy that action was selected
                 if len(ob['action']) > 0:
                 #json.dump(ob, replay_buffer_file)
+                    ob['action'] =  ob['action']['alpha']
                     replay_buffer.append(ob)
                 else:
                     curr_arrivals = curr_arrivals - 1
@@ -231,6 +234,19 @@ def main():
         f.close()
         for j,s in enumerate(lines):
             stats.append(s)
+
+    #print("actor loss")
+    prate = drl_args['prate']
+    rate = drl_args['rate']
+    #plt.title(f'Actor Loss, prate={prate}, rate={rate}, bsize={bsize}')
+    #plt.plot(agent.getActorLoss())
+    #plt.savefig(f'{output_file}_actor_loss.png')
+    #plt.clear()
+    #print("critic loss")
+    #plt.title(f'Critic Loss, prate={prate}, rate={rate}, bsize={bsize}')
+    #plt.plot(agent.getCriticLoss())
+    #plt.savefig(f'{output_file}_critic_loss.png')
+    #plt.clear()
 
     num_agents = 0
     for key,value in roles.items():

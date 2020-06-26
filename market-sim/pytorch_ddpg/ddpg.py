@@ -56,6 +56,9 @@ class DDPG(object):
         self.a_t = None # Most recent action
         self.is_training = True
 
+        self.actor_loss = []
+        self.critic_loss = []
+
         # 
         if USE_CUDA: self.cuda()
 
@@ -77,6 +80,7 @@ class DDPG(object):
         
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
+        self.critic_loss.append(float(to_numpy(value_loss).squeeze(0)))
         self.critic_optim.step()
 
         # Actor update
@@ -89,6 +93,7 @@ class DDPG(object):
 
         policy_loss = policy_loss.mean()
         policy_loss.backward()
+        self.actor_loss.append(float(to_numpy(policy_loss).squeeze(0)))
         self.actor_optim.step()
 
         # Target update
@@ -146,6 +151,12 @@ class DDPG(object):
         torch.manual_seed(s)
         if USE_CUDA:
             torch.cuda.manual_seed(s)
+
+    def getActorLoss(self):
+        return self.actor_loss
+
+    def getCriticLoss(self):
+        return self.critic_loss
 
 if __name__ == '__main__':
     state = [0,1,2,3,4,5]

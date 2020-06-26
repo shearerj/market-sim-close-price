@@ -35,6 +35,11 @@ public class NoOpAgent implements Agent {
   }
 
   @Override
+  public double getRunningPayoff() {
+	return -1;
+  }
+  
+  @Override
   public double payoffForExchange(int position, OrderType type) {
     return 0;
   }

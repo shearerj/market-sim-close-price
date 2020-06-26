@@ -99,6 +99,8 @@ public class RLBenchmarkAgentOld implements Agent {
 	private final int benchmarkImpact;
     private final double contractHoldings;
     private final int benchmarkDir;
+    
+    private double runningPayoff;
   
   /** Standard constructor for ZIR agent. */
   public RLBenchmarkAgentOld(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
@@ -160,6 +162,8 @@ public class RLBenchmarkAgentOld implements Agent {
     this.benchmarkImpact = spec.get(BenchmarkImpact.class);
     this.contractHoldings = spec.get(ContractHoldings.class);
     this.benchmarkDir = spec.get(BenchmarkDir.class);
+    
+    this.runningPayoff = 0;
   
   }
   
@@ -220,6 +224,7 @@ public class RLBenchmarkAgentOld implements Agent {
         firstArrival = false;
       } else {
         double reward = currProfit - this.prevProfit;
+        this.runningPayoff += reward;
         this.prev_obs.addProperty("reward", reward);
         this.rl_observations.add(prev_obs);
       }
@@ -310,6 +315,8 @@ public class RLBenchmarkAgentOld implements Agent {
   private void finalRlObs() {
     double currProfit = this.calculateReward(this.finalFundamental);
     double reward = currProfit - this.prevProfit;
+    
+    this.runningPayoff += reward;
    
     JsonArray state = this.stateSpace.getState(this.finalFundamental, 0, privateValue);
     this.prev_obs.add("state1", state);
@@ -329,6 +336,11 @@ public class RLBenchmarkAgentOld implements Agent {
   @Override
   public final int getId() {
     return id;
+  }
+  
+  @Override
+  public double getRunningPayoff() {
+	return this.runningPayoff;
   }
 
   @Override

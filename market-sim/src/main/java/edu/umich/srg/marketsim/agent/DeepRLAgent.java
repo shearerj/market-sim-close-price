@@ -95,6 +95,7 @@ public class DeepRLAgent implements Agent {
   private final JsonArray rl_observations;
   private JsonObject prev_obs;
   private JsonArray action;
+  private JsonObject actionDict;
   
   private double runningPayoff;
   
@@ -150,6 +151,7 @@ public class DeepRLAgent implements Agent {
     this.runningPayoff = 0;
     
     this.action = new JsonArray();
+    this.actionDict = new JsonObject();
   
     this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
     double priceVarEst = spec.get(PriceVarEst.class);
@@ -178,12 +180,13 @@ public class DeepRLAgent implements Agent {
     
     //JsonArray state = this.stateSpace.getState(finalEstimate, privateValue);
     JsonArray state = new JsonArray();
-    JsonArray state1 = new JsonArray();
+    JsonObject stateDict = new JsonObject();
     double currProfit = this.calculateReward(finalEstimate);
     double startProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
       state = this.getNormState(finalEstimate,type.sign());
+      stateDict = this.getStateDict(finalEstimate, type.sign());
 	  for (int num = 0; num < ordersPerSide; num++) {
 	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
 	
@@ -198,6 +201,7 @@ public class DeepRLAgent implements Agent {
 	        continue;
 	      }
 	      long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
+	      this.actionDict.addProperty("price", rounded);
 	      shadingStats.accept(Math.abs(estimatedValue - toSubmit));
 	
 	      if (rounded > 0) {
@@ -206,7 +210,7 @@ public class DeepRLAgent implements Agent {
 	      }
   	    }
   	  }
-	  state1 = this.getNormState(finalEstimate,type.sign());
+	  //state1 = this.getNormState(finalEstimate,type.sign());
     }
     
     double endProfit = this.calculateReward(finalEstimate);
@@ -221,8 +225,11 @@ public class DeepRLAgent implements Agent {
     */
     
     curr_obs.add("state0", state);
-    curr_obs.add("action", this.action);
+    //curr_obs.add("state0", stateDict);
+    //curr_obs.add("action", this.action);
+    curr_obs.add("action", this.actionDict);
     prev_obs.add("state1", state);
+    //prev_obs.add("state1", stateDict);
     prev_obs.addProperty("terminal", 0);
     
     if (!firstArrival) {
@@ -246,6 +253,10 @@ public class DeepRLAgent implements Agent {
 	  return this.stateSpace.getState(finalEstimate, side, privateValue);
   }
   
+  protected JsonObject getStateDict(double finalEstimate, int side) {
+	  return this.stateSpace.getStateDict(finalEstimate, side, privateValue);
+  }
+  
   protected JsonArray getNormState(double finalEstimate, int side) {
 	  JsonArray fullState = this.stateSpace.getState(finalEstimate, side, privateValue);
 	  return this.stateSpace.getNormState(fullState);
@@ -255,12 +266,16 @@ public class DeepRLAgent implements Agent {
       double toSubmit = 0;
       
       if(this.policyAction) {
-    	  this.action = this.policyActionSpace.getAction(curr_state);
-    	  toSubmit = this.policyActionSpace.actionToPrice(finalEstimate);
+    	  //this.action = this.policyActionSpace.getAction(curr_state);
+    	  //toSubmit = this.policyActionSpace.actionToPrice(finalEstimate);
+    	  this.actionDict = this.policyActionSpace.getActionDict(curr_state,finalEstimate);
+    	  toSubmit = this.actionDict.get("price").getAsDouble();
       }
       else { 
-    	  this.action = this.randomActionSpace.getAction();
-    	  toSubmit = this.randomActionSpace.actionToPrice(finalEstimate);
+    	  //this.action = this.randomActionSpace.getAction();
+    	  //toSubmit = this.randomActionSpace.actionToPrice(finalEstimate);
+    	  this.actionDict = this.randomActionSpace.getActionDict(finalEstimate);
+    	  toSubmit = this.actionDict.get("price").getAsDouble();
 	  }
 	  return toSubmit;
   }
@@ -308,7 +323,9 @@ public class DeepRLAgent implements Agent {
     this.runningPayoff += reward;
    
     JsonArray state = this.getNormState(this.finalFundamental,0);
+    JsonObject stateDict = this.getStateDict(this.finalFundamental,0);
     this.prev_obs.add("state1", state);
+    //this.prev_obs.add("state1", stateDict);
     this.prev_obs.addProperty("terminal", 1);
     this.prev_obs.addProperty("reward", reward);
     this.rl_observations.add(prev_obs);
@@ -324,6 +341,11 @@ public class DeepRLAgent implements Agent {
 
   protected String name() {
     return "DeepRL";
+  }
+  
+  @Override
+  public double getRunningPayoff() {
+	  return this.runningPayoff;
   }
   
   @Override

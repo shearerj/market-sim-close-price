@@ -105,7 +105,7 @@ public class SimpleState implements State{
 		    for(int i = this.bid_vector.size() - 1; i>=0; i--) {
 		    	//state.add(this.bid_vector.get(i).doubleValue());
 		    	//state.add(Math.log(this.bid_vector.get(i).doubleValue()));
-		    	state.add(finalEstimate - this.bid_vector.get(i).doubleValue());
+		    	state.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
 		    }	
 		}
 	    
@@ -114,8 +114,12 @@ public class SimpleState implements State{
 		    for(int i = 0; i< this.ask_vector.size(); i++) {
 		    	//state.add(this.ask_vector.get(i).doubleValue());
 		    	//state.add(Math.log(this.ask_vector.get(i).doubleValue()));
-		    	state.add(finalEstimate - this.ask_vector.get(i).doubleValue());
+		    	state.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
 		    }
+		}
+	    
+	    if(stateFlags.get("spread").getAsBoolean()) {
+		    state.add(this.ask_vector.get(0).doubleValue() - this.bid_vector.get(0).doubleValue());
 		}
 	    
 	    if(stateFlags.get("transactionHistory").getAsBoolean()) {
@@ -123,7 +127,7 @@ public class SimpleState implements State{
 		    for(int i = 0; i < transactions.size();i++) {
 		    	//state.add(transactions.get(i).doubleValue());
 		    	//state.add(Math.log(transactions.get(i).doubleValue()));
-		    	state.add(finalEstimate - transactions.get(i).doubleValue());
+		    	state.add(transactions.get(i).doubleValue() - finalEstimate);
 		    }
 		}
 	    
@@ -159,11 +163,9 @@ public class SimpleState implements State{
 	    	//state.add(privateAskBenefit/1000);
 		}
 	    
-	    if(stateFlags.get("omegaRatio").getAsBoolean()) {
+	    if(stateFlags.get("omegaRatioBid").getAsBoolean()) {
 	    	double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit);
-	    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
 	    	state.add(omega_bid);
-		    state.add(omega_ask);
 	    	/*
 	    	if ((omega_bid == 0) && (omega_ask == 0)) {
 	    		state.add(omega_bid);
@@ -176,10 +178,121 @@ public class SimpleState implements State{
 	    	*/
 		}
 	    
+	    if(stateFlags.get("omegaRatioAsk").getAsBoolean()) {
+	    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
+		    state.add(omega_ask);
+		}
+	    
 	    if(stateFlags.get("timeTilEnd").getAsBoolean()) {
 	    	long timeTilEnd = this.timeHorizon - sim.getCurrentTime().get();
 	    	state.add(timeTilEnd);
 		    //state.add(((double)timeTilEnd)/((double)this.timeHorizon));
+		}
+	    
+	    this.stateSize = state.size();
+	    
+	    return state;
+	  }
+	
+	
+	@Override
+	public JsonObject getStateDict(double finalEstimate, int side, PrivateValue privateValue) {
+		JsonObject state = new JsonObject();
+	
+		if(stateFlags.get("finalFundamentalEstimate").getAsBoolean()) {
+			state.addProperty("finalFundamentalEstimate", finalEstimate);
+		}
+	    
+		if(stateFlags.get("side").getAsBoolean()) {
+			state.addProperty("side", side);
+		}
+	    
+	    this.bid_vector = market.getBidVector();
+	    this.ask_vector = market.getAskVector();
+	    
+	    if(stateFlags.get("bidSize").getAsBoolean()) {
+	    	state.addProperty("bidSize", bid_vector.size());
+		}
+	    if(stateFlags.get("askSize").getAsBoolean()) {
+	    	state.addProperty("askSize", ask_vector.size());
+		}
+	    
+	    if(stateFlags.get("bidVector").getAsBoolean()) {
+	    	this.getBidVector(market, finalEstimate);
+	    	ArrayList<Double> bid_vec_double = new ArrayList<Double>();
+	    	for(int i = this.bid_vector.size() - 1; i>=0; i--) {
+	    		bid_vec_double.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
+		    }	
+	    	state.addProperty("bidVector", bid_vec_double.toString());	
+		}
+	    
+	    if(stateFlags.get("askVector").getAsBoolean()) {
+	    	this.getAskVector(market, finalEstimate);
+	    	ArrayList<Double> ask_vec_double = new ArrayList<Double>();
+	    	for(int i = 0; i< this.ask_vector.size(); i++) {
+	    		ask_vec_double.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
+		    }
+	    	state.addProperty("askVector", ask_vec_double.toString());	
+		}
+	    
+	    if(stateFlags.get("spread").getAsBoolean()) {
+		    state.addProperty("spread", this.ask_vector.get(0).doubleValue() - this.bid_vector.get(0).doubleValue());
+		}
+	    
+	    if(stateFlags.get("transactionHistory").getAsBoolean()) {
+	    	this.getTransactionHistory(finalEstimate);
+	    	ArrayList<Double> trans_double = new ArrayList<Double>();
+	    	for(int i = 0; i < transactions.size();i++) {
+		    	trans_double.add(transactions.get(i).doubleValue() - finalEstimate);
+		    }
+	    	state.addProperty("transactionHistory", trans_double.toString());	
+		}
+	    
+	    int market_h = market.getHoldings();
+	    if(stateFlags.get("marketHoldings").getAsBoolean()) {
+	    	state.addProperty("marketHoldings",market_h);
+		}
+	    
+	    double privateBidBenefit;
+	    double privateAskBenefit;
+	    if (Math.abs(market_h + OrderType.BUY.sign()) <= this.maxPosition) {
+	        privateBidBenefit = OrderType.BUY.sign()
+	            * privateValue.valueForExchange(market_h + OrderType.BUY.sign(), OrderType.BUY);
+	    }
+	    else {
+	    	privateBidBenefit = 0; //Dummy variable
+	    }
+	    if (Math.abs(market_h + OrderType.SELL.sign()) <= this.maxPosition) {
+	        privateAskBenefit = OrderType.SELL.sign()
+	            * privateValue.valueForExchange(market_h + OrderType.SELL.sign(), OrderType.SELL);
+	    }
+	    else {
+	    	privateAskBenefit = 0; //Dummy variable
+	    }
+	    
+	    if(stateFlags.get("privateBid").getAsBoolean()) {
+	    	state.addProperty("privateBid",privateBidBenefit);
+	    	//state.add(privateBidBenefit/1000);
+		}
+	    
+	    if(stateFlags.get("privateAsk").getAsBoolean()) {
+	    	state.addProperty("privateAsk",privateAskBenefit);
+	    	//state.add(privateAskBenefit/1000);
+		}
+	    
+	    if(stateFlags.get("omegaRatioBid").getAsBoolean()) {
+	    	double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit);
+	    	state.addProperty("omegaRatioBid",omega_bid);
+		}
+	    
+	    if(stateFlags.get("omegaRatioAsk").getAsBoolean()) {
+	    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
+		    state.addProperty("omegaRatioAsk",omega_ask);
+		}
+	    
+	    if(stateFlags.get("timeTilEnd").getAsBoolean()) {
+	    	long timeTilEnd = this.timeHorizon - sim.getCurrentTime().get();
+	    	state.addProperty("timeTilEnd",timeTilEnd);
 		}
 	    
 	    this.stateSize = state.size();

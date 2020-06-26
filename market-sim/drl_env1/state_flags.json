@@ -9,7 +9,9 @@
     "marketHoldings": "true",
     "privateBid": "true",
     "privateAsk": "true",
-    "omegaRatio": "false",
+    "omegaRatioBid": "false",
+    "omegaRatioAsk": "false",
+    "spread": "false",
     "timeTilEnd": "true",
     "numTransactions": "true",
     "contractHoldings": "true"

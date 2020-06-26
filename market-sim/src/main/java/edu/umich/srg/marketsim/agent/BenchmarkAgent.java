@@ -209,6 +209,11 @@ public class BenchmarkAgent implements Agent {
 	  public double getContractHoldings() {
 		  return contractHoldings;
 	  }
+	  
+	  @Override
+	  public double getRunningPayoff() {
+		return -1;
+	  }
 
 	  @Override
 	  public final int getId() {

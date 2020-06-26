@@ -116,6 +116,11 @@ public class NoiseAgent implements Agent {
   public double getContractHoldings() {
 	  return 0;
   }
+  
+  @Override
+  public double getRunningPayoff() {
+	return -1;
+  }
 
   @Override
   public int getId() {

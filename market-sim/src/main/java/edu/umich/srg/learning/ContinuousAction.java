@@ -43,6 +43,18 @@ public class ContinuousAction implements Action {
         this.actionSize = action.size();
 		return action;
 	}
+	
+	@Override
+	public JsonObject getActionDict(double finalEstimate) {
+		JsonObject action = new JsonObject();
+		
+		//ContinuousUniform actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
+        this.alpha = actionsToSubmit.sample(this.rand);
+        action.addProperty("alpha", this.alpha);
+        action.addProperty("price", this.actionToPrice(finalEstimate));
+        this.actionSize = action.size();
+		return action;
+	}
 
 	@Override
 	public int getActionSize() {
@@ -60,6 +72,12 @@ public class ContinuousAction implements Action {
 
 	@Override
 	public JsonArray getAction(JsonObject state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public JsonObject getActionDict(JsonObject state, double finalEstimate) {
 		// TODO Auto-generated method stub
 		return null;
 	}

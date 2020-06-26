@@ -178,6 +178,11 @@ public abstract class ASimpleAgent implements Agent {
   public double getContractHoldings() {
 	return benchmarkHoldings();
   }
+  
+  @Override
+  public double getRunningPayoff() {
+	return -1;
+  }
 
   @Override
   public final int getId() {

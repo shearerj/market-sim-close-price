@@ -5,12 +5,14 @@
     "askSize": "true",
     "bidVector": "true",
     "askVector": "true",
+    "spread": "true",
     "transactionHistory": "true",
     "marketHoldings": "true",
     "privateBid": "true",
     "privateAsk": "true",
     "omegaRatio": "true",
     "timeTilEnd": "true",
+    "spread": "false",
     "numTransactions": "true",
     "contractHoldings": "true"
 }
