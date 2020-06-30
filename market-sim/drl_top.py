@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 import random
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import numpy.random as rand
 
@@ -238,15 +238,15 @@ def main():
     #print("actor loss")
     prate = drl_args['prate']
     rate = drl_args['rate']
-    #plt.title(f'Actor Loss, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(agent.getActorLoss())
-    #plt.savefig(f'{output_file}_actor_loss.png')
-    #plt.clear()
+    plt.title(f'Actor Loss, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(agent.getActorLoss())
+    plt.savefig(f'{output_file}_actor_loss.png')
+    plt.close()
     #print("critic loss")
-    #plt.title(f'Critic Loss, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(agent.getCriticLoss())
-    #plt.savefig(f'{output_file}_critic_loss.png')
-    #plt.clear()
+    plt.title(f'Critic Loss, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(agent.getCriticLoss())
+    plt.savefig(f'{output_file}_critic_loss.png')
+    plt.close()
 
     num_agents = 0
     for key,value in roles.items():
