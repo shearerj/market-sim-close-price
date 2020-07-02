@@ -58,6 +58,12 @@ class DDPG(object):
 
         self.actor_loss = []
         self.critic_loss = []
+        self.q_avg = []
+        self.target_q_avg = []
+        self.q_min = []
+        self.target_q_min = []
+        self.q_max = []
+        self.target_q_max = []
 
         # 
         if USE_CUDA: self.cuda()
@@ -77,6 +83,15 @@ class DDPG(object):
         self.critic.zero_grad()
 
         q_batch = self.critic([ to_tensor(state_batch), to_tensor(action_batch) ])
+
+        self.q_avg.append(float(to_numpy(q_batch.mean()).squeeze(0)))
+        self.target_q_avg.append(float(to_numpy(target_q_batch.mean()).squeeze(0)))
+
+        self.q_min.append(float(to_numpy(q_batch.min()).squeeze(0)))
+        self.target_q_min.append(float(to_numpy(target_q_batch.min()).squeeze(0)))
+
+        self.q_max.append(float(to_numpy(q_batch.max()).squeeze(0)))
+        self.target_q_max.append(float(to_numpy(target_q_batch.max()).squeeze(0)))
         
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
@@ -91,6 +106,8 @@ class DDPG(object):
             self.actor(to_tensor(state_batch))
         ])
 
+        #print('policy loss')
+        #print(policy_loss)
         policy_loss = policy_loss.mean()
         policy_loss.backward()
         self.actor_loss.append(float(to_numpy(policy_loss).squeeze(0)))
@@ -157,6 +174,9 @@ class DDPG(object):
 
     def getCriticLoss(self):
         return self.critic_loss
+
+    def getQLists(self):
+        return self.q_avg, self.target_q_avg, self.q_min, self.target_q_min, self.q_max, self.target_q_max
 
 if __name__ == '__main__':
     state = [0,1,2,3,4,5]

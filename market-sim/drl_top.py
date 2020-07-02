@@ -248,6 +248,23 @@ def main():
     plt.savefig(f'{output_file}_critic_loss.png')
     plt.close()
 
+    q_avg, target_q_avg, q_min, target_q_min, q_max, target_q_max = agent.getQLists()
+    plt.title(f'Q Average, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(target_q_avg, label='Target Q batch')
+    plt.plot(q_avg, label='Q batch')
+    plt.savefig(f'{output_file}_q_avg.png')
+    plt.close()
+    plt.title(f'Q Min, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(target_q_min, label='Target Q batch')
+    plt.plot(q_min, label='Q batch')
+    plt.savefig(f'{output_file}_q_min.png')
+    plt.close()
+    plt.title(f'Q Max, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(target_q_max, label='Target Q batch')
+    plt.plot(q_max, label='Q batch')
+    plt.savefig(f'{output_file}_q_max.png')
+    plt.close()
+
     num_agents = 0
     for key,value in roles.items():
         num_agents += value
