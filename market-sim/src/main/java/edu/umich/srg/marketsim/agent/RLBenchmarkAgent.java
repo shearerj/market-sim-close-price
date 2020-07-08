@@ -1,9 +1,11 @@
 package edu.umich.srg.marketsim.agent;
 
+import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys.BenchmarkDir;
 import edu.umich.srg.marketsim.Keys.BenchmarkImpact;
 import edu.umich.srg.marketsim.Keys.ContractHoldings;
+import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;

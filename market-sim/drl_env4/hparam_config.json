@@ -18,7 +18,7 @@
     "ou_mu": [0.0],
     "init_w": [0.001],
     "epsilon": [25],
-    "trainingSteps": [500],
+    "trainingSteps": [1000],
     "updateSteps": [10],
     "testingSteps": [100],
 

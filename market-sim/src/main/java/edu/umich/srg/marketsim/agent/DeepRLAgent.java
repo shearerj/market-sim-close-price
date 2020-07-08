@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Distribution;
+import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.IntUniform;
@@ -98,6 +99,7 @@ public class DeepRLAgent implements Agent {
   private JsonObject actionDict;
   
   private double runningPayoff;
+  protected final double initialFundamentalEst;
   
   public DeepRLAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     this.sim = sim;
@@ -131,6 +133,9 @@ public class DeepRLAgent implements Agent {
         this.fundamental = ((GaussableView) fundamental.getView(sim)).addNoise(rand,
             spec.get(FundamentalObservationVariance.class));
     }
+    
+    Gaussian distInitial = Gaussian.withMeanVariance(0, spec.get(FundamentalObservationVariance.class));
+	this.initialFundamentalEst = this.getFinalFundamentalEstiamte() + distInitial.sample(rand);
       
     this.policyAction = spec.get(PolicyAction.class);
     
@@ -240,7 +245,7 @@ public class DeepRLAgent implements Agent {
         this.prevProfit = currProfit;
       } else {
     	firstArrival = false;
-    	this.prevProfit = 0;
+    	this.prevProfit = getInitialReward();
       }
     
     this.prev_obs = curr_obs;
@@ -292,6 +297,11 @@ public class DeepRLAgent implements Agent {
 	  
 	  return estProfit;
 	  
+  }
+  
+
+  protected double getInitialReward() {
+	  return this.initialFundamentalEst * this.getContractHoldings() * this.getBenchmarkDir();
   }
 
   @Override
@@ -345,7 +355,7 @@ public class DeepRLAgent implements Agent {
   
   @Override
   public double getRunningPayoff() {
-	  return this.runningPayoff;
+	  return this.runningPayoff + this.getInitialReward();
   }
   
   @Override
