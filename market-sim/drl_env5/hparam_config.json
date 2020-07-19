@@ -1,0 +1,33 @@
+{
+  "submit_template": "greatlakes_scripts/run.sh",
+  "experiment_template": "python3 drl_top.py -c drl_env3/ms_config.json -m drl_env3/profile.json -s drl_env3/state_flags.json",
+  "name": "ms_env3_hparam_search",
+  "num_jobs": 30,
+  "num_parallel": 30,
+  "options": {
+    "bsize": [32, 64, 128, 256],
+    "warmup": [400],
+    "rmsize": [1000],
+    "hidden_layers": [[40,30]],
+    "rate": [1e-3, 3e-3, 1e-4, 3e-4,1e-2, 3e-2, 1e-5, 3e-5],
+    "prate": [1e-3, 3e-3, 1e-4, 3e-4,1e-2, 3e-2, 1e-5, 3e-5],
+    "discount": [0.99],
+    "tau": [0.01],
+    "ou_theta": [0.0015],
+    "ou_sigma": [0.001],
+    "ou_mu": [0.0],
+    "init_w": [0.001],
+    "epsilon": [25],
+    "trainingSteps": [1000],
+    "updateSteps": [10],
+    "testingSteps": [100],
+
+    "seed":[-1],
+
+    "actionCoefficient": [2500],
+    "viewBookDepth": [5],
+    "transactionDepth": [5],
+    "omegaDepth": [5]
+
+  }
+}

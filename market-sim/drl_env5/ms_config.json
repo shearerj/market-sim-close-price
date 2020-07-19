@@ -1,0 +1,28 @@
+{
+    "roles":{
+        "bench_mani":1,
+        "zi": 10
+    },
+    "configuration": {
+        "simLength": 10000,
+        "fundamentalMean": 1000000.0,
+        "maxPosition": 10,
+        "privateValueVar": 50000000.0,
+        "fundamentalShockVar": 10000000.0,
+        "PriceVarEst": "Infinity",
+        "arrivalRate": 0.005,
+        "fundamentalMeanReversion": 0.05,
+        "markets": "cda",
+        "fundamentalObservationVariance": 10000.0,
+        "benchmarkDir": 1,
+        "contractHoldings": 40,
+        "viewBookDepth": 5,
+        "transactionDepth": 5,
+        "policyAction": true,
+        "actionCoefficient": 100,
+        "nbStates": 20,
+        "nbActions":1,
+        "benchmarkModelPath": "HSLN-env3",
+        "benchmarkType": "vwap"
+    }
+}

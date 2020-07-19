@@ -1,0 +1,19 @@
+{
+    "finalFundamentalEstimate": "true",
+    "side": "true",
+    "bidSize": "true",
+    "askSize": "true",
+    "bidVector": "true",
+    "askVector": "true",
+    "spread": "true",
+    "transactionHistory": "true",
+    "marketHoldings": "true",
+    "privateBid": "true",
+    "privateAsk": "true",
+    "omegaRatioBid": "true",
+    "omegaRatioAsk": "true",
+    "timeTilEnd": "true",
+    "spread": "true",
+    "numTransactions": "true",
+    "contractHoldings": "true"
+}

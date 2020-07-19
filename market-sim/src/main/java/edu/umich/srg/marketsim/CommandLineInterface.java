@@ -115,7 +115,7 @@ public class CommandLineInterface extends CommandLineOptions {
       info.features.addProperty("holdings_abs", Math.abs(pays.getHoldings()));
       
       double runningReward = info.agent.getRunningPayoff();
-      if (runningReward != info.payoff && runningReward != -1) {
+      if (Math.floor(runningReward) != Math.floor(info.payoff) && runningReward != -1) {
       	System.exit(0);
       }
     }
