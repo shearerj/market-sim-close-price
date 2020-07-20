@@ -177,6 +177,9 @@ def main():
             action_batch[j,:] = np.array(ob['action'])
             term_batch[j,:] = np.array(ob['terminal'])
             reward_batch[j,:] = np.array(ob['reward'])
+        # Normalize reward batch
+        reward_norm = np.sqrt(np.sum(reward_batch**2))
+        reward_batch = reward_batch/reward_norm
         
         # Update the policy the number of arrivals
         for j in range(int(drl_args["updateSteps"])):
