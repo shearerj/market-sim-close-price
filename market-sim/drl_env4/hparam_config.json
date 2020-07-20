@@ -1,7 +1,7 @@
 {
   "submit_template": "greatlakes_scripts/run.sh",
-  "experiment_template": "python3 drl_top.py -c drl_env3/ms_config.json -m drl_env3/profile.json -s drl_env3/state_flags.json",
-  "name": "ms_env3_hparam_search",
+  "experiment_template": "python3 drl_top.py -c drl_env4/ms_config.json -m drl_env4/profile.json -s drl_env4/state_flags.json",
+  "name": "ms_env4_hparam_search",
   "num_jobs": 30,
   "num_parallel": 30,
   "options": {

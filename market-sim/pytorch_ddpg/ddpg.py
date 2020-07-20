@@ -176,6 +176,7 @@ class DDPG(object):
         return self.critic_loss
 
     def getQLists(self):
+        print(self.q_avg)
         return self.q_avg, self.target_q_avg, self.q_min, self.target_q_min, self.q_max, self.target_q_max
 
 if __name__ == '__main__':

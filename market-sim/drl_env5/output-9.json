@@ -1,1 +1,5 @@
-{"ZI": {"mean": -289.69726004725607, "total": -28969.726004725606, "sd": 97443.14637934734}, "Benchmark-Manipulator": {"mean": 39988925.43594755, "total": 3998892543.594755, "sd": 99381.5529034629}, "Benchmark-Manipulator-Market-Performance": {"mean": -37369.40386296764, "total": -3736940.386296764, "sd": 96435.60625995338}, "Benchmark-Manipulator-Benchmark-Performance": {"mean": 40026294.83981053, "total": 4002629483.981053, "sd": 26191.659582255652}, "Total-Surplus": {"mean": 39988635.738687515, "total": 3998863573.8687515, "sd": 28985.19452213737}, "Market-Surplus": {"mean": -37659.10112301499, "total": -3765910.1123014987, "sd": 21014.30698903544}}
+{"ZI": {"mean": -289.69726004725607, "total": -28969.726004725606, "sd": 97443.14637934734}, 
+"Benchmark-Manipulator": {"mean": 39988925.43594755, "total": 3998892543.594755, "sd": 99381.5529034629},
+ "Benchmark-Manipulator-Market-Performance": {"mean": -37369.40386296764, "total": -3736940.386296764, "sd": 96435.60625995338},
+  "Benchmark-Manipulator-Benchmark-Performance": {"mean": 40026294.83981053, "total": 4002629483.981053, "sd": 26191.659582255652}, 
+  "Total-Surplus": {"mean": 39988635.738687515, "total": 3998863573.8687515, "sd": 28985.19452213737}, "Market-Surplus": {"mean": -37659.10112301499, "total": -3765910.1123014987, "sd": 21014.30698903544}}
