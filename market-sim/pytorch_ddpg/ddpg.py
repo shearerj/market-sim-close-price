@@ -84,18 +84,18 @@ class DDPG(object):
 
         q_batch = self.critic([ to_tensor(state_batch), to_tensor(action_batch) ])
 
-        self.q_avg.append(float(to_numpy(q_batch.mean()).squeeze(0)))
-        self.target_q_avg.append(float(to_numpy(target_q_batch.mean()).squeeze(0)))
+        #self.q_avg.append(float(to_numpy(q_batch.mean()).squeeze(0)))
+        #self.target_q_avg.append(float(to_numpy(target_q_batch.mean()).squeeze(0)))
 
-        self.q_min.append(float(to_numpy(q_batch.min()).squeeze(0)))
-        self.target_q_min.append(float(to_numpy(target_q_batch.min()).squeeze(0)))
+        #self.q_min.append(float(to_numpy(q_batch.min()).squeeze(0)))
+        #self.target_q_min.append(float(to_numpy(target_q_batch.min()).squeeze(0)))
 
-        self.q_max.append(float(to_numpy(q_batch.max()).squeeze(0)))
-        self.target_q_max.append(float(to_numpy(target_q_batch.max()).squeeze(0)))
+        #self.q_max.append(float(to_numpy(q_batch.max()).squeeze(0)))
+        #self.target_q_max.append(float(to_numpy(target_q_batch.max()).squeeze(0)))
         
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
-        self.critic_loss.append(float(to_numpy(value_loss).squeeze(0)))
+        #self.critic_loss.append(float(to_numpy(value_loss).squeeze(0)))
         self.critic_optim.step()
 
         # Actor update
@@ -110,7 +110,7 @@ class DDPG(object):
         #print(policy_loss)
         policy_loss = policy_loss.mean()
         policy_loss.backward()
-        self.actor_loss.append(float(to_numpy(policy_loss).squeeze(0)))
+        #self.actor_loss.append(float(to_numpy(policy_loss).squeeze(0)))
         self.actor_optim.step()
 
         # Target update
