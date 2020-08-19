@@ -19,6 +19,10 @@ from pytorch_ddpg.util import *
 
 from mse import getDataList, getStats, getStatsJson
 
+from profile_code import profile
+
+profile_path = ''
+
 
 def create_parser():
     parser = argparse.ArgumentParser(description="""Run market-sim with a
@@ -72,6 +76,128 @@ def writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config
     except BrokenPipeError:
         pass
 
+def launchMarketSimW(config_path, temp_out_path, training):
+    #warm up & training
+    if training:
+        os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+
+    #testing
+    else:
+        os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
+
+def launchMarketSimTrain(config_path, temp_out_path, training):
+    #warm up & training
+    if training:
+        os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+
+    #testing
+    else:
+        os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
+
+def launchMarketSimTest(config_path, temp_out_path, training):
+    #warm up & training
+    if training:
+        os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
+
+    #testing
+    else:
+        os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
+
+def getObservations(replay_buffer, temp_out_path, curr_arrivals):
+    #warm up & training
+    with open(temp_out_path) as json_file:
+        feat = json.load(json_file)
+    arr = feat['arrivals']
+    curr_arrivals = curr_arrivals + arr
+    print(curr_arrivals)
+    json_file.close()
+
+    obs = feat['rl_observations']
+    for i, ob in enumerate(obs):
+        # Hacky way to vefiy that action was selected
+        if len(ob['action']) > 0:
+        #json.dump(ob, replay_buffer_file)
+            ob['action'] =  ob['action']['alpha']
+            replay_buffer.append(ob)
+        else:
+            curr_arrivals = curr_arrivals - 1
+    return replay_buffer, curr_arrivals
+
+def getTestStats(stats, temp_out_path):
+    #testing
+    with open(temp_out_path) as f:
+        lines = [line.replace('\"', '').split() for line in f]
+    f.close()
+    for j,s in enumerate(lines):
+        stats.append(s)
+    return stats
+
+def updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_steps):
+    mini_batch = random.choices(replay_buffer, k=bsize)
+    state0_batch = np.empty((bsize,nb_states))
+    state1_batch = np.empty((bsize,nb_states))
+    action_batch = np.empty((bsize,nb_actions))
+    term_batch = np.empty((bsize,1))
+    reward_batch = np.empty((bsize,1))
+    for j, ob in enumerate(mini_batch):
+        state0_batch[j,:] = np.array(ob['state0'])
+        state1_batch[j,:] = np.array(ob['state1'])
+        action_batch[j,:] = np.array(ob['action'])
+        term_batch[j,:] = np.array(ob['terminal'])
+        reward_batch[j,:] = np.array(ob['reward'])
+    # Normalize reward batch
+    reward_norm = np.sqrt(np.sum(reward_batch**2))
+    reward_batch = reward_batch/reward_norm
+    
+    # Update the policy the number of arrivals
+    for j in range(update_steps):
+        agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
+
+    #agent.save_model(model_folder)
+
+    actor_weights = {}
+    actor_weights['weightMtx1'] = to_numpy(agent.actor.fc1.weight).tolist()
+    actor_weights['biasMtx1'] = to_numpy(agent.actor.fc1.bias).tolist()
+    actor_weights['weightMtx2'] = to_numpy(agent.actor.fc2.weight).tolist()
+    actor_weights['biasMtx2'] = to_numpy(agent.actor.fc2.bias).tolist()
+    actor_weights['weightMtx3'] = to_numpy(agent.actor.fc3.weight).tolist()
+    actor_weights['biasMtx3'] = to_numpy(agent.actor.fc3.bias).tolist()
+
+    return agent, actor_weights
+
+def plotDRLStats(agent,prate, rate, bsize, job_num, output_file):
+    #actor loss
+    plt.title(f'Actor Loss, job={job_num}, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(agent.getActorLoss())
+    plt.savefig(f'{output_file}_actor_loss.png')
+    plt.close()
+    #critic loss
+    plt.title(f'Critic Loss, job={job_num}, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(agent.getCriticLoss())
+    plt.savefig(f'{output_file}_critic_loss.png')
+    plt.close()
+
+    q_avg, target_q_avg, q_min, target_q_min, q_max, target_q_max = agent.getQLists()
+    plt.title(f'Q Average, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(target_q_avg, label='Target Q batch')
+    plt.plot(q_avg, label='Q batch')
+    plt.legend()
+    plt.savefig(f'{output_file}_q_avg.png')
+    plt.close()
+    plt.title(f'Q Min, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(target_q_min, label='Target Q batch')
+    plt.plot(q_min, label='Q batch')
+    plt.legend()
+    plt.savefig(f'{output_file}_q_min.png')
+    plt.close()
+    plt.title(f'Q Max, prate={prate}, rate={rate}, bsize={bsize}')
+    plt.plot(target_q_max, label='Target Q batch')
+    plt.plot(q_max, label='Q batch')
+    plt.legend()
+    plt.savefig(f'{output_file}_q_max.png')
+    plt.close()
+
+profile(sort_by='cumulative', lines_to_print=10, strip_dirs=True)
 def main():
     args = create_parser().parse_args()
     model_folder = args.model_folder
@@ -101,7 +227,6 @@ def main():
     conf['configuration']['OUMu'] = drl_args['ou_mu']
     conf['configuration']['OUSigma'] = drl_args['ou_sigma']
     conf['configuration']['OUTheta'] = drl_args['ou_theta']
-    print(drl_args['epsilon'])
     conf['configuration']['EpsilonDecay'] = drl_args['epsilon']
 
     keys = {key.lower(): key for key in conf['configuration']}
@@ -121,25 +246,8 @@ def main():
         # Generate new mixed strategies for agents
         writeConfigFile(conf, role_info, 0, 0, model_folder, config_path)
 
-        #  print(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
-
-        os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
-        with open(temp_out_path) as json_file:
-                feat = json.load(json_file)
-        arr = feat['arrivals']
-        curr_arrivals = curr_arrivals + arr
-        print(curr_arrivals)
-
-        obs = feat['rl_observations']
-        for i, ob in enumerate(obs):
-            if len(ob['action']) > 0:
-                ob['action'] =  ob['action']['alpha']
-                replay_buffer.append(ob)
-            else:
-                curr_arrivals = curr_arrivals - 1
-            #replay_buffer.append(ob)
-        #curr_arrivals = 4 #This line is for testing to pass warmup loop
-
+        launchMarketSimW(config_path, temp_out_path, True)
+        replay_buffer, curr_arrivals = getObservations(replay_buffer, temp_out_path, curr_arrivals)
 
     print("made it to ddpg!")
     assert np.array(replay_buffer[0]['state0']).size == np.array(replay_buffer[0]['state1']).size,"First state0 != state1 length."
@@ -165,35 +273,8 @@ def main():
     training_steps = int(drl_args["trainingSteps"])
     for i in range(training_steps):
         print("Training step "+str(i))
-        mini_batch = random.choices(replay_buffer, k=bsize)
-        state0_batch = np.empty((bsize,nb_states))
-        state1_batch = np.empty((bsize,nb_states))
-        action_batch = np.empty((bsize,nb_actions))
-        term_batch = np.empty((bsize,1))
-        reward_batch = np.empty((bsize,1))
-        for j, ob in enumerate(mini_batch):
-            state0_batch[j,:] = np.array(ob['state0'])
-            state1_batch[j,:] = np.array(ob['state1'])
-            action_batch[j,:] = np.array(ob['action'])
-            term_batch[j,:] = np.array(ob['terminal'])
-            reward_batch[j,:] = np.array(ob['reward'])
-        # Normalize reward batch
-        reward_norm = np.sqrt(np.sum(reward_batch**2))
-        reward_batch = reward_batch/reward_norm
-        
-        # Update the policy the number of arrivals
-        for j in range(int(drl_args["updateSteps"])):
-            agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
-
-        #agent.save_model(model_folder)
-
-        actor_weights = {}
-        actor_weights['weightMtx1'] = to_numpy(agent.actor.fc1.weight).tolist()
-        actor_weights['biasMtx1'] = to_numpy(agent.actor.fc1.bias).tolist()
-        actor_weights['weightMtx2'] = to_numpy(agent.actor.fc2.weight).tolist()
-        actor_weights['biasMtx2'] = to_numpy(agent.actor.fc2.bias).tolist()
-        actor_weights['weightMtx3'] = to_numpy(agent.actor.fc3.weight).tolist()
-        actor_weights['biasMtx3'] = to_numpy(agent.actor.fc3.bias).tolist()
+        update_steps = int(drl_args["updateSteps"])
+        agent, actor_weights = updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_steps)
 
         if i < training_steps - 1:
             # get weights and bias for policy actions
@@ -202,23 +283,8 @@ def main():
             # Generate new mixed strategies for agents
             writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True, isTraining = True)
 
-            os.system(f"./market-sim.sh -s {config_path} | jq -c \'(.players[] | select (.role | contains(\"bench_mani\")) | .features)\' > {temp_out_path}")
-            with open(temp_out_path) as json_file:
-                    feat = json.load(json_file)
-            arr = feat['arrivals']
-            curr_arrivals = curr_arrivals + arr
-            print(curr_arrivals)
-            json_file.close()
-
-            obs = feat['rl_observations']
-            for i, ob in enumerate(obs):
-                # Hacky way to vefiy that action was selected
-                if len(ob['action']) > 0:
-                #json.dump(ob, replay_buffer_file)
-                    ob['action'] =  ob['action']['alpha']
-                    replay_buffer.append(ob)
-                else:
-                    curr_arrivals = curr_arrivals - 1
+            launchMarketSimTrain(config_path, temp_out_path, True)
+            replay_buffer, curr_arrivals = getObservations(replay_buffer, temp_out_path, curr_arrivals)
 
             if curr_arrivals > rmsize:
                 begin_buffer = curr_arrivals - rmsize
@@ -230,46 +296,12 @@ def main():
     testing_steps = int(drl_args["testingSteps"])
     for i in range(testing_steps):
         writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True)
-        os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
-        #os.system("./market-sim.sh -s run_scripts/drl_conf.json | jq -c  '(.players[]), (.features) ' > test_out.json")
-        with open(temp_out_path) as f:
-            lines = [line.replace('\"', '').split() for line in f]
-        f.close()
-        for j,s in enumerate(lines):
-            stats.append(s)
+        launchMarketSimTest(config_path, temp_out_path, False)
+        stats = getTestStats(stats, temp_out_path)
 
-    #print("actor loss")
-    #prate = drl_args['prate']
-    #rate = drl_args['rate']
-    #plt.title(f'Actor Loss, job={job_num}, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(agent.getActorLoss())
-    #plt.savefig(f'{output_file}_actor_loss.png')
-    #plt.close()
-    #print("critic loss")
-    #plt.title(f'Critic Loss, job={job_num}, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(agent.getCriticLoss())
-    #plt.savefig(f'{output_file}_critic_loss.png')
-    #plt.close()
-
-    #q_avg, target_q_avg, q_min, target_q_min, q_max, target_q_max = agent.getQLists()
-    #plt.title(f'Q Average, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(target_q_avg, label='Target Q batch')
-    #plt.plot(q_avg, label='Q batch')
-    #plt.legend()
-    #plt.savefig(f'{output_file}_q_avg.png')
-    #plt.close()
-    #plt.title(f'Q Min, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(target_q_min, label='Target Q batch')
-    #plt.plot(q_min, label='Q batch')
-    #plt.legend()
-    #plt.savefig(f'{output_file}_q_min.png')
-    #plt.close()
-    #plt.title(f'Q Max, prate={prate}, rate={rate}, bsize={bsize}')
-    #plt.plot(target_q_max, label='Target Q batch')
-    #plt.plot(q_max, label='Q batch')
-    #plt.legend()
-    #plt.savefig(f'{output_file}_q_max.png')
-    #plt.close()
+    prate = drl_args['prate']
+    rate = drl_args['rate']
+    plotDRLStats(agent, prate, rate, bsize, job_num, output_file)
 
     num_agents = 0
     for key,value in roles.items():
@@ -306,7 +338,6 @@ def main():
 
     #for i, ob in enumerate(replay_buffer):
         #json.dump(ob, replay_buffer_file)
-
 
 if __name__ == '__main__':
     main()
