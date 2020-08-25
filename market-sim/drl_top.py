@@ -103,7 +103,7 @@ def launchMarketSimTest(config_path, temp_out_path, training):
     else:
         os.system(f"./market-sim.sh -s {config_path} | jq -c  '(.players[] | \"\(.role) \(.payoff)\"), (.features | .markets[0] | .benchmark), (.features | .total_surplus) ' > {temp_out_path}")
 
-def getObservations(replay_buffer, temp_out_path, curr_arrivals):
+def getObservationsWarm(replay_buffer, temp_out_path, curr_arrivals):
     #warm up & training
     with open(temp_out_path) as json_file:
         feat = json.load(json_file)
@@ -122,6 +122,47 @@ def getObservations(replay_buffer, temp_out_path, curr_arrivals):
         else:
             curr_arrivals = curr_arrivals - 1
     return replay_buffer, curr_arrivals
+
+def getObservationsTrain(replay_buffer, temp_out_path, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread, transactionHistory, 
+                                    marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward):
+    #warm up & training
+    with open(temp_out_path) as json_file:
+        feat = json.load(json_file)
+    arr = feat['arrivals']
+    curr_arrivals = curr_arrivals + arr
+    print(curr_arrivals)
+    json_file.close()
+
+    obs = feat['rl_observations']
+    for i, ob in enumerate(obs):
+        # Hacky way to vefiy that action was selected
+        if len(ob['action']) > 0:
+        #json.dump(ob, replay_buffer_file)
+            cumulativeAlpha.append(ob['action']['alpha'])
+            cumulativePrice.append(ob['action']['price'])
+            cumulativeReward.append(ob['reward'])
+            ob['action'] =  ob['action']['alpha']
+            replay_buffer.append(ob)
+
+            stateDict = ob['state0Dict']
+            finalFundamentalEstimate.append(stateDict['finalFundamentalEstimate'])
+            side.append(stateDict['side'])
+            bidSize.append(stateDict['bidSize'])
+            askSize.append(stateDict['askSize'])
+            bidVector.append(stateDict['bidVector'])
+            askVector.append(stateDict['askVector'])
+            spread.append(stateDict['spread'])
+            transactionHistory.append(stateDict['transactionHistory'])
+            marketHoldings.append(stateDict['marketHoldings'])
+            privateBid.append(stateDict['privateBid'])
+            privateAsk.append(stateDict['privateAsk'])
+            omegaRatioBid.append(stateDict['omegaRatioBid'])
+            omegaRatioAsk.append(stateDict['omegaRatioAsk'])
+            timeTilEnd.append(stateDict['timeTilEnd'])
+
+        else:
+            curr_arrivals = curr_arrivals - 1
+    return replay_buffer, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread, transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward
 
 def getTestStats(stats, temp_out_path):
     #testing
@@ -247,7 +288,7 @@ def main():
         writeConfigFile(conf, role_info, 0, 0, model_folder, config_path)
 
         launchMarketSimW(config_path, temp_out_path, True)
-        replay_buffer, curr_arrivals = getObservations(replay_buffer, temp_out_path, curr_arrivals)
+        replay_buffer, curr_arrivals = getObservationsWarm(replay_buffer, temp_out_path, curr_arrivals)
 
     print("made it to ddpg!")
     assert np.array(replay_buffer[0]['state0']).size == np.array(replay_buffer[0]['state1']).size,"First state0 != state1 length."
@@ -270,6 +311,24 @@ def main():
     #    with open(".gitignore", "a") as ignore_file:
     #        ignore_file.write('\n/'+model_folder+'/*')
 
+    finalFundamentalEstimate = [] 
+    side = []
+    bidSize = []
+    askSize = []
+    bidVector = []
+    askVector = []
+    spread = []
+    transactionHistory = []
+    marketHoldings = []
+    privateBid = []
+    privateAsk = []
+    omegaRatioBid = []
+    omegaRatioAsk = []
+    timeTilEnd = []
+    cumulativeAlpha = []
+    cumulativePrice = []
+    cumulativeReward = []
+
     training_steps = int(drl_args["trainingSteps"])
     for i in range(training_steps):
         print("Training step "+str(i))
@@ -284,12 +343,97 @@ def main():
             writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True, isTraining = True)
 
             launchMarketSimTrain(config_path, temp_out_path, True)
-            replay_buffer, curr_arrivals = getObservations(replay_buffer, temp_out_path, curr_arrivals)
+            replay_buffer, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread,transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward = getObservationsTrain(replay_buffer, temp_out_path, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread,transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward)
 
             if curr_arrivals > rmsize:
                 begin_buffer = curr_arrivals - rmsize
                 replay_buffer = replay_buffer[begin_buffer:len(replay_buffer)]
                 curr_arrivals = curr_arrivals - begin_buffer
+
+    plt.title("Final Fundamental Estimate")
+    plt.plot(finalFundamentalEstimate,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_final_fundamental.png')
+    plt.close()
+
+    plt.title("Side")
+    plt.plot(side,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_side.png')
+    plt.close()
+
+    plt.title("Bid Size")
+    plt.plot(bidSize,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_bid_size.png')
+    plt.close()
+
+    plt.title("Ask Size")
+    plt.plot(askSize,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_ask_size.png')
+    plt.close()
+
+    plt.title("Bid Vector")
+    plt.plot(bidVector,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_bid_vector.png')
+    plt.close()
+
+    plt.title("Ask Vector")
+    plt.plot(askVector,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_ask_vector.png')
+    plt.close()
+
+    plt.title("Spread")
+    plt.plot(spread,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_spread.png')
+    plt.close()
+
+    plt.title("Transaction History")
+    plt.plot(transactionHistory,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_transaction_history.png')
+    plt.close()
+
+    plt.title("Private Bid")
+    plt.plot(privateBid,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_private_bid.png')
+    plt.close()
+
+    plt.title("Private Ask")
+    plt.plot(privateAsk,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_private_ask.png')
+    plt.close()
+
+    plt.title("Omega Ratio Bid")
+    plt.plot(omegaRatioBid,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_bid_omega.png')
+    plt.close()
+
+    plt.title("Omega Ratio Ask")
+    plt.plot(omegaRatioAsk,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_ask_omega.png')
+    plt.close()
+
+    plt.title("Market Holdings")
+    plt.plot(marketHoldings,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_market_holdings.png')
+    plt.close()
+
+    plt.title("Time Til End")
+    plt.plot(timeTilEnd,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_time_til_end.png')
+    plt.close()
+
+    plt.title("Action, Alpha")
+    plt.plot(cumulativeAlpha,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_alpha.png')
+    plt.close()
+
+    plt.title("Action, Price")
+    plt.plot(cumulativePrice,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_price.png')
+    plt.close()
+
+    plt.title("Reward")
+    plt.plot(cumulativeReward,linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_reward.png')
+    plt.close()
 
     # testing
     stats = []

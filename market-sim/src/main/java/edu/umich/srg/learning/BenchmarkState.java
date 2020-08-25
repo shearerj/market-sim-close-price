@@ -1,6 +1,7 @@
 package edu.umich.srg.learning;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Sim;
@@ -37,6 +38,26 @@ public class BenchmarkState extends SimpleState{
 	    if(stateFlags.get("contractHoldings").getAsBoolean()) {
 	    	int contract_h = this.benchmarkDir * this.benchmarkImpact;
 	    	state.add(contract_h);
+		    //state.add(Math.log(contract_h));
+		}
+	    
+	    this.stateSize = state.size();
+	    
+	    return state;
+	  }
+	
+	@Override
+	public JsonObject getStateDict(double finalEstimate, int side, PrivateValue privateValue) {
+		JsonObject state = super.getStateDict(finalEstimate, side, privateValue);
+	    
+		if(stateFlags.get("numTransactions").getAsBoolean()) {
+			int num_transactions = market.getCurrentNumTransactions();
+		    state.addProperty("numTransactions",num_transactions);
+		}
+	    
+	    if(stateFlags.get("contractHoldings").getAsBoolean()) {
+	    	int contract_h = this.benchmarkDir * this.benchmarkImpact;
+	    	state.addProperty("contractHoldings",contract_h);
 		    //state.add(Math.log(contract_h));
 		}
 	    

@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Random;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * This agent gets noisy observations of the fundamental and uses markov assumptions of the price
@@ -48,6 +49,11 @@ public class RLBenchmarkAgent extends DeepRLAgent {
   @Override
   protected JsonArray getState(double finalEstimate, int side) {
 	  return this.stateSpace.getState(finalEstimate, side, privateValue);
+  }
+  
+  @Override
+  protected JsonObject getStateDict(double finalEstimate, int side) {
+	  return this.stateSpace.getStateDict(finalEstimate, side, privateValue);
   }
   
   @Override

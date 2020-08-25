@@ -230,11 +230,11 @@ public class DeepRLAgent implements Agent {
     */
     
     curr_obs.add("state0", state);
-    //curr_obs.add("state0", stateDict);
+    curr_obs.add("state0Dict", stateDict);
     //curr_obs.add("action", this.action);
     curr_obs.add("action", this.actionDict);
     prev_obs.add("state1", state);
-    //prev_obs.add("state1", stateDict);
+    //prev_obs.add("state1Dict", stateDict);
     prev_obs.addProperty("terminal", 0);
     
     if (!firstArrival) {
@@ -335,7 +335,7 @@ public class DeepRLAgent implements Agent {
     JsonArray state = this.getNormState(this.finalFundamental,0);
     JsonObject stateDict = this.getStateDict(this.finalFundamental,0);
     this.prev_obs.add("state1", state);
-    //this.prev_obs.add("state1", stateDict);
+    //this.prev_obs.add("state1Dict", stateDict);
     this.prev_obs.addProperty("terminal", 1);
     this.prev_obs.addProperty("reward", reward);
     this.rl_observations.add(prev_obs);
