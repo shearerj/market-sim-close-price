@@ -355,9 +355,19 @@ def main():
     plt.savefig(f'{output_file}_final_fundamental.png')
     plt.close()
 
+    plt.title("Final Fundamental Estimate - Trunkacted")
+    plt.plot(finalFundamentalEstimate[len(finalFundamentalEstimate)-11:len(finalFundamentalEstimate)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_final_fundamental_trunk.png')
+    plt.close()
+
     plt.title("Side")
     plt.plot(side,linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_side.png')
+    plt.close()
+
+    plt.title("Side - Trunkacted")
+    plt.plot(side[len(side)-11:len(side)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_side_trunk.png')
     plt.close()
 
     plt.title("Bid Size")
@@ -365,9 +375,19 @@ def main():
     plt.savefig(f'{output_file}_bid_size.png')
     plt.close()
 
+    plt.title("Bid Size - Trunkacted")
+    plt.plot(bidSize[len(bidSize)-11:len(bidSize)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_bid_size_trunk.png')
+    plt.close()
+
     plt.title("Ask Size")
     plt.plot(askSize,linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_ask_size.png')
+    plt.close()
+
+    plt.title("Ask Size - Trunkacted")
+    plt.plot(askSize[len(askSize)-11:len(askSize)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_ask_size_trunk.png')
     plt.close()
 
     plt.title("Bid Vector")
@@ -383,6 +403,11 @@ def main():
     plt.title("Spread")
     plt.plot(spread,linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_spread.png')
+    plt.close()
+
+    plt.title("Spread - Trunkacted")
+    plt.plot(spread[len(spread)-11:len(spread)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_spread_trunk.png')
     plt.close()
 
     plt.title("Transaction History")
@@ -425,14 +450,29 @@ def main():
     plt.savefig(f'{output_file}_alpha.png')
     plt.close()
 
+    plt.title("Action, Alpha - Trunkacted")
+    plt.plot(cumulativeAlpha[len(cumulativeAlpha)-11:len(cumulativeAlpha)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_alpha_trunk.png')
+    plt.close()
+
     plt.title("Action, Price")
     plt.plot(cumulativePrice,linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_price.png')
     plt.close()
 
+    plt.title("Action, Price - Trunkacted")
+    plt.plot(cumulativePrice[len(cumulativePrice)-11:len(cumulativePrice)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_price_trunk.png')
+    plt.close()
+
     plt.title("Reward")
     plt.plot(cumulativeReward,linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_reward.png')
+    plt.close()
+
+    plt.title("Reward - Trunkacted")
+    plt.plot(cumulativeReward[len(cumulativeReward)-11:len(cumulativeReward)-2],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_reward_trunk.png')
     plt.close()
 
     # testing
