@@ -162,7 +162,7 @@ def getObservationsTrain(replay_buffer, temp_out_path, curr_arrivals, finalFunda
 
         else:
             curr_arrivals = curr_arrivals - 1
-    return replay_buffer, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread, transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward
+    return replay_buffer, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread, transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward, obs
 
 def getTestStats(stats, temp_out_path):
     #testing
@@ -173,7 +173,8 @@ def getTestStats(stats, temp_out_path):
         stats.append(s)
     return stats
 
-def updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_steps):
+
+def updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_steps, conf, obs, cumulativeReward, max_reward):
     mini_batch = random.choices(replay_buffer, k=bsize)
     state0_batch = np.empty((bsize,nb_states))
     state1_batch = np.empty((bsize,nb_states))
@@ -194,7 +195,17 @@ def updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_step
     for j in range(update_steps):
         agent.update_policy(state0_batch, action_batch, reward_batch, state1_batch, term_batch)
 
-    #agent.save_model(model_folder)
+    print(len(cumulativeReward))
+    if len(cumulativeReward) > 0:
+        if max_reward < np.max(cumulativeReward):
+            max_reward = np.max(cumulativeReward)
+            print(f'Max reward: {max_reward}')
+            conf_f= open('run_scripts/max_config_path.json',"w")
+            json.dump(conf, conf_f, sort_keys=True)
+            conf_f.close()
+            obs_f= open('run_scripts/max_obs.json',"w")
+            json.dump(obs, obs_f, sort_keys=True)
+            obs_f.close()
 
     actor_weights = {}
     actor_weights['weightMtx1'] = to_numpy(agent.actor.fc1.weight).tolist()
@@ -204,7 +215,7 @@ def updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_step
     actor_weights['weightMtx3'] = to_numpy(agent.actor.fc3.weight).tolist()
     actor_weights['biasMtx3'] = to_numpy(agent.actor.fc3.bias).tolist()
 
-    return agent, actor_weights
+    return agent, actor_weights, max_reward
 
 def plotDRLStats(agent,prate, rate, bsize, job_num, output_file):
     #actor loss
@@ -306,10 +317,10 @@ def main():
     print(len(replay_buffer))
     assert bsize <= len(replay_buffer), "Mini batch is bigger than replay buffer."
 
-    #if not os.path.exists(model_folder):
-    #    os.makedirs(model_folder)
-    #    with open(".gitignore", "a") as ignore_file:
-    #        ignore_file.write('\n/'+model_folder+'/*')
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
+        with open(".gitignore", "a") as ignore_file:
+            ignore_file.write('\n/'+model_folder+'/*')
 
     finalFundamentalEstimate = [] 
     side = []
@@ -329,11 +340,14 @@ def main():
     cumulativePrice = []
     cumulativeReward = []
 
+    max_reward = 0
+    obs = []
+
     training_steps = int(drl_args["trainingSteps"])
     for i in range(training_steps):
         print("Training step "+str(i))
         update_steps = int(drl_args["updateSteps"])
-        agent, actor_weights = updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_steps)
+        agent, actor_weights, max_reward = updatePolicy(agent, replay_buffer, bsize, nb_states, nb_actions, update_steps, conf, obs, cumulativeReward, max_reward)
 
         if i < training_steps - 1:
             # get weights and bias for policy actions
@@ -343,7 +357,7 @@ def main():
             writeConfigFile(conf, role_info, nb_states, nb_actions, model_folder, config_path, actor_weights = actor_weights, policy_action = True, isTraining = True)
 
             launchMarketSimTrain(config_path, temp_out_path, True)
-            replay_buffer, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread,transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward = getObservationsTrain(replay_buffer, temp_out_path, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread,transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward)
+            replay_buffer, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread,transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward, obs = getObservationsTrain(replay_buffer, temp_out_path, curr_arrivals, finalFundamentalEstimate, side, bidSize, askSize, bidVector, askVector, spread,transactionHistory, marketHoldings, privateBid, privateAsk, omegaRatioBid, omegaRatioAsk, timeTilEnd, cumulativeAlpha, cumulativePrice, cumulativeReward)
 
             if curr_arrivals > rmsize:
                 begin_buffer = curr_arrivals - rmsize
@@ -356,7 +370,7 @@ def main():
     plt.close()
 
     plt.title("Final Fundamental Estimate - Trunkacted")
-    plt.plot(finalFundamentalEstimate[len(finalFundamentalEstimate)-11:len(finalFundamentalEstimate)-2],linestyle = 'None', marker = ".")
+    plt.plot(finalFundamentalEstimate[len(finalFundamentalEstimate)-51:len(finalFundamentalEstimate)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_final_fundamental_trunk.png')
     plt.close()
 
@@ -366,7 +380,7 @@ def main():
     plt.close()
 
     plt.title("Side - Trunkacted")
-    plt.plot(side[len(side)-11:len(side)-2],linestyle = 'None', marker = ".")
+    plt.plot(side[len(side)-51:len(side)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_side_trunk.png')
     plt.close()
 
@@ -376,7 +390,7 @@ def main():
     plt.close()
 
     plt.title("Bid Size - Trunkacted")
-    plt.plot(bidSize[len(bidSize)-11:len(bidSize)-2],linestyle = 'None', marker = ".")
+    plt.plot(bidSize[len(bidSize)-51:len(bidSize)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_bid_size_trunk.png')
     plt.close()
 
@@ -386,7 +400,7 @@ def main():
     plt.close()
 
     plt.title("Ask Size - Trunkacted")
-    plt.plot(askSize[len(askSize)-11:len(askSize)-2],linestyle = 'None', marker = ".")
+    plt.plot(askSize[len(askSize)-51:len(askSize)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_ask_size_trunk.png')
     plt.close()
 
@@ -406,7 +420,7 @@ def main():
     plt.close()
 
     plt.title("Spread - Trunkacted")
-    plt.plot(spread[len(spread)-11:len(spread)-2],linestyle = 'None', marker = ".")
+    plt.plot(spread[len(spread)-51:len(spread)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_spread_trunk.png')
     plt.close()
 
@@ -451,7 +465,7 @@ def main():
     plt.close()
 
     plt.title("Action, Alpha - Trunkacted")
-    plt.plot(cumulativeAlpha[len(cumulativeAlpha)-11:len(cumulativeAlpha)-2],linestyle = 'None', marker = ".")
+    plt.plot(cumulativeAlpha[len(cumulativeAlpha)-51:len(cumulativeAlpha)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_alpha_trunk.png')
     plt.close()
 
@@ -461,7 +475,7 @@ def main():
     plt.close()
 
     plt.title("Action, Price - Trunkacted")
-    plt.plot(cumulativePrice[len(cumulativePrice)-11:len(cumulativePrice)-2],linestyle = 'None', marker = ".")
+    plt.plot(cumulativePrice[len(cumulativePrice)-51:len(cumulativePrice)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_price_trunk.png')
     plt.close()
 
@@ -471,9 +485,20 @@ def main():
     plt.close()
 
     plt.title("Reward - Trunkacted")
-    plt.plot(cumulativeReward[len(cumulativeReward)-11:len(cumulativeReward)-2],linestyle = 'None', marker = ".")
+    plt.plot(cumulativeReward[len(cumulativeReward)-51:len(cumulativeReward)-1],linestyle = 'None', marker = ".")
     plt.savefig(f'{output_file}_reward_trunk.png')
     plt.close()
+
+    plt.title("Reward - Trunkacted")
+    plt.plot(cumulativeReward[len(cumulativeReward)-101:len(cumulativeReward)-1],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_reward_trunk100.png')
+    plt.close()
+
+    plt.title("Reward - Trunkacted")
+    plt.plot(cumulativeReward[len(cumulativeReward)-501:len(cumulativeReward)-1],linestyle = 'None', marker = ".")
+    plt.savefig(f'{output_file}_reward_trunk500.png')
+    plt.close()
+    print(f"trunkacted reward: {cumulativeReward[len(cumulativeReward)-101:len(cumulativeReward)-1]}")
 
     # testing
     stats = []

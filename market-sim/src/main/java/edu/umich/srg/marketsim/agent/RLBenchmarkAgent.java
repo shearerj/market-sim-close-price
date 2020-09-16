@@ -65,7 +65,13 @@ public class RLBenchmarkAgent extends DeepRLAgent {
   @Override
   protected double calculateReward(double finalEstimate) {
 	  double currProfit = super.calculateReward(finalEstimate);
+	  //System.out.println(currProfit);
+	  
 	  double currBenchmark = market.getCurrentBenchmark();
+	  
+	  //System.out.println(currBenchmark);
+	  //System.out.println(currProfit + (currBenchmark * this.benchmarkDir * this.contractHoldings));
+	  
 	  return currProfit + (currBenchmark * this.benchmarkDir * this.contractHoldings);
 	  //return currProfit + (currBenchmark * this.benchmarkDir);
 	  

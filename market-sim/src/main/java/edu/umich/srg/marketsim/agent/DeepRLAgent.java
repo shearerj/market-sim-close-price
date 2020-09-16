@@ -187,7 +187,7 @@ public class DeepRLAgent implements Agent {
     JsonArray state = new JsonArray();
     JsonObject stateDict = new JsonObject();
     double currProfit = this.calculateReward(finalEstimate);
-    double startProfit = this.calculateReward(finalEstimate);
+    //double startProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
       state = this.getNormState(finalEstimate,type.sign());
@@ -218,7 +218,7 @@ public class DeepRLAgent implements Agent {
 	  //state1 = this.getNormState(finalEstimate,type.sign());
     }
     
-    double endProfit = this.calculateReward(finalEstimate);
+    //double endProfit = this.calculateReward(finalEstimate);
     /*
     curr_obs.add("state0", state);
     curr_obs.add("action", this.action);
@@ -239,11 +239,21 @@ public class DeepRLAgent implements Agent {
     
     if (!firstArrival) {
         double reward = currProfit - this.prevProfit;
+        this.prev_obs.addProperty("current Profit", currProfit);
+        this.prev_obs.addProperty("previous Profit", this.prevProfit);
+        
+        if(Math.abs(reward) == getInitialReward() && currProfit == 0) {
+        	reward = 0;
+        }
+        else {
+        	this.prevProfit = currProfit;
+        }
+        
         this.runningPayoff += reward;
         this.prev_obs.addProperty("reward", reward);
         this.rl_observations.add(prev_obs);
-        this.prevProfit = currProfit;
-      } else {
+      } 
+      else {
     	firstArrival = false;
     	this.prevProfit = getInitialReward();
       }
@@ -286,14 +296,23 @@ public class DeepRLAgent implements Agent {
   }
   
   protected double calculateReward(double finalEstimate) {
+	  //System.out.println(55555);
 	  double estProfit = market.getProfit();
 	  int market_h = market.getHoldings();
 	  
+	  //System.out.println(estProfit);
+	  //System.out.println(market_h);
+	  
 	  estProfit += market_h * finalEstimate;
+	  
+	  //System.out.println(estProfit);
+	  
 	  OrderType direction = market_h > 0 ? BUY : SELL;
 	  for (int pos = 0; pos != market_h; pos += direction.sign()) {
 		  estProfit += this.payoffForExchange(pos, direction);
 	  }
+	  
+	  //System.out.println(estProfit);
 	  
 	  return estProfit;
 	  
