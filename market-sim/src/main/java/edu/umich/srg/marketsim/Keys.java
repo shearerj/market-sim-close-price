@@ -185,8 +185,12 @@ public interface Keys {
   class ActionCoefficient extends DoubleValue {
   }
   
-  @ValueHelp("The path for deep RL model when using policy-based action.")
-  class BenchmarkModelPath extends StringsValue {
+  @ValueHelp("The Python path for deep RL model when using policy-based action.")
+  class PythonModelPath extends StringsValue {
+  }
+  
+  @ValueHelp("The Tensorflow path for Tensor graph to interact with RL Python agent.")
+  class TensorFlowModelPath extends StringsValue {
   }
   
   @ValueHelp("The path for deep RL paramters when using policy-based action.")
@@ -421,7 +425,7 @@ public interface Keys {
       .put(Thresh.class, 1d) // No threshold
       .put(BenchmarkThresh.class, 1d) // No threshold
       .put(ShareEstimates.class, false) // Don't share estimates unless explicit
-      .put(PolicyAction.class, false) // Randomly generate action
+      .put(PolicyAction.class, false) // Randomly generate actionCoefficient
       .put(GreatLakesJobNumber.class, -1) // Randomly generate action
       .put(NbStates.class, 0) // Assign arbitrary number of states
       .put(NbActions.class, 0) // Assign arbitrary number of actions

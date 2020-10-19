@@ -12,7 +12,7 @@ import com.google.gson.JsonObject;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.distributions.Uniform.ContinuousUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.marketsim.Keys.BenchmarkModelPath;
+import edu.umich.srg.marketsim.Keys.PythonModelPath;
 import edu.umich.srg.marketsim.Keys.BenchmarkParamPath;
 import edu.umich.srg.marketsim.Keys.GreatLakesJobNumber;
 import edu.umich.srg.marketsim.Keys.NbActions;
@@ -25,7 +25,7 @@ public class PythonContinuousAction extends ContinuousAction {
 	private Random rand;
 	private double alpha;
 	
-	private final String benchmarkModelPath;
+	private final String pythonModelPath;
 	private final String benchmarkParamPath;
 	private final int glJobNum;
 	private final int nbStates;
@@ -37,7 +37,7 @@ public class PythonContinuousAction extends ContinuousAction {
 		this.rand = rand;
 		this.actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
 		this.alpha = 0;
-		this.benchmarkModelPath =spec.get(BenchmarkModelPath.class).iterator().next();
+		this.pythonModelPath =spec.get(PythonModelPath.class).iterator().next();
 	    this.benchmarkParamPath =spec.get(BenchmarkParamPath.class).iterator().next();
 	    this.glJobNum = spec.get(GreatLakesJobNumber.class);
 	    this.nbStates = spec.get(NbStates.class);
@@ -73,7 +73,7 @@ public class PythonContinuousAction extends ContinuousAction {
 				training = 1;
 			} 
 			ProcessBuilder pb = new ProcessBuilder("python3","action.py","-p",""+this.benchmarkParamPath,
-					"-f",""+statePath,"-m",""+this.benchmarkModelPath,"-s",""+this.nbStates,
+					"-f",""+statePath,"-m",""+this.pythonModelPath,"-s",""+this.nbStates,
 					"-a",""+this.nbActions,"-t",""+training);
 			Process p = pb.start();
 			 
