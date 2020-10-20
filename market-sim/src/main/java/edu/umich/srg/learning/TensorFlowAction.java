@@ -68,6 +68,8 @@ public class TensorFlowAction extends ContinuousAction {
 					.feed("askSize", TInt32.scalarOf(state.get("askSize").getAsInt()))
 					.feed("spread", TInt32.scalarOf(state.get("spread").getAsInt()))
 					.feed("marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
+					.feed("contractHoldings", TInt32.scalarOf(state.get("contractHoldings").getAsInt()))
+					.feed("numTransactions", TInt32.scalarOf(state.get("numTransactions").getAsInt()))
 					.feed("timeTilEnd", TInt32.scalarOf(state.get("timeTilEnd").getAsInt()))
 					.feed("bidVector", bidVector)
 					.feed("askVector", askVector)
