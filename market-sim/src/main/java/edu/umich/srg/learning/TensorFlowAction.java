@@ -7,12 +7,8 @@ import java.util.Random;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import edu.umich.srg.distributions.Uniform;
-import edu.umich.srg.distributions.Uniform.ContinuousUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.Sim;
-import edu.umich.srg.marketsim.Keys.ActionCoefficient;
 
 import edu.umich.srg.marketsim.Keys.TensorFlowModelPath;
 // import edu.umich.srg.marketsim.Keys.GreatLakesJobNumber;
@@ -24,19 +20,19 @@ import org.tensorflow.Graph;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
+import org.tensorflow.Tensors;
 import org.tensorflow.DataType;
 import org.tensorflow.TensorFlow;
-import org.tensorflow.types.TFloat32;
 import org.tensorflow.types.TFloat64;
 import org.tensorflow.types.TInt32;
 import org.tensorflow.types.TString;
 import org.tensorflow.types.family.TType;
+import org.tensorflow.ndarray.DoubleNdArray;
+import org.tensorflow.op.core.Shape;
 
 public class TensorFlowAction extends ContinuousAction {
 
 	// private ContinuousUniform actionsToSubmit;
-	private Random rand;
-	private double alpha;
 	
 	private final String TFModelPath;
 	// private final int glJobNum;
@@ -44,18 +40,10 @@ public class TensorFlowAction extends ContinuousAction {
 	// private final int nbActions;
 	// private final Boolean isTraining;
 
-	private int actionSize;
 
 	public TensorFlowAction(Sim sim, Spec spec, Random rand) {
 		super(spec, rand);
-		// this.actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
-		this.alpha = 0;
 		this.TFModelPath = spec.get(TensorFlowModelPath.class).iterator().next();
-		this.actionSize = 0;
-	    // this.glJobNum = spec.get(GreatLakesJobNumber.class);
-	    // this.nbStates = spec.get(NbStates.class);
-	    // this.nbActions = spec.get(NbActions.class);
-	    // this.isTraining = spec.get(IsTraining.class);
 	}
 
 	public static TensorFlowAction create(Sim sim, Spec spec, Random rand) {
@@ -67,8 +55,12 @@ public class TensorFlowAction extends ContinuousAction {
 		JsonObject action = new JsonObject();
 		try(SavedModelBundle savedModelBundle = SavedModelBundle.load(this.TFModelPath, "serve")) {
 			Session session = savedModelBundle.session();
-		
-			//@SuppressWarnings("unchecked")
+			//Tensor bidVector = 
+			//Tensor bidVec = Tensor.create(new int[] {1});
+			Tensor<?> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray(), 20);
+			Tensor<?> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray(), 20);
+			Tensor<?> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray(), 20);
+	
 			List<Tensor<?>> order = (List<Tensor<?>>) session.runner()
 					.feed("finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
 					.feed("side", TInt32.scalarOf(state.get("side").getAsInt()))
@@ -77,9 +69,9 @@ public class TensorFlowAction extends ContinuousAction {
 					.feed("spread", TInt32.scalarOf(state.get("spread").getAsInt()))
 					.feed("marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
 					.feed("timeTilEnd", TInt32.scalarOf(state.get("timeTilEnd").getAsInt()))
-					.feed("bidVector", TString.vectorOf(state.get("bidVector").getAsString()))
-					.feed("askVector", TString.vectorOf(state.get("askVector").getAsString()))
-					.feed("transactionHistory", TString.vectorOf(state.get("transactionHistory").getAsString()))
+					.feed("bidVector", bidVector)
+					.feed("askVector", askVector)
+					.feed("transactionHistory", transactionHistory)
 					.fetch("price", 0)
 					.fetch("side", 1)
 					.fetch("size", 2)
@@ -92,5 +84,20 @@ public class TensorFlowAction extends ContinuousAction {
 			return action;
 
 		}
+	}
+	
+	//Fix this so the length of the array is verified to be < maxLength
+	private Tensor<?> jsonToTensor(JsonArray jArray, int maxLength) {
+		double[] listdata = new double[maxLength]; 
+		if (jArray != null) { 
+		   for (int i=0;i<jArray.size();i++){ 
+			 listdata[i] = jArray.get(i).getAsDouble();
+		   } 
+		   for (int i=jArray.size(); i<maxLength; i++) {
+			 listdata[i] = 0;
+		   }
+		}
+		
+		return Tensors.create(listdata);
 	}
 }
