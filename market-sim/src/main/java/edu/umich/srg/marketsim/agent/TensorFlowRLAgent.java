@@ -33,10 +33,9 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SharedGaussianView;
 import edu.umich.srg.util.SummStats;
-import edu.umich.srg.learning.SimpleState;
+import edu.umich.srg.learning.TensorFlowState;
 import edu.umich.srg.learning.ContinuousAction;
-//import edu.umich.srg.learning.PythonContinuousAction;
-import edu.umich.srg.learning.JavaContinuousAction;
+import edu.umich.srg.learning.TensorFlowAction;
 
 import static edu.umich.srg.fourheap.OrderType.BUY;
 import static edu.umich.srg.fourheap.OrderType.SELL;
@@ -57,7 +56,7 @@ import com.google.common.math.DoubleMath;
  * This agent gets noisy observations of the fundamental and uses markov assumptions of the price
  * series to get more refined estimates of the final fundamental.
  */
-public class DeepRLAgent implements Agent {
+public class TensorFlowRLAgent implements Agent {
 	
   private static final Distribution<OrderType> randomOrder = Uniform.over(OrderType.values());
   private static final Set<OrderType> allOrders = EnumSet.allOf(OrderType.class);
@@ -82,11 +81,9 @@ public class DeepRLAgent implements Agent {
   private double prevProfit;
   private final boolean policyAction;
   
-  //private final BenchmarkState stateSpace;
-  private final SimpleState stateSpace;
+  private final TensorFlowState stateSpace;
   private final ContinuousAction randomActionSpace;
-  //private final PythonContinuousAction policyActionSpace;
-  //private final JavaContinuousAction policyActionSpace;
+  private final TensorFlowAction policyActionSpace;
   
   private Boolean firstArrival;
   
@@ -100,14 +97,11 @@ public class DeepRLAgent implements Agent {
   private double runningPayoff;
   protected final double initialFundamentalEst;
   
-  public DeepRLAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
+  public TensorFlowRLAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     this.sim = sim;
     this.id = rand.nextInt();
     this.latency = spec.get(CommunicationLatency.class);
-    System.out.println(12345678);
-    System.out.println(this.latency);
     this.market = market.getView(this, TimeStamp.of(latency));
-    //this.market = market.getView(this, TimeStamp.ZERO);
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
@@ -142,11 +136,9 @@ public class DeepRLAgent implements Agent {
       
     this.policyAction = spec.get(PolicyAction.class);
     
-    //this.stateSpace = BenchmarkState.create(this.sim,market,spec);
-    this.stateSpace = SimpleState.create(this.sim,this.market,spec);
+    this.stateSpace = TensorFlowState.create(this.sim,this.market,spec);
     this.randomActionSpace = ContinuousAction.create(spec,rand);
-    //this.policyActionSpace = PythonContinuousAction.create(spec,rand);
-    //this.policyActionSpace = JavaContinuousAction.create(this.sim,spec,rand);
+    this.policyActionSpace = TensorFlowAction.create(this.sim,spec,rand);
   
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
@@ -167,9 +159,9 @@ public class DeepRLAgent implements Agent {
     }
   }
   
-  public static DeepRLAgent createFromSpec(Sim sim, Fundamental fundamental,
+  public static TensorFlowRLAgent createFromSpec(Sim sim, Fundamental fundamental,
 	      Collection<Market> markets, Market market, Spec spec, Random rand) {
-	    return new DeepRLAgent(sim, market, fundamental, spec, rand);
+	    return new TensorFlowRLAgent(sim, market, fundamental, spec, rand);
 	  }
   
   private void scheduleNextArrival() {
@@ -185,21 +177,15 @@ public class DeepRLAgent implements Agent {
     double finalEstimate = getFinalFundamentalEstiamte();
     fundamentalError.accept(Math.pow(finalEstimate - finalFundamental, 2));
     
-    //JsonArray state = this.stateSpace.getState(finalEstimate, privateValue);
     JsonArray state = new JsonArray();
     JsonObject stateDict = new JsonObject();
     double currProfit = this.calculateReward(finalEstimate);
-    //double startProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
       state = this.getNormState(finalEstimate,type.sign());
       stateDict = this.getStateDict(finalEstimate, type.sign());
 	  for (int num = 0; num < ordersPerSide; num++) {
 	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
-	
-	      double privateBenefit = type.sign()
-	          * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
-	      double estimatedValue = finalEstimate + privateBenefit;
  
 	      JsonObject curr_state = new JsonObject();
 	      curr_state.add("state0", state);
@@ -209,34 +195,20 @@ public class DeepRLAgent implements Agent {
 	      }
 	      long rounded = DoubleMath.roundToLong(toSubmit, type == BUY ? FLOOR : CEILING);
 	      this.actionDict.addProperty("price", rounded);
-	      shadingStats.accept(Math.abs(estimatedValue - toSubmit));
 	
 	      if (rounded > 0) {
 	    	  market.submitOrder(type, Price.of(rounded), 1);
-	        //action.addProperty("side", type.sign());
 	      }
   	    }
   	  }
-	  //state1 = this.getNormState(finalEstimate,type.sign());
     }
-    
-    //double endProfit = this.calculateReward(finalEstimate);
-    /*
-    curr_obs.add("state0", state);
-    curr_obs.add("action", this.action);
-    curr_obs.add("state1", state1);
-    curr_obs.addProperty("terminal", 0);
-    double reward = endProfit - startProfit;
-    curr_obs.addProperty("reward", reward);
-    this.rl_observations.add(curr_obs);
-    */
     
     curr_obs.add("state0", state);
     curr_obs.add("state0Dict", stateDict);
     //curr_obs.add("action", this.action);
     curr_obs.add("action", this.actionDict);
     prev_obs.add("state1", state);
-    //prev_obs.add("state1Dict", stateDict);
+    prev_obs.add("state1Dict", stateDict);
     prev_obs.addProperty("terminal", 0);
     
     if (!firstArrival) {
@@ -285,7 +257,7 @@ public class DeepRLAgent implements Agent {
       if(this.policyAction) {
     	  //this.action = this.policyActionSpace.getAction(curr_state);
     	  //toSubmit = this.policyActionSpace.actionToPrice(finalEstimate);
-    	  //this.actionDict = this.policyActionSpace.getActionDict(curr_state,finalEstimate);
+    	  this.actionDict = this.policyActionSpace.getActionDict(curr_state,finalEstimate);
     	  toSubmit = this.actionDict.get("price").getAsDouble();
     	  
       }
@@ -349,7 +321,7 @@ public class DeepRLAgent implements Agent {
     JsonArray state = this.getNormState(this.finalFundamental,0);
     JsonObject stateDict = this.getStateDict(this.finalFundamental,0);
     this.prev_obs.add("state1", state);
-    //this.prev_obs.add("state1Dict", stateDict);
+    this.prev_obs.add("state1Dict", stateDict);
     this.prev_obs.addProperty("terminal", 1);
     this.prev_obs.addProperty("reward", reward);
     this.rl_observations.add(prev_obs);
@@ -360,7 +332,7 @@ public class DeepRLAgent implements Agent {
   }
 
   protected String name() {
-    return "DeepRL";
+    return "TensorFlowRL";
   }
   
   @Override

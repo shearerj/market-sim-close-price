@@ -16,6 +16,7 @@ import org.tensorflow.Tensor;
 import org.tensorflow.Tensors;
 import org.tensorflow.types.TFloat64;
 import org.tensorflow.types.TInt32;
+import org.tensorflow.types.TInt64;
 
 public class TensorFlowAction extends ContinuousAction {
 	
@@ -41,14 +42,19 @@ public class TensorFlowAction extends ContinuousAction {
 	
 			List<Tensor<?>> order = (List<Tensor<?>>) session.runner()
 					.feed("finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
+					.feed("privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
+					.feed("privateAsk", TFloat64.scalarOf(state.get("privateAsk").getAsDouble()))
+					.feed("omegaRatioBid", TFloat64.scalarOf(state.get("omegaRatioBid").getAsDouble()))
+					.feed("omegaRatioAsk", TFloat64.scalarOf(state.get("omegaRatioAsk").getAsDouble()))
 					.feed("side", TInt32.scalarOf(state.get("side").getAsInt()))
 					.feed("bidSize", TInt32.scalarOf(state.get("bidSize").getAsInt()))
 					.feed("askSize", TInt32.scalarOf(state.get("askSize").getAsInt()))
 					.feed("spread", TInt32.scalarOf(state.get("spread").getAsInt()))
 					.feed("marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
-					.feed("contractHoldings", TInt32.scalarOf(state.get("contractHoldings").getAsInt()))
+					.feed("contractHoldings", TFloat64.scalarOf(state.get("contractHoldings").getAsDouble()))
 					.feed("numTransactions", TInt32.scalarOf(state.get("numTransactions").getAsInt()))
-					.feed("timeTilEnd", TInt32.scalarOf(state.get("timeTilEnd").getAsInt()))
+					.feed("timeTilEnd", TInt64.scalarOf(state.get("timeTilEnd").getAsInt()))
+					.feed("latency", TInt64.scalarOf(state.get("latency").getAsInt()))
 					.feed("bidVector", bidVector)
 					.feed("askVector", askVector)
 					.feed("transactionHistory", transactionHistory)

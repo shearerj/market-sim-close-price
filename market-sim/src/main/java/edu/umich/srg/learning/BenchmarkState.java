@@ -8,16 +8,16 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.Keys.BenchmarkDir;
-import edu.umich.srg.marketsim.Keys.BenchmarkImpact;
+import edu.umich.srg.marketsim.Keys.ContractHoldings;;
 
 public class BenchmarkState extends SimpleState{
 	
-	private final int benchmarkImpact;
+	private final double contractHoldings;
 	private final int benchmarkDir;
 	
 	public BenchmarkState(Sim sim, MarketView market, Spec spec) {
 		super(sim,market,spec);
-	    this.benchmarkImpact = spec.get(BenchmarkImpact.class);
+	    this.contractHoldings = spec.get(ContractHoldings.class);
 	    this.benchmarkDir = spec.get(BenchmarkDir.class);
 		
 	}
@@ -36,7 +36,7 @@ public class BenchmarkState extends SimpleState{
 		}
 	    
 	    if(stateFlags.get("contractHoldings").getAsBoolean()) {
-	    	int contract_h = this.benchmarkDir * this.benchmarkImpact;
+	    	double contract_h = this.benchmarkDir * this.contractHoldings;
 	    	state.add(contract_h);
 		    //state.add(Math.log(contract_h));
 		}
@@ -56,7 +56,7 @@ public class BenchmarkState extends SimpleState{
 		}
 	    
 	    if(stateFlags.get("contractHoldings").getAsBoolean()) {
-	    	int contract_h = this.benchmarkDir * this.benchmarkImpact;
+	    	double contract_h = this.benchmarkDir * this.contractHoldings;
 	    	state.addProperty("contractHoldings",contract_h);
 		    //state.add(Math.log(contract_h));
 		}

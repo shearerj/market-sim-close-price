@@ -432,6 +432,8 @@ public interface Keys {
       .put(SubmitDepth.class, 1) // Submit one order per arrival (legacy)
       .put(Thresh.class, 1d) // No threshold
       .put(BenchmarkThresh.class, 1d) // No threshold
+      .put(ContractHoldings.class, 0.0)
+      .put(BenchmarkDir.class, 1)
       .put(ShareEstimates.class, false) // Don't share estimates unless explicit
       .put(PolicyAction.class, false) // Randomly generate actionCoefficient
       .put(GreatLakesJobNumber.class, -1) // Randomly generate action

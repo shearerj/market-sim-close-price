@@ -6,7 +6,7 @@
 
         },
         "rl_agent": {
-            "btfrl:benchmarkDir_-1_contractHoldings_40_omegaDepth_5_maxVectorDepth_20": 1
+            "tfrl:omegaDepth_5_maxVectorDepth_20": 1
             }
     }, 
     "configuration": {
