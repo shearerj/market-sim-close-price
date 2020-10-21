@@ -22,6 +22,7 @@ import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
 import edu.umich.srg.marketsim.Keys.PolicyAction;
+import edu.umich.srg.marketsim.Keys.CommunicationLatency;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -89,7 +90,7 @@ public class DeepRLAgent implements Agent {
   private final SimpleState stateSpace;
   private final ContinuousAction randomActionSpace;
   //private final PythonContinuousAction policyActionSpace;
-  private final JavaContinuousAction policyActionSpace;
+  //private final JavaContinuousAction policyActionSpace;
   
   private Boolean firstArrival;
   
@@ -98,13 +99,19 @@ public class DeepRLAgent implements Agent {
   private JsonArray action;
   private JsonObject actionDict;
   
+  private final long latency;
+  
   private double runningPayoff;
   protected final double initialFundamentalEst;
   
   public DeepRLAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
     this.sim = sim;
     this.id = rand.nextInt();
-    this.market = market.getView(this, TimeStamp.ZERO);
+    this.latency = spec.get(CommunicationLatency.class);
+    System.out.println(12345678);
+    System.out.println(this.latency);
+    this.market = market.getView(this, TimeStamp.of(latency));
+    //this.market = market.getView(this, TimeStamp.ZERO);
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
@@ -143,7 +150,7 @@ public class DeepRLAgent implements Agent {
     this.stateSpace = SimpleState.create(this.sim,this.market,spec);
     this.randomActionSpace = ContinuousAction.create(spec,rand);
     //this.policyActionSpace = PythonContinuousAction.create(spec,rand);
-    this.policyActionSpace = JavaContinuousAction.create(this.sim,spec,rand);
+    //this.policyActionSpace = JavaContinuousAction.create(this.sim,spec,rand);
   
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
@@ -283,8 +290,9 @@ public class DeepRLAgent implements Agent {
       if(this.policyAction) {
     	  //this.action = this.policyActionSpace.getAction(curr_state);
     	  //toSubmit = this.policyActionSpace.actionToPrice(finalEstimate);
-    	  this.actionDict = this.policyActionSpace.getActionDict(curr_state,finalEstimate);
+    	  //this.actionDict = this.policyActionSpace.getActionDict(curr_state,finalEstimate);
     	  toSubmit = this.actionDict.get("price").getAsDouble();
+    	  
       }
       else { 
     	  //this.action = this.randomActionSpace.getAction();
@@ -296,23 +304,15 @@ public class DeepRLAgent implements Agent {
   }
   
   protected double calculateReward(double finalEstimate) {
-	  //System.out.println(55555);
 	  double estProfit = market.getProfit();
 	  int market_h = market.getHoldings();
 	  
-	  //System.out.println(estProfit);
-	  //System.out.println(market_h);
-	  
 	  estProfit += market_h * finalEstimate;
-	  
-	  //System.out.println(estProfit);
 	  
 	  OrderType direction = market_h > 0 ? BUY : SELL;
 	  for (int pos = 0; pos != market_h; pos += direction.sign()) {
 		  estProfit += this.payoffForExchange(pos, direction);
 	  }
-	  
-	  //System.out.println(estProfit);
 	  
 	  return estProfit;
 	  

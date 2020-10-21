@@ -177,6 +177,10 @@ public interface Keys {
   class OmegaDepth extends IntValue {
   }
   
+  @ValueHelp("The maximum fixed length of any vector (e.g. bid and ask vectors, and transaction history) passed through the TensorFlow graph when using RL.")
+  class MaxVectorDepth extends IntValue {
+  }
+  
   @ValueHelp("Boolean value which determines whether the deep RL benchmark agent chooses its action by a policy or randomly.")
   class PolicyAction extends BoolValue {
   }
@@ -244,6 +248,10 @@ public interface Keys {
   
   @ValueHelp("Parameter for noise decay.")
   class EpsilonDecay extends DoubleValue {
+  }
+  
+  @ValueHelp("Latency, or time delay, in time steps for an RL agent. If latency is 5, then the market waits 5 time steps to process request or notify of transaction.")
+  class CommunicationLatency extends LongValue {
   }
 
   // ------------
@@ -436,6 +444,8 @@ public interface Keys {
       .put(OUSigma.class, 0.0) // Assign arbitrary number for OU parameter sigma
       .put(OUTheta.class, 0.0) // Assign arbitrary number for OU parameter theta
       .put(EpsilonDecay.class, 0.0) // Assign arbitrary number for epsilon decay for DRL
+      .put(CommunicationLatency.class, 0L) // Assign zero latency for RL agent
+      //.put(BenchmarkType.class, "vwap")
       .build();
 
 }

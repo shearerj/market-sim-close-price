@@ -1,0 +1,41 @@
+{
+    "assignment": {
+        "zi": {
+            "markov:rmin_0_rmax_1000_Thresh_0.1": 6,
+            "markov:rmin_0_rmax_1000_Thresh_0.8": 3
+
+        },
+        "rl_agent": {
+            "drl:rmin_0_rmax_1000_benchmarkThresh_0.8_benchmarkImpact_1000": 1
+            }
+    }, 
+    "configuration": {
+        "randomSeed":100,
+        "simLength": 1000,
+        "fundamentalMean": 1000000.0, 
+        "maxPosition": 10,
+        "privateValueVar": 50000000.0,
+        "fundamentalShockVar": 1000000.0,
+        "PriceVarEst": "Infinity",
+        "arrivalRate": 0.005,
+        "fundamentalMeanReversion": 0.05,
+        "markets": "cda",
+        "fundamentalObservationVariance": 10000000.0,
+        "benchmarkDir": 1,
+        "contractHoldings": 40,
+        "viewBookDepth": 5,
+        "omegaDepth": 5,
+        "stateSpaceFlags": "{'finalFundamentalEstimate': 'true', 'side': 'true', 'bidSize': 'true', 'askSize': 'true', 'bidVector': 'true', 'askVector': 'true', 'spread': 'true', 'transactionHistory': 'true', 'marketHoldings': 'true', 'privateBid': 'true', 'privateAsk': 'true', 'omegaRatioBid': 'true', 'omegaRatioAsk': 'true', 'timeTilEnd': 'true', 'numTransactions': 'true', 'contractHoldings': 'true'}",
+        "transactionDepth": 5,
+        "policyAction": false,
+        "actionCoefficient": 100,
+        "nbStates": 20,
+        "nbActions":1,
+        "hiddenLayer1": 1,
+        "hiddenLayer2":1,
+        "benchmarkParamPath": "drl_param.json",
+        "benchmarkType": "vwap",
+        "actorWeights": "{\"weightMtx1\":[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]], \"weightMtx2\":[[5,5,5]], \"weightMtx3\":[[5,5,5]], \"biasMtx1\":[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]], \"biasMtx2\":[[5,5,5]], \"biasMtx3\":[[5,5,5]]}",
+        "communicationLatency":5
+    }
+}
