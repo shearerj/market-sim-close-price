@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.Keys.TensorFlowModelPath;
+import edu.umich.srg.marketsim.Keys.MaxVectorDepth;
 
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
@@ -20,11 +21,13 @@ import org.tensorflow.types.TInt64;
 
 public class TensorFlowAction extends ContinuousAction {
 	
-	private final String TFModelPath;
+	private final String tfModelPath;
+	private final int maxVectorDepth;
 
 	public TensorFlowAction(Sim sim, Spec spec, Random rand) {
 		super(spec, rand);
-		this.TFModelPath = spec.get(TensorFlowModelPath.class).iterator().next();
+		this.tfModelPath = spec.get(TensorFlowModelPath.class).iterator().next();
+		this.maxVectorDepth = spec.get(MaxVectorDepth.class);
 	}
 
 	public static TensorFlowAction create(Sim sim, Spec spec, Random rand) {
@@ -34,11 +37,11 @@ public class TensorFlowAction extends ContinuousAction {
 	@Override
 	public JsonObject getActionDict(JsonObject state, double finalEstimate) {
 		JsonObject action = new JsonObject();
-		try(SavedModelBundle savedModelBundle = SavedModelBundle.load(this.TFModelPath, "serve")) {
+		try(SavedModelBundle savedModelBundle = SavedModelBundle.load(this.tfModelPath, "serve")) {
 			Session session = savedModelBundle.session();
-			Tensor<?> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray(), 20);
-			Tensor<?> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray(), 20);
-			Tensor<?> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray(), 20);
+			Tensor<?> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
+			Tensor<?> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
+			Tensor<?> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
 	
 			List<Tensor<?>> order = (List<Tensor<?>>) session.runner()
 					.feed("finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
@@ -73,13 +76,13 @@ public class TensorFlowAction extends ContinuousAction {
 	}
 	
 	//Fix this so the length of the array is verified to be < maxLength
-	private Tensor<?> jsonToTensor(JsonArray jArray, int maxLength) {
-		double[] listdata = new double[maxLength]; 
+	private Tensor<?> jsonToTensor(JsonArray jArray) {
+		double[] listdata = new double[this.maxVectorDepth]; 
 		if (jArray != null) { 
 		   for (int i=0;i<jArray.size();i++){ 
 			 listdata[i] = jArray.get(i).getAsDouble();
 		   } 
-		   for (int i=jArray.size(); i<maxLength; i++) {
+		   for (int i=jArray.size(); i<this.maxVectorDepth; i++) {
 			 listdata[i] = 0;
 		   }
 		}
