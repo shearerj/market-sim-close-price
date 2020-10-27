@@ -44,6 +44,7 @@ public class TensorFlowAction extends ContinuousAction {
 			Tensor<?> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
 			//System.out.println(TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()));
 			System.out.println(state.get("finalFundamentalEstimate").getAsDouble());
+			System.out.println(TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()).rawData().asDoubles().getDouble(0));
 	
 			List<Tensor<?>> order = (List<Tensor<?>>) session.runner()
 					.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
@@ -63,15 +64,15 @@ public class TensorFlowAction extends ContinuousAction {
 					.feed("serving_default_bidVector", bidVector)
 					.feed("serving_default_askVector", askVector)
 					.feed("serving_default_transactionHistory", transactionHistory)
-					.fetch("PartitionedCall",0)
+					//.fetch("PartitionedCall",0)
+					.fetch("StatefulPartitionedCall",0)
+					.fetch("StatefulPartitionedCall",1)
+					.fetch("StatefulPartitionedCall",2)
 					.run();
 			
-			System.out.println(order.get(0).rawData().asDoubles().getDouble(0));
 			action.addProperty("price", order.get(0).rawData().asDoubles().getDouble(0));
-			//action.addProperty("side", order.get(0).rawData().asInts().getInt(1));
-			//action.addProperty("size", order.get(0).rawData().asInts().getInt(2));
-			//action.addProperty("side", order.get(1).rawData().asInts().getInt(0));
-			//action.addProperty("size", order.get(2).rawData().asInts().getInt(2));
+			action.addProperty("side", order.get(1).rawData().asInts().getInt(0));
+			action.addProperty("size", order.get(2).rawData().asInts().getInt(0));
 
 			return action;
 
