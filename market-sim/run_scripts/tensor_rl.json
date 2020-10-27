@@ -21,13 +21,13 @@
         "fundamentalMeanReversion": 0.05,
         "markets": "cda",
         "fundamentalObservationVariance": 10000000.0,
-        "policyAction": false,
+        "policyAction": true,
         "actionCoefficient": 100,
         "nbStates": 20,
         "nbActions":1,
         "hiddenLayer1": 1,
         "hiddenLayer2":1,
-        "TensorFlowModelPath": "filler_path",
+        "TensorFlowModelPath": "test_tf_2/saved_model.pb",
         "benchmarkType": "vwap",
         "communicationLatency":5
     }

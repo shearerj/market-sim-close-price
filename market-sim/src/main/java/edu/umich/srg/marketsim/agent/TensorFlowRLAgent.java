@@ -189,7 +189,7 @@ public class TensorFlowRLAgent implements Agent {
  
 	      JsonObject curr_state = new JsonObject();
 	      curr_state.add("state0", state);
-	      double toSubmit = this.getAction(finalEstimate, curr_state);
+	      double toSubmit = this.getAction(finalEstimate, stateDict);
 	      if (toSubmit < 0) { // Hacky patch to stop submiting
 	        continue;
 	      }

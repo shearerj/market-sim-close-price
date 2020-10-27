@@ -173,26 +173,35 @@ public class TensorFlowState implements State{
 	    
 	    this.getBidVector(market, finalEstimate);
     	ArrayList<Double> bid_vec_double = new ArrayList<Double>();
+    	JsonArray bid_vec = new JsonArray();
     	for(int i = this.bid_vector.size() - 1; i>=0; i--) {
     		bid_vec_double.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
+    		bid_vec.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
 	    }	
-    	state.addProperty("bidVector", bid_vec_double.toString());
+    	//state.addProperty("bidVector", bid_vec_double.toString());
+    	state.add("bidVector", bid_vec);
 	    
     	this.getAskVector(market, finalEstimate);
     	ArrayList<Double> ask_vec_double = new ArrayList<Double>();
+    	JsonArray ask_vec = new JsonArray();
     	for(int i = 0; i< this.ask_vector.size(); i++) {
     		ask_vec_double.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
+    		ask_vec.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
 	    }
-    	state.addProperty("askVector", ask_vec_double.toString());	
+    	//state.addProperty("askVector", ask_vec_double.toString());
+    	state.add("askVector", ask_vec);
 	    
     	state.addProperty("spread", this.ask_vector.get(0).doubleValue() - this.bid_vector.get(0).doubleValue());
 	    
     	this.getTransactionHistory(finalEstimate);
     	ArrayList<Double> trans_double = new ArrayList<Double>();
+    	JsonArray trans_json = new JsonArray();
     	for(int i = 0; i < transactions.size();i++) {
 	    	trans_double.add(transactions.get(i).doubleValue() - finalEstimate);
+	    	trans_json.add(transactions.get(i).doubleValue() - finalEstimate);
 	    }
-    	state.addProperty("transactionHistory", trans_double.toString());
+    	//state.addProperty("transactionHistory", trans_double.toString());
+    	state.add("transactionHistory", trans_json);
     	
     	int market_h = market.getHoldings();
 	    state.addProperty("marketHoldings",market_h);
