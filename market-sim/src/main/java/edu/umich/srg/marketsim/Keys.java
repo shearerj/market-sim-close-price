@@ -14,6 +14,7 @@ import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.ValueHelp;
 import edu.umich.srg.fourheap.OrderType;
 import edu.umich.srg.marketsim.agent.ZiAgent.OrderStyle;
+import edu.umich.srg.marketsim.market.Benchmark.BenchmarkStyle;
 
 /**
  * This file contains all of the type safe keys used in Spec object for initializing agents and
@@ -63,8 +64,11 @@ public interface Keys {
   // -------
 
   @ValueHelp("The type of benchmark used.")
-  class BenchmarkType extends StringsValue {
-  }
+  class BenchmarkType extends EnumValue<BenchmarkStyle> {
+	    public BenchmarkType() {
+	        super(BenchmarkStyle.class);
+	      }
+	    }
   
   @ValueHelp("Whether the call market biases towards buyer or seller, 0 -> buyer price, 1 -> "
       + "seller price.")
@@ -447,7 +451,7 @@ public interface Keys {
       .put(OUTheta.class, 0.0) // Assign arbitrary number for OU parameter theta
       .put(EpsilonDecay.class, 0.0) // Assign arbitrary number for epsilon decay for DRL
       .put(CommunicationLatency.class, 0L) // Assign zero latency for RL agent
-      //.put(BenchmarkType.class, "vwap")
+      .put(BenchmarkType.class, BenchmarkStyle.VWAP) //Use volume-weighted price average (VWAP) as a market benchmark
       .build();
 
 }

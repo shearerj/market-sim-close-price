@@ -16,6 +16,7 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.market.Benchmark.BenchmarkStyle;
 
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -31,25 +32,25 @@ public class CallMarket extends AMarket {
   private boolean nextClearScheduled;
 
   private CallMarket(Sim sim, Fundamental fundamental, CallPricing pricing, long clearInterval,
-      Random rand, String benchmarkType) {
+      Random rand, BenchmarkStyle benchmarkType) {
     super(sim, fundamental, pricing, RandomProRataSelector.create(rand), benchmarkType);
     this.clearInterval = clearInterval;
     this.nextClearScheduled = false;
   }
 
   public static CallMarket create(Sim sim, Fundamental fundamental, double pricing,
-      long clearInterval, Random rand, String benchmarkType) {
+      long clearInterval, Random rand, BenchmarkStyle benchmarkType) {
     return new CallMarket(sim, fundamental, new CallPricing(pricing), clearInterval, rand, benchmarkType);
   }
 
   public static CallMarket create(Sim sim, Fundamental fundamental, long clearInterval,
       Random rand) {
-    return create(sim, fundamental, 0.5, clearInterval, rand, "vwap");
+    return create(sim, fundamental, 0.5, clearInterval, rand, BenchmarkStyle.VWAP);
   }
 
   public static CallMarket createFromSpec(Sim sim, Fundamental fundamental, Spec spec,
       Random rand) {
-    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class), rand, spec.get(BenchmarkType.class).iterator().next());
+    return create(sim, fundamental, spec.get(Pricing.class), spec.get(ClearInterval.class), rand, spec.get(BenchmarkType.class));
   }
 
   public long getClearingInterval() {

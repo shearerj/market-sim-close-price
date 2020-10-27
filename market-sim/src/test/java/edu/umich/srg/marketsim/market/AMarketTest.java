@@ -15,6 +15,7 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
+import edu.umich.srg.marketsim.market.Benchmark.BenchmarkStyle;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.observer.GetQuoteObserver;
@@ -673,7 +674,7 @@ public class AMarketTest {
 
     private MockMarket(Sim sim) {
       super(sim, ConstantFundamental.create(100, 100), MockMarket::mockPricing,
-          PrioritySelector.create(), "vwap");
+          PrioritySelector.create(), BenchmarkStyle.VWAP);
     }
 
     private static Iterable<Entry<MatchedOrders<Price, AOrder>, Price>> mockPricing(

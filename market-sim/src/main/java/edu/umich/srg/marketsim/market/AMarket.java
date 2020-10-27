@@ -29,6 +29,7 @@ import edu.umich.srg.marketsim.fundamental.Fundamental.FundamentalView;
 import edu.umich.srg.marketsim.market.MarketObserver.QuoteObserver;
 import edu.umich.srg.marketsim.market.MarketObserver.TransactionObserver;
 import edu.umich.srg.marketsim.market.Benchmark;
+import edu.umich.srg.marketsim.market.Benchmark.BenchmarkStyle;
 import edu.umich.srg.util.SummStats;
 
 import java.io.Serializable;
@@ -82,7 +83,7 @@ abstract class AMarket implements Market, Serializable {
   private double benchmark;
   private int num_transactions;
 
-  AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector, String benchmarkType) {
+  AMarket(Sim sim, Fundamental fundamental, PricingRule pricing, Selector<AOrder> selector, BenchmarkStyle benchmarkType) {
     this.sim = sim;
     this.orderbook = FourHeap.create(selector);
     this.pricing = pricing;

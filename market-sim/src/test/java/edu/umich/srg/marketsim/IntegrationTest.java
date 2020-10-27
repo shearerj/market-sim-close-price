@@ -42,6 +42,7 @@ import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.market.Benchmark.BenchmarkStyle;
 import edu.umich.srg.marketsim.market.CallMarket;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
@@ -512,7 +513,7 @@ public class IntegrationTest {
   public void longCallMarketTest() {
     Fundamental fundamental = ConstantFundamental.create(0, 100);
     MarketSimulator sim = MarketSimulator.create(fundamental, rand);
-    Market call = sim.addMarket(CallMarket.create(sim, fundamental, 0.5, 1000, rand, "vwap"));
+    Market call = sim.addMarket(CallMarket.create(sim, fundamental, 0.5, 1000, rand, BenchmarkStyle.VWAP));
     sim.addAgent(new MockAgent() {
       @Override
       public void initilaize() {

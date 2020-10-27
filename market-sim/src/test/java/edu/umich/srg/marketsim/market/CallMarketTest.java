@@ -12,6 +12,7 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.market.Benchmark.BenchmarkStyle;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.observer.GetQuoteObserver;
 import edu.umich.srg.marketsim.testing.MockAgent;
@@ -65,7 +66,7 @@ public class CallMarketTest {
   @Test
   public void abnormalPricingPolicyTest() {
     MockSim sim = new MockSim();
-    CallMarket market = CallMarket.create(sim, fund, 0.2, 100, rand, "vwap");
+    CallMarket market = CallMarket.create(sim, fund, 0.2, 100, rand, BenchmarkStyle.VWAP);
     GetQuoteObserver quoteInfo = market.addQuoteObserver(GetQuoteObserver.create(market));
     AtomicInteger transacted = new AtomicInteger(0);
     Agent agent = new MockAgent() {

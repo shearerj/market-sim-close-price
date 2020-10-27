@@ -28,7 +28,7 @@
         "hiddenLayer1": 1,
         "hiddenLayer2":1,
         "TensorFlowModelPath": "filler_path",
-        "benchmarkType": "vwap",
+        "benchmarkType": "VWAP",
         "communicationLatency":5
     }
 }

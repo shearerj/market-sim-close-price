@@ -28,7 +28,6 @@
         "hiddenLayer1": 1,
         "hiddenLayer2":1,
         "TensorFlowModelPath": "test6/saved_model.pb",
-        "benchmarkType": "vwap",
         "communicationLatency":5
     }
 }

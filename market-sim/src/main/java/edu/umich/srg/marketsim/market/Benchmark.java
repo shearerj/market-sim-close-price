@@ -12,32 +12,37 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class Benchmark {
-	private static final Map<String, Benchmark> memoized = new HashMap<>();
 	
-	private final String benchType; //Add final once it is a key
+	public enum BenchmarkStyle {
+	    VWAP, VWMP, TWAP, RVWAP, RTWAP
+	  }
 	
-	private Benchmark (String benchType) {
+	private static final Map<BenchmarkStyle, Benchmark> memoized = new HashMap<>();
+	
+	private final BenchmarkStyle benchType; //Add final once it is a key
+	
+	private Benchmark (BenchmarkStyle benchType) {
 		this.benchType = benchType;
 	}
 	
-	public static Benchmark create(String benchType) {
+	public static Benchmark create(BenchmarkStyle benchType) {
 	    return memoized.computeIfAbsent(benchType, Benchmark::new);
 	  }
 	
 	public double calcBenchmark (List<Entry<TimeStamp, Price>> prices) {
-		if (benchType.toLowerCase().equals("vwap")) {
+		if (benchType.equals(BenchmarkStyle.VWAP)) {
 			return vwap(prices);
 		} 
-		else if (benchType.toLowerCase().equals("vwmp")) {
+		else if (benchType.equals(BenchmarkStyle.VWMP)) {
 			return vwmp(prices);
 		}
-		else if (benchType.toLowerCase().equals("twap")) {
+		else if (benchType.equals(BenchmarkStyle.TWAP)) {
 			return twap(prices);
 		}
-		else if (benchType.toLowerCase().equals("rvwap")) {
+		else if (benchType.equals(BenchmarkStyle.RVWAP)) {
 			return rvwap(prices);
 		}
-		else if (benchType.toLowerCase().equals("rtwap")) {
+		else if (benchType.equals(BenchmarkStyle.RTWAP)) {
 			return rtwap(prices);
 		}
 		else {
