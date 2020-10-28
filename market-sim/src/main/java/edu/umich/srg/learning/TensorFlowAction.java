@@ -39,12 +39,9 @@ public class TensorFlowAction extends ContinuousAction {
 		try(SavedModelBundle savedModelBundle = SavedModelBundle.load(this.tfModelPath, "serve")) {
 			Session session = savedModelBundle.session();
 			
-			Tensor<?> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
-			Tensor<?> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
-			Tensor<?> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
-			//System.out.println(TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()));
-			System.out.println(state.get("finalFundamentalEstimate").getAsDouble());
-			System.out.println(TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()).rawData().asDoubles().getDouble(0));
+			Tensor<TFloat64> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
+			Tensor<TFloat64> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
+			Tensor<TFloat64> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
 	
 			List<Tensor<?>> order = (List<Tensor<?>>) session.runner()
 					.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
@@ -64,7 +61,7 @@ public class TensorFlowAction extends ContinuousAction {
 					.feed("serving_default_bidVector", bidVector)
 					.feed("serving_default_askVector", askVector)
 					.feed("serving_default_transactionHistory", transactionHistory)
-					//.fetch("PartitionedCall",0)
+					//order = (price, side, size)
 					.fetch("StatefulPartitionedCall",0)
 					.fetch("StatefulPartitionedCall",1)
 					.fetch("StatefulPartitionedCall",2)
