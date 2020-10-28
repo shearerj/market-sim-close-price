@@ -37,8 +37,8 @@ public class PythonContinuousAction extends ContinuousAction {
 		this.rand = rand;
 		this.actionsToSubmit = Uniform.closedOpen(-1.0, 1.0);
 		this.alpha = 0;
-		this.pythonModelPath =spec.get(PythonModelPath.class).iterator().next();
-	    this.benchmarkParamPath =spec.get(BenchmarkParamPath.class).iterator().next();
+		this.pythonModelPath =spec.get(PythonModelPath.class);
+	    this.benchmarkParamPath =spec.get(BenchmarkParamPath.class);
 	    this.glJobNum = spec.get(GreatLakesJobNumber.class);
 	    this.nbStates = spec.get(NbStates.class);
 	    this.nbActions = spec.get(NbActions.class);

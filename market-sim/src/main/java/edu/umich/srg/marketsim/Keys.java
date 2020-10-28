@@ -9,6 +9,7 @@ import edu.umich.srg.egtaonline.spec.ParsableValue.DoubleValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.EnumValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.IntValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.LongValue;
+import edu.umich.srg.egtaonline.spec.ParsableValue.StringValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.StringsValue;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.ValueHelp;
@@ -194,15 +195,15 @@ public interface Keys {
   }
   
   @ValueHelp("The Python path for deep RL model when using policy-based action.")
-  class PythonModelPath extends StringsValue {
+  class PythonModelPath extends StringValue {
   }
   
   @ValueHelp("The Tensorflow path for Tensor graph to interact with RL Python agent.")
-  class TensorFlowModelPath extends StringsValue {
+  class TensorFlowModelPath extends StringValue {
   }
   
   @ValueHelp("The path for deep RL paramters when using policy-based action.")
-  class BenchmarkParamPath extends StringsValue {
+  class BenchmarkParamPath extends StringValue {
   }
 
   @ValueHelp("Job number for greatlakes, used only for file labels in python action.")

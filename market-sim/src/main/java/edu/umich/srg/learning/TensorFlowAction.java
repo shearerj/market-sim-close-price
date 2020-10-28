@@ -25,7 +25,9 @@ public class TensorFlowAction extends ContinuousAction {
 
 	public TensorFlowAction(Sim sim, Spec spec, Random rand) {
 		super(spec, rand);
-		this.tfModelPath = spec.get(TensorFlowModelPath.class).iterator().next();
+		
+		this.tfModelPath = spec.get(TensorFlowModelPath.class);
+		
 		this.maxVectorDepth = spec.get(MaxVectorDepth.class);
 	}
 

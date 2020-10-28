@@ -27,7 +27,7 @@
         "nbActions":1,
         "hiddenLayer1": 1,
         "hiddenLayer2":1,
-        "TensorFlowModelPath": "test6/saved_model.pb",
+        "TensorFlowModelPath": "test6/",
         "communicationLatency":0
     }
 }
