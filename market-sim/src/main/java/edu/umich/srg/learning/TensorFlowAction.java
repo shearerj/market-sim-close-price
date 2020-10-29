@@ -1,5 +1,6 @@
 package edu.umich.srg.learning;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -11,6 +12,7 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.Keys.TensorFlowModelPath;
 import edu.umich.srg.marketsim.Keys.MaxVectorDepth;
 
+import org.tensorflow.Operation;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
@@ -41,62 +43,47 @@ public class TensorFlowAction extends ContinuousAction {
 		try(SavedModelBundle savedModelBundle = SavedModelBundle.load(this.tfModelPath, "serve")) {
 			Session session = savedModelBundle.session();
 			
+			
+			// Determine if the name of the output op of the graph is "StatefulPartitionedCall" or "PartitionedCall"
+			Iterator<Operation> ops = savedModelBundle.graph().operations();
+			Operation op;
+			String outputOpName = null;
+			while(ops.hasNext()) {
+				op = ops.next();
+				if (op.numOutputs() == 3 && op.name().endsWith("PartitionedCall")) {
+					outputOpName = op.name();
+				}
+			}
+			
 			Tensor<TFloat64> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
 			Tensor<TFloat64> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
 			Tensor<TFloat64> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
 	
 			List<Tensor<?>> order;
 			
-			try {
-				order = (List<Tensor<?>>) session.runner()
-						.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
-						.feed("serving_default_privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
-						.feed("serving_default_privateAsk", TFloat64.scalarOf(state.get("privateAsk").getAsDouble()))
-						.feed("serving_default_omegaRatioBid", TFloat64.scalarOf(state.get("omegaRatioBid").getAsDouble()))
-						.feed("serving_default_omegaRatioAsk", TFloat64.scalarOf(state.get("omegaRatioAsk").getAsDouble()))
-						.feed("serving_default_side", TInt32.scalarOf(state.get("side").getAsInt()))
-						.feed("serving_default_bidSize", TInt32.scalarOf(state.get("bidSize").getAsInt()))
-						.feed("serving_default_askSize", TInt32.scalarOf(state.get("askSize").getAsInt()))
-						.feed("serving_default_spread", TInt32.scalarOf(state.get("spread").getAsInt()))
-						.feed("serving_default_marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
-						.feed("serving_default_contractHoldings", TFloat64.scalarOf(state.get("contractHoldings").getAsDouble()))
-						.feed("serving_default_numTransactions", TInt32.scalarOf(state.get("numTransactions").getAsInt()))
-						.feed("serving_default_timeTilEnd", TInt64.scalarOf(state.get("timeTilEnd").getAsInt()))
-						.feed("serving_default_latency", TInt64.scalarOf(state.get("latency").getAsInt()))
-						.feed("serving_default_bidVector", bidVector)
-						.feed("serving_default_askVector", askVector)
-						.feed("serving_default_transactionHistory", transactionHistory)
-						//order = (price, side, size)
-						.fetch("StatefulPartitionedCall",0)
-						.fetch("StatefulPartitionedCall",1)
-						.fetch("StatefulPartitionedCall",2)
-						.run();
-			}
-			catch(Exception e) {
-				order = (List<Tensor<?>>) session.runner()
-						.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
-						.feed("serving_default_privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
-						.feed("serving_default_privateAsk", TFloat64.scalarOf(state.get("privateAsk").getAsDouble()))
-						.feed("serving_default_omegaRatioBid", TFloat64.scalarOf(state.get("omegaRatioBid").getAsDouble()))
-						.feed("serving_default_omegaRatioAsk", TFloat64.scalarOf(state.get("omegaRatioAsk").getAsDouble()))
-						.feed("serving_default_side", TInt32.scalarOf(state.get("side").getAsInt()))
-						.feed("serving_default_bidSize", TInt32.scalarOf(state.get("bidSize").getAsInt()))
-						.feed("serving_default_askSize", TInt32.scalarOf(state.get("askSize").getAsInt()))
-						.feed("serving_default_spread", TInt32.scalarOf(state.get("spread").getAsInt()))
-						.feed("serving_default_marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
-						.feed("serving_default_contractHoldings", TFloat64.scalarOf(state.get("contractHoldings").getAsDouble()))
-						.feed("serving_default_numTransactions", TInt32.scalarOf(state.get("numTransactions").getAsInt()))
-						.feed("serving_default_timeTilEnd", TInt64.scalarOf(state.get("timeTilEnd").getAsInt()))
-						.feed("serving_default_latency", TInt64.scalarOf(state.get("latency").getAsInt()))
-						.feed("serving_default_bidVector", bidVector)
-						.feed("serving_default_askVector", askVector)
-						.feed("serving_default_transactionHistory", transactionHistory)
-						//order = (price, side, size)
-						.fetch("PartitionedCall",0)
-						.fetch("PartitionedCall",1)
-						.fetch("PartitionedCall",2)
-						.run();
-			}
+			order = (List<Tensor<?>>) session.runner()
+					.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
+					.feed("serving_default_privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
+					.feed("serving_default_privateAsk", TFloat64.scalarOf(state.get("privateAsk").getAsDouble()))
+					.feed("serving_default_omegaRatioBid", TFloat64.scalarOf(state.get("omegaRatioBid").getAsDouble()))
+					.feed("serving_default_omegaRatioAsk", TFloat64.scalarOf(state.get("omegaRatioAsk").getAsDouble()))
+					.feed("serving_default_side", TInt32.scalarOf(state.get("side").getAsInt()))
+					.feed("serving_default_bidSize", TInt32.scalarOf(state.get("bidSize").getAsInt()))
+					.feed("serving_default_askSize", TInt32.scalarOf(state.get("askSize").getAsInt()))
+					.feed("serving_default_spread", TInt32.scalarOf(state.get("spread").getAsInt()))
+					.feed("serving_default_marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
+					.feed("serving_default_contractHoldings", TFloat64.scalarOf(state.get("contractHoldings").getAsDouble()))
+					.feed("serving_default_numTransactions", TInt32.scalarOf(state.get("numTransactions").getAsInt()))
+					.feed("serving_default_timeTilEnd", TInt64.scalarOf(state.get("timeTilEnd").getAsInt()))
+					.feed("serving_default_latency", TInt64.scalarOf(state.get("latency").getAsInt()))
+					.feed("serving_default_bidVector", bidVector)
+					.feed("serving_default_askVector", askVector)
+					.feed("serving_default_transactionHistory", transactionHistory)
+					//order = (price, side, size)
+					.fetch(outputOpName,0)
+					.fetch(outputOpName,1)
+					.fetch(outputOpName,2)
+					.run();
 			
 			action.addProperty("price", order.get(0).rawData().asDoubles().getDouble(0));
 			action.addProperty("side", order.get(1).rawData().asInts().getInt(0));
