@@ -77,83 +77,6 @@ public class TensorFlowState implements State{
 		  }
 	
 	@Override
-	public JsonArray getState(double finalEstimate, int side, PrivateValue privateValue) {
-		JsonArray state = new JsonArray();
-	
-		state.add(finalEstimate);
-	    
-		state.add(side);
-		
-		state.add(this.latency);
-	    
-	    this.bid_vector = market.getBidVector();
-	    this.ask_vector = market.getAskVector();
-	    state.add(bid_vector.size());
-	    state.add(ask_vector.size());
-	    
-	    int num_transactions = market.getCurrentNumTransactions();
-	    state.add(num_transactions);
-	    
-	    this.getBidVector(market, finalEstimate);
-	    for(int i = this.bid_vector.size() - 1; i>=0; i--) {
-	    	state.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
-	    }
-	    
-	    this.getAskVector(market, finalEstimate);
-	    for(int i = 0; i< this.ask_vector.size(); i++) {
-	    	state.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
-	    }
-	    
-	    state.add(this.ask_vector.get(0).doubleValue() - this.bid_vector.get(0).doubleValue());
-	    
-	    this.getTransactionHistory(finalEstimate);
-	    for(int i = 0; i < transactions.size();i++) {
-	    	state.add(transactions.get(i).doubleValue() - finalEstimate);
-	    }
-	    
-	    int market_h = market.getHoldings();
-	    state.add(market_h);
-	    
-	    double contract_h = this.benchmarkDir * this.contractHoldings;
-    	state.add(contract_h);
-    	
-    	double privateBidBenefit;
-	    double privateAskBenefit;
-	    if (Math.abs(market_h + OrderType.BUY.sign()) <= this.maxPosition) {
-	        privateBidBenefit = OrderType.BUY.sign()
-	            * privateValue.valueForExchange(market_h + OrderType.BUY.sign(), OrderType.BUY);
-	    }
-	    else {
-	    	privateBidBenefit = 0; //Dummy variable
-	    }
-	    if (Math.abs(market_h + OrderType.SELL.sign()) <= this.maxPosition) {
-	        privateAskBenefit = OrderType.SELL.sign()
-	            * privateValue.valueForExchange(market_h + OrderType.SELL.sign(), OrderType.SELL);
-	    }
-	    else {
-	    	privateAskBenefit = 0; //Dummy variable
-	    }
-	    
-	    state.add(privateBidBenefit);
-	    
-	    state.add(privateAskBenefit);
-	    
-	    double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit);
-    	state.add(omega_bid);
-	    
-	    double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
-	    state.add(omega_ask);
-	    
-	    long timeTilEnd = this.timeHorizon - sim.getCurrentTime().get();
-    	state.add(timeTilEnd);
-	    
-	    this.stateSize = state.size();
-	    
-	    return state;
-	  }
-	
-	
-	@Override
 	public JsonObject getStateDict(double finalEstimate, int side, PrivateValue privateValue) {
 		JsonObject state = new JsonObject();
 	
@@ -230,13 +153,22 @@ public class TensorFlowState implements State{
 	    
 	    state.addProperty("privateAsk",privateAskBenefit);
 	    
-	    double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit);
+	    List<Entry<TimeStamp, Price>> allTransactions = market.getCurrentTransactions();
+    	allTransactions.size();
+	    
+	    double omega_bid = this.omegaRatio(finalEstimate + privateBidBenefit, allTransactions);
     	state.addProperty("omegaRatioBid",omega_bid);
 	    
-    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit);
+    	double omega_ask = this.omegaRatio(finalEstimate + privateAskBenefit, allTransactions);
 	    state.addProperty("omegaRatioAsk",omega_ask);
 	    
-	    long timeTilEnd = this.timeHorizon - sim.getCurrentTime().get();
+	    long currentTime = sim.getCurrentTime().get();
+	    
+	    Entry<TimeStamp, Price> lastTrade = allTransactions.get(allTransactions.size()-1);
+	    long timeSinceLastTrade = currentTime - lastTrade.getKey().get();
+	    state.addProperty("timeSinceLastTrade", timeSinceLastTrade);
+	    
+	    long timeTilEnd = this.timeHorizon - currentTime;
     	state.addProperty("timeTilEnd",timeTilEnd);
 	    
 	    this.stateSize = state.size();
@@ -302,9 +234,9 @@ public class TensorFlowState implements State{
 	    }
 	}
 	
-	protected double omegaRatio(final double cutoff) {
+	protected double omegaRatio(final double cutoff, List<Entry<TimeStamp, Price>> allTransactions) {
     	final int minLength = 2;
-    	List<Entry<TimeStamp, Price>> allTransactions = market.getCurrentTransactions();
+    	//List<Entry<TimeStamp, Price>> allTransactions = market.getCurrentTransactions();
     	if (allTransactions.size() <= minLength) {
     		// too little history to have a meaningful
     		// omega ratio. return default placeholder of 1.0.
@@ -334,6 +266,12 @@ public class TensorFlowState implements State{
 	@Override
 	public int getStateSize() {
 		return this.stateSize;
+	}
+
+	@Override
+	public JsonArray getState(double finalEstimate, int side, PrivateValue privateValue) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -11,10 +11,13 @@ import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.Keys.TensorFlowModelPath;
 import edu.umich.srg.marketsim.Keys.MaxVectorDepth;
+import edu.umich.srg.marketsim.Keys.AdditionalActions;
+import edu.umich.srg.marketsim.Keys.AddActionTypes;
 
 import org.tensorflow.Operation;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
+import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.tensorflow.types.TFloat64;
 import org.tensorflow.types.TInt32;
@@ -24,13 +27,16 @@ public class TensorFlowAction extends ContinuousAction {
 	
 	private final String tfModelPath;
 	private final int maxVectorDepth;
+	private final Iterable<String> addActions;
+	private final Iterable<String> actionTypes;
 
 	public TensorFlowAction(Sim sim, Spec spec, Random rand) {
 		super(spec, rand);
 		
 		this.tfModelPath = spec.get(TensorFlowModelPath.class);
-		
 		this.maxVectorDepth = spec.get(MaxVectorDepth.class);
+		this.addActions = spec.get(AdditionalActions.class);
+		this.actionTypes = spec.get(AddActionTypes.class);
 	}
 
 	public static TensorFlowAction create(Sim sim, Spec spec, Random rand) {
@@ -42,7 +48,6 @@ public class TensorFlowAction extends ContinuousAction {
 		JsonObject action = new JsonObject();
 		try(SavedModelBundle savedModelBundle = SavedModelBundle.load(this.tfModelPath, "serve")) {
 			Session session = savedModelBundle.session();
-			
 			
 			// Determine if the name of the output op of the graph is "StatefulPartitionedCall" or "PartitionedCall"
 			Iterator<Operation> ops = savedModelBundle.graph().operations();
@@ -58,10 +63,12 @@ public class TensorFlowAction extends ContinuousAction {
 			Tensor<TFloat64> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
 			Tensor<TFloat64> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
 			Tensor<TFloat64> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
+			
+			Iterator<String> itActions, itTypes;
 	
 			List<Tensor<?>> order;
 			
-			order = (List<Tensor<?>>) session.runner()
+			Runner tfGraph = session.runner()
 					.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
 					.feed("serving_default_privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
 					.feed("serving_default_privateAsk", TFloat64.scalarOf(state.get("privateAsk").getAsDouble()))
@@ -74,20 +81,62 @@ public class TensorFlowAction extends ContinuousAction {
 					.feed("serving_default_marketHoldings", TInt32.scalarOf(state.get("marketHoldings").getAsInt()))
 					.feed("serving_default_contractHoldings", TFloat64.scalarOf(state.get("contractHoldings").getAsDouble()))
 					.feed("serving_default_numTransactions", TInt32.scalarOf(state.get("numTransactions").getAsInt()))
+					.feed("serving_default_timeSinceLastTrade", TInt64.scalarOf(state.get("timeSinceLastTrade").getAsInt()))
 					.feed("serving_default_timeTilEnd", TInt64.scalarOf(state.get("timeTilEnd").getAsInt()))
 					.feed("serving_default_latency", TInt64.scalarOf(state.get("latency").getAsInt()))
 					.feed("serving_default_bidVector", bidVector)
 					.feed("serving_default_askVector", askVector)
-					.feed("serving_default_transactionHistory", transactionHistory)
-					//order = (price, side, size)
+					.feed("serving_default_transactionHistory", transactionHistory);
+			
+			tfGraph = tfGraph
 					.fetch(outputOpName,0)
 					.fetch(outputOpName,1)
-					.fetch(outputOpName,2)
-					.run();
+					.fetch(outputOpName,2);
+			
+			itActions = this.addActions.iterator();
+			//Start index at 3 because of price, side, and size
+			int i =3;
+			while (itActions.hasNext()) {
+				itActions.next();
+				tfGraph = tfGraph.fetch(outputOpName,i);
+				i++;
+			}
+			
+			order = (List<Tensor<?>>) tfGraph.run();
 			
 			action.addProperty("price", order.get(0).rawData().asDoubles().getDouble(0));
 			action.addProperty("side", order.get(1).rawData().asInts().getInt(0));
 			action.addProperty("size", order.get(2).rawData().asInts().getInt(0));
+			
+			itActions = this.addActions.iterator();
+			itTypes = this.actionTypes.iterator();
+			//Start index at 3 because of price, side, and size
+			i = 3;
+			String actionName, actionType;
+			while (itActions.hasNext()) {
+				actionName = itActions.next();
+				actionType = itTypes.next();
+				if(actionType.equalsIgnoreCase("int32")) {
+					action.addProperty(actionName, order.get(i).rawData().asInts().getInt(0));
+				}
+				else if (actionType.equalsIgnoreCase("int64")) {
+					action.addProperty(actionName, order.get(i).rawData().asLongs().getLong(0));
+				}
+				else if (actionType.equalsIgnoreCase("float32")) {
+					action.addProperty(actionName, order.get(i).rawData().asFloats().getFloat(0));
+				}
+				else if (actionType.equalsIgnoreCase("float64")) {
+					action.addProperty(actionName, order.get(i).rawData().asDoubles().getDouble(0));
+				}
+				else if (actionType.equalsIgnoreCase("boolean")) {
+					action.addProperty(actionName, order.get(i).rawData().asBooleans().getBoolean(0));
+				}
+				else {
+					//Will exit if type provided is not an int, long, float, double, or boolean
+					System.exit(0);
+				}
+				i++;
+			}
 
 			return action;
 

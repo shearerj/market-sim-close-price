@@ -28,6 +28,8 @@
         "hiddenLayer1": 1,
         "hiddenLayer2":1,
         "TensorFlowModelPath": "test6/",
-        "communicationLatency":0
+        "communicationLatency":0,
+        "additionalActions": "price/side/size",
+        "addActionTypes": "float64/int32/int32"
     }
 }

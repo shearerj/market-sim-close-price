@@ -89,7 +89,6 @@ public class TensorFlowRLAgent implements Agent {
   
   private final JsonArray rl_observations;
   private JsonObject prev_obs;
-  private JsonArray action;
   private JsonObject actionDict;
   
   private final long latency;
@@ -150,7 +149,6 @@ public class TensorFlowRLAgent implements Agent {
     
     this.runningPayoff = 0;
     
-    this.action = new JsonArray();
     this.actionDict = new JsonObject();
   
     double priceVarEst = spec.get(PriceVarEst.class);
@@ -177,18 +175,14 @@ public class TensorFlowRLAgent implements Agent {
     double finalEstimate = getFinalFundamentalEstiamte();
     fundamentalError.accept(Math.pow(finalEstimate - finalFundamental, 2));
     
-    JsonArray state = new JsonArray();
     JsonObject stateDict = new JsonObject();
     double currProfit = this.calculateReward(finalEstimate);
     
     for (OrderType type : sides) {
-      state = this.getNormState(finalEstimate,type.sign());
       stateDict = this.getStateDict(finalEstimate, type.sign());
 	  for (int num = 0; num < ordersPerSide; num++) {
 	    if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
  
-	      JsonObject curr_state = new JsonObject();
-	      curr_state.add("state0", state);
 	      double toSubmit = this.getAction(finalEstimate, stateDict);
 	      if (toSubmit < 0) { // Hacky patch to stop submiting
 	        continue;
@@ -203,11 +197,9 @@ public class TensorFlowRLAgent implements Agent {
   	  }
     }
     
-    curr_obs.add("state0", state);
     curr_obs.add("state0Dict", stateDict);
     //curr_obs.add("action", this.action);
     curr_obs.add("action", this.actionDict);
-    prev_obs.add("state1", state);
     prev_obs.add("state1Dict", stateDict);
     prev_obs.addProperty("terminal", 0);
     
@@ -238,17 +230,9 @@ public class TensorFlowRLAgent implements Agent {
     scheduleNextArrival();
   }
 
-  protected JsonArray getState(double finalEstimate, int side) {
-	  return this.stateSpace.getState(finalEstimate, side, privateValue);
-  }
   
   protected JsonObject getStateDict(double finalEstimate, int side) {
 	  return this.stateSpace.getStateDict(finalEstimate, side, privateValue);
-  }
-  
-  protected JsonArray getNormState(double finalEstimate, int side) {
-	  JsonArray fullState = this.stateSpace.getState(finalEstimate, side, privateValue);
-	  return this.stateSpace.getNormState(fullState);
   }
  
   protected double getAction(double finalEstimate, JsonObject curr_state) {
@@ -318,9 +302,7 @@ public class TensorFlowRLAgent implements Agent {
 
     this.runningPayoff += reward;
    
-    JsonArray state = this.getNormState(this.finalFundamental,0);
     JsonObject stateDict = this.getStateDict(this.finalFundamental,0);
-    this.prev_obs.add("state1", state);
     this.prev_obs.add("state1Dict", stateDict);
     this.prev_obs.addProperty("terminal", 1);
     this.prev_obs.addProperty("reward", reward);

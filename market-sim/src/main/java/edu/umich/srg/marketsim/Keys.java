@@ -258,6 +258,14 @@ public interface Keys {
   @ValueHelp("Latency, or time delay, in time steps for an RL agent. If latency is 5, then the market waits 5 time steps to process request or notify of transaction.")
   class CommunicationLatency extends LongValue {
   }
+  
+  @ValueHelp("Actions to include in the Tensorflow graph output that are not price, side, and size. Should be a string with each additional action seperated by \'/\', e.g. \"rmin/rmax/thresh\" ")
+  class AdditionalActions extends StringsValue {
+  }
+  
+  @ValueHelp("Tensorflow types of actions listed in AdditionalActions. Can use strings: int32, int64, float32, float64, or boolean. Should be a string seperated by \'/\', e.g. \"int32/int32/float64\" ")
+  class AddActionTypes extends StringsValue {
+  }
 
   // ------------
   // Market Maker
