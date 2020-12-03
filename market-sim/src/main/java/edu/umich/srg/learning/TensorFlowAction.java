@@ -12,7 +12,6 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.Keys.TensorFlowModelPath;
 import edu.umich.srg.marketsim.Keys.MaxVectorDepth;
 import edu.umich.srg.marketsim.Keys.AdditionalActions;
-import edu.umich.srg.marketsim.Keys.AddActionTypes;
 
 import org.tensorflow.Operation;
 import org.tensorflow.SavedModelBundle;
@@ -28,7 +27,6 @@ public class TensorFlowAction extends ContinuousAction {
 	private final String tfModelPath;
 	private final int maxVectorDepth;
 	private final Iterable<String> addActions;
-	private final Iterable<String> actionTypes;
 
 	public TensorFlowAction(Sim sim, Spec spec, Random rand) {
 		super(spec, rand);
@@ -36,7 +34,6 @@ public class TensorFlowAction extends ContinuousAction {
 		this.tfModelPath = spec.get(TensorFlowModelPath.class);
 		this.maxVectorDepth = spec.get(MaxVectorDepth.class);
 		this.addActions = spec.get(AdditionalActions.class);
-		this.actionTypes = spec.get(AddActionTypes.class);
 	}
 
 	public static TensorFlowAction create(Sim sim, Spec spec, Random rand) {
@@ -55,7 +52,7 @@ public class TensorFlowAction extends ContinuousAction {
 			String outputOpName = null;
 			while(ops.hasNext()) {
 				op = ops.next();
-				if (op.numOutputs() == 3 && op.name().endsWith("PartitionedCall")) {
+				if (op.numOutputs() >=3 && op.name().endsWith("PartitionedCall")) {
 					outputOpName = op.name();
 				}
 			}
@@ -64,10 +61,9 @@ public class TensorFlowAction extends ContinuousAction {
 			Tensor<TFloat64> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
 			Tensor<TFloat64> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
 			
-			Iterator<String> itActions, itTypes;
+			Iterator<String> itActions;
 	
 			List<Tensor<?>> order;
-			
 			Runner tfGraph = session.runner()
 					.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
 					.feed("serving_default_privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
@@ -109,32 +105,10 @@ public class TensorFlowAction extends ContinuousAction {
 			action.addProperty("size", order.get(2).rawData().asInts().getInt(0));
 			
 			itActions = this.addActions.iterator();
-			itTypes = this.actionTypes.iterator();
 			//Start index at 3 because of price, side, and size
 			i = 3;
-			String actionName, actionType;
 			while (itActions.hasNext()) {
-				actionName = itActions.next();
-				actionType = itTypes.next();
-				if(actionType.equalsIgnoreCase("int32")) {
-					action.addProperty(actionName, order.get(i).rawData().asInts().getInt(0));
-				}
-				else if (actionType.equalsIgnoreCase("int64")) {
-					action.addProperty(actionName, order.get(i).rawData().asLongs().getLong(0));
-				}
-				else if (actionType.equalsIgnoreCase("float32")) {
-					action.addProperty(actionName, order.get(i).rawData().asFloats().getFloat(0));
-				}
-				else if (actionType.equalsIgnoreCase("float64")) {
-					action.addProperty(actionName, order.get(i).rawData().asDoubles().getDouble(0));
-				}
-				else if (actionType.equalsIgnoreCase("boolean")) {
-					action.addProperty(actionName, order.get(i).rawData().asBooleans().getBoolean(0));
-				}
-				else {
-					//Will exit if type provided is not an int, long, float, double, or boolean
-					System.exit(0);
-				}
+				action.addProperty(itActions.next(), order.get(i).rawData().asFloats().getFloat(0));
 				i++;
 			}
 
