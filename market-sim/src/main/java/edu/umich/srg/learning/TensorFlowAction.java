@@ -57,13 +57,13 @@ public class TensorFlowAction extends ContinuousAction {
 				}
 			}
 			
-			Tensor<TFloat64> bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
-			Tensor<TFloat64> askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
-			Tensor<TFloat64> transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
+			Tensor bidVector = this.jsonToTensor(state.get("bidVector").getAsJsonArray());
+			Tensor askVector = this.jsonToTensor(state.get("askVector").getAsJsonArray());
+			Tensor transactionHistory = this.jsonToTensor(state.get("transactionHistory").getAsJsonArray());
 			
 			Iterator<String> itActions;
 	
-			List<Tensor<?>> order;
+			//List<Tensor> order;
 			Runner tfGraph = session.runner()
 					.feed("serving_default_finalFundamentalEstimate", TFloat64.scalarOf(state.get("finalFundamentalEstimate").getAsDouble()))
 					.feed("serving_default_privateBid", TFloat64.scalarOf(state.get("privateBid").getAsDouble()))
@@ -98,17 +98,17 @@ public class TensorFlowAction extends ContinuousAction {
 				i++;
 			}
 			
-			order = (List<Tensor<?>>) tfGraph.run();
+			List<Tensor> order = tfGraph.run();
 			
-			action.addProperty("price", order.get(0).rawData().asDoubles().getDouble(0));
-			action.addProperty("side", order.get(1).rawData().asInts().getInt(0));
-			action.addProperty("size", order.get(2).rawData().asInts().getInt(0));
+			action.addProperty("price", order.get(0).asRawTensor().data().asDoubles().getDouble(0));
+			action.addProperty("side", order.get(1).asRawTensor().data().asInts().getInt(0));
+			action.addProperty("size", order.get(2).asRawTensor().data().asInts().getInt(0));
 			
 			itActions = this.addActions.iterator();
 			//Start index at 3 because of price, side, and size
 			i = 3;
 			while (itActions.hasNext()) {
-				action.addProperty(itActions.next(), order.get(i).rawData().asFloats().getFloat(0));
+				action.addProperty(itActions.next(), order.get(i).asRawTensor().data().asFloats().getFloat(0));
 				i++;
 			}
 
@@ -118,7 +118,7 @@ public class TensorFlowAction extends ContinuousAction {
 	}
 	
 	//Fix this so the length of the array is verified to be < maxLength
-	private Tensor<TFloat64> jsonToTensor(JsonArray jArray) {
+	private Tensor jsonToTensor(JsonArray jArray) {
 		double[] listdata = new double[this.maxVectorDepth]; 
 		if (jArray != null) { 
 		   for (int i=0;i<jArray.size();i++){ 
