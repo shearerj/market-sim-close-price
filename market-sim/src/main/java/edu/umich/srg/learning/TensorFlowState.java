@@ -164,8 +164,12 @@ public class TensorFlowState implements State{
 	    
 	    long currentTime = sim.getCurrentTime().get();
 	    
-	    Entry<TimeStamp, Price> lastTrade = allTransactions.get(allTransactions.size()-1);
-	    long timeSinceLastTrade = currentTime - lastTrade.getKey().get();
+	    long timeOfLastTrade = 0;
+	    if (allTransactions.size() > 0) {
+	    	Entry<TimeStamp, Price> lastTrade = allTransactions.get(allTransactions.size()-1);
+	    	timeOfLastTrade = lastTrade.getKey().get();
+	    }
+	    long timeSinceLastTrade = currentTime - timeOfLastTrade;
 	    state.addProperty("timeSinceLastTrade", timeSinceLastTrade);
 	    
 	    long timeTilEnd = this.timeHorizon - currentTime;
