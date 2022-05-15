@@ -18,7 +18,7 @@ import edu.umich.srg.marketsim.Keys.ShareEstimates;
 import edu.umich.srg.marketsim.Keys.Sides;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.SubmitDepth;
-import edu.umich.srg.marketsim.Keys.PolicyAction;
+//import edu.umich.srg.marketsim.Keys.PolicyAction;
 import edu.umich.srg.marketsim.Keys.CommunicationLatency;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
@@ -34,7 +34,7 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SharedGaussianView;
 import edu.umich.srg.util.SummStats;
 import edu.umich.srg.learning.TensorFlowState;
-import edu.umich.srg.learning.ContinuousAction;
+//import edu.umich.srg.learning.ContinuousAction;
 import edu.umich.srg.learning.TensorFlowAction;
 
 import static edu.umich.srg.fourheap.OrderType.BUY;
@@ -79,10 +79,10 @@ public class TensorFlowRLAgent implements Agent {
   private final GaussianFundamentalView fundamental;
   
   private double prevProfit;
-  private final boolean policyAction;
+  //private final boolean policyAction;
   
   private final TensorFlowState stateSpace;
-  private final ContinuousAction randomActionSpace;
+  //private final ContinuousAction randomActionSpace;
   private final TensorFlowAction policyActionSpace;
   
   private Boolean firstArrival;
@@ -90,6 +90,12 @@ public class TensorFlowRLAgent implements Agent {
   private final JsonArray rl_observations;
   private JsonObject prev_obs;
   private JsonObject actionDict;
+  
+  private int market_h;
+  private double cash;
+  private double fund_val;
+  private double fund_h;
+  private double fund_cash;
   
   private final long latency;
   
@@ -133,10 +139,10 @@ public class TensorFlowRLAgent implements Agent {
     Gaussian distInitial = Gaussian.withMeanVariance(0, spec.get(FundamentalObservationVariance.class));
 	this.initialFundamentalEst = this.getFinalFundamentalEstiamte() + distInitial.sample(rand);
       
-    this.policyAction = spec.get(PolicyAction.class);
+    //this.policyAction = spec.get(PolicyAction.class);
     
     this.stateSpace = TensorFlowState.create(this.sim,this.market,spec);
-    this.randomActionSpace = ContinuousAction.create(spec,rand);
+    //this.randomActionSpace = ContinuousAction.create(spec,rand);
     this.policyActionSpace = TensorFlowAction.create(this.sim,spec,rand);
   
     this.maxPosition = spec.get(MaxPosition.class);
@@ -150,6 +156,11 @@ public class TensorFlowRLAgent implements Agent {
     this.runningPayoff = 0;
     
     this.actionDict = new JsonObject();
+    this.cash = 0.0;
+    this.market_h = 0;
+    this.fund_val = 0.0;
+    this.fund_h = 0.0;
+    this.fund_cash = 0.0;
   
     double priceVarEst = spec.get(PriceVarEst.class);
     if (Double.isFinite(priceVarEst)) {
@@ -198,15 +209,21 @@ public class TensorFlowRLAgent implements Agent {
     }
     
     curr_obs.add("state0Dict", stateDict);
-    //curr_obs.add("action", this.action);
     curr_obs.add("action", this.actionDict);
     prev_obs.add("state1Dict", stateDict);
     prev_obs.addProperty("terminal", 0);
     
     if (!firstArrival) {
         double reward = currProfit - this.prevProfit;
+        /*
         this.prev_obs.addProperty("current Profit", currProfit);
         this.prev_obs.addProperty("previous Profit", this.prevProfit);
+        this.prev_obs.addProperty("cash", this.cash);
+        this.prev_obs.addProperty("market holdings", this.market_h);
+        this.prev_obs.addProperty("fundamental estimate", this.fund_val);
+        this.prev_obs.addProperty("market holdings times fund", this.fund_h);
+        this.prev_obs.addProperty("cash plus fund_h", this.fund_cash);
+        */
         
         if(Math.abs(reward) == getInitialReward() && currProfit == 0) {
         	reward = 0;
@@ -215,6 +232,7 @@ public class TensorFlowRLAgent implements Agent {
         	this.prevProfit = currProfit;
         }
         
+        //reward = reward > 0 ? reward : 0.0;
         this.runningPayoff += reward;
         this.prev_obs.addProperty("reward", reward);
         this.rl_observations.add(prev_obs);
@@ -238,6 +256,9 @@ public class TensorFlowRLAgent implements Agent {
   protected double getAction(double finalEstimate, JsonObject curr_state) {
       double toSubmit = 0;
       
+      this.actionDict = this.policyActionSpace.getActionDict(curr_state,finalEstimate);
+	  toSubmit = this.actionDict.get("price").getAsDouble();
+      /*
       if(this.policyAction) {
     	  //this.action = this.policyActionSpace.getAction(curr_state);
     	  //toSubmit = this.policyActionSpace.actionToPrice(finalEstimate);
@@ -251,14 +272,21 @@ public class TensorFlowRLAgent implements Agent {
     	  this.actionDict = this.randomActionSpace.getActionDict(finalEstimate);
     	  toSubmit = this.actionDict.get("price").getAsDouble();
 	  }
+	  */
 	  return toSubmit;
   }
   
   protected double calculateReward(double finalEstimate) {
 	  double estProfit = market.getProfit();
 	  int market_h = market.getHoldings();
+	  this.cash = estProfit;
+	  this.market_h = market_h;
 	  
 	  estProfit += market_h * finalEstimate;
+	  
+	  this.fund_val = finalEstimate;
+	  this.fund_h = market_h * finalEstimate;
+	  this.fund_cash = estProfit;
 	  
 	  OrderType direction = market_h > 0 ? BUY : SELL;
 	  for (int pos = 0; pos != market_h; pos += direction.sign()) {
@@ -305,6 +333,15 @@ public class TensorFlowRLAgent implements Agent {
     JsonObject stateDict = this.getStateDict(this.finalFundamental,0);
     this.prev_obs.add("state1Dict", stateDict);
     this.prev_obs.addProperty("terminal", 1);
+    /*
+    this.prev_obs.addProperty("current Profit", currProfit);
+    this.prev_obs.addProperty("previous Profit", this.prevProfit);
+    this.prev_obs.addProperty("cash", this.cash);
+    this.prev_obs.addProperty("market holdings", this.market_h);
+    this.prev_obs.addProperty("fundamental estimate", this.fund_val);
+    this.prev_obs.addProperty("market holdings times fund", this.fund_h);
+    this.prev_obs.addProperty("cash plus fund_h", this.fund_cash);
+     */
     this.prev_obs.addProperty("reward", reward);
     this.rl_observations.add(prev_obs);
   }

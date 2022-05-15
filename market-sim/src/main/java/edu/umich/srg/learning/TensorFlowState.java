@@ -25,11 +25,14 @@ import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.BenchmarkDir;
 import edu.umich.srg.marketsim.Keys.CommunicationLatency;
 import edu.umich.srg.marketsim.Keys.ContractHoldings;
+import edu.umich.srg.marketsim.Keys.IsTraining;
 
 public class TensorFlowState implements State{
 	
 	protected final Sim sim;
     protected final MarketView market;
+    
+    private final boolean isTraining;
     
     private final int omegaDepth;
 	private final int maxVectorDepth;
@@ -52,6 +55,8 @@ public class TensorFlowState implements State{
 		
 		this.sim = sim;
 	    this.market = market;
+	    
+	    this.isTraining = spec.get(IsTraining.class);
 		
 	    this.omegaDepth = spec.get(OmegaDepth.class);
 	    this.maxVectorDepth = spec.get(MaxVectorDepth.class);
@@ -79,6 +84,8 @@ public class TensorFlowState implements State{
 	@Override
 	public JsonObject getStateDict(double finalEstimate, int side, PrivateValue privateValue) {
 		JsonObject state = new JsonObject();
+		
+		state.addProperty("isTraining", this.isTraining);
 	
 		state.addProperty("finalFundamentalEstimate", finalEstimate);
 	    
@@ -94,12 +101,37 @@ public class TensorFlowState implements State{
 	    int num_transactions = market.getCurrentNumTransactions();
 	    state.addProperty("numTransactions",num_transactions);
 	    
+	    int market_h = market.getHoldings();
+	    state.addProperty("marketHoldings",market_h);
+	    
+	    double contract_h = this.benchmarkDir * this.contractHoldings;
+    	state.addProperty("contractHoldings",contract_h);
+	    
+	    double privateBidBenefit;
+	    double privateAskBenefit;
+	    if (Math.abs(market_h + OrderType.BUY.sign()) <= this.maxPosition) {
+	        privateBidBenefit = OrderType.BUY.sign() * privateValue.valueForExchange(market_h, OrderType.BUY);
+	    }
+	    else {
+	    	privateBidBenefit = 0; //Dummy variable
+	    }
+	    if (Math.abs(market_h + OrderType.SELL.sign()) <= this.maxPosition) {
+	        privateAskBenefit = OrderType.SELL.sign() * privateValue.valueForExchange(market_h, OrderType.SELL);
+	    }
+	    else {
+	    	privateAskBenefit = 0; //Dummy variable
+	    }
+	    
+	    state.addProperty("privateBid",privateBidBenefit);
+	    
+	    state.addProperty("privateAsk",privateAskBenefit);
+	    
 	    this.getBidVector(market, finalEstimate);
     	ArrayList<Double> bid_vec_double = new ArrayList<Double>();
     	JsonArray bid_vec = new JsonArray();
     	for(int i = this.bid_vector.size() - 1; i>=0; i--) {
-    		bid_vec_double.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
-    		bid_vec.add(this.bid_vector.get(i).doubleValue() - finalEstimate);
+    		bid_vec_double.add(this.bid_vector.get(i).doubleValue() - (finalEstimate + privateAskBenefit));
+    		bid_vec.add(this.bid_vector.get(i).doubleValue() - (finalEstimate + privateAskBenefit));
 	    }	
     	//state.addProperty("bidVector", bid_vec_double.toString());
     	state.add("bidVector", bid_vec);
@@ -108,8 +140,8 @@ public class TensorFlowState implements State{
     	ArrayList<Double> ask_vec_double = new ArrayList<Double>();
     	JsonArray ask_vec = new JsonArray();
     	for(int i = 0; i< this.ask_vector.size(); i++) {
-    		ask_vec_double.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
-    		ask_vec.add(this.ask_vector.get(i).doubleValue() - finalEstimate);
+    		ask_vec_double.add((finalEstimate + privateBidBenefit) - this.ask_vector.get(i).doubleValue());
+    		ask_vec.add((finalEstimate + privateBidBenefit) - this.ask_vector.get(i).doubleValue());
 	    }
     	//state.addProperty("askVector", ask_vec_double.toString());
     	state.add("askVector", ask_vec);
@@ -120,38 +152,17 @@ public class TensorFlowState implements State{
     	ArrayList<Double> trans_double = new ArrayList<Double>();
     	JsonArray trans_json = new JsonArray();
     	for(int i = 0; i < transactions.size();i++) {
-	    	trans_double.add(transactions.get(i).doubleValue() - finalEstimate);
-	    	trans_json.add(transactions.get(i).doubleValue() - finalEstimate);
+    		if (side == 1) {
+    			trans_double.add((finalEstimate + privateBidBenefit) - transactions.get(i).doubleValue());
+    	    	trans_json.add((finalEstimate + privateBidBenefit) - transactions.get(i).doubleValue());
+    		}
+    		else {
+    			trans_double.add(transactions.get(i).doubleValue() - (finalEstimate + privateAskBenefit));
+    	    	trans_json.add(transactions.get(i).doubleValue() - (finalEstimate + privateAskBenefit));
+    		}
 	    }
     	//state.addProperty("transactionHistory", trans_double.toString());
     	state.add("transactionHistory", trans_json);
-    	
-    	int market_h = market.getHoldings();
-	    state.addProperty("marketHoldings",market_h);
-	    
-	    double contract_h = this.benchmarkDir * this.contractHoldings;
-    	state.addProperty("contractHoldings",contract_h);
-    	
-    	double privateBidBenefit;
-	    double privateAskBenefit;
-	    if (Math.abs(market_h + OrderType.BUY.sign()) <= this.maxPosition) {
-	        privateBidBenefit = OrderType.BUY.sign()
-	            * privateValue.valueForExchange(market_h + OrderType.BUY.sign(), OrderType.BUY);
-	    }
-	    else {
-	    	privateBidBenefit = 0; //Dummy variable
-	    }
-	    if (Math.abs(market_h + OrderType.SELL.sign()) <= this.maxPosition) {
-	        privateAskBenefit = OrderType.SELL.sign()
-	            * privateValue.valueForExchange(market_h + OrderType.SELL.sign(), OrderType.SELL);
-	    }
-	    else {
-	    	privateAskBenefit = 0; //Dummy variable
-	    }
-	    
-	    state.addProperty("privateBid",privateBidBenefit);
-	    
-	    state.addProperty("privateAsk",privateAskBenefit);
 	    
 	    List<Entry<TimeStamp, Price>> allTransactions = market.getCurrentTransactions();
     	allTransactions.size();
