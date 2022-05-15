@@ -1,0 +1,97 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @DDPGAgent()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @SimpleExperienceParser()
+__main__.train_policy.zi_payoff_parser = @ParseAveragePayoff()
+
+training_protocol.debug_mode = True
+training_protocol.agent_name = "rl_agent"
+training_protocol.agent_type = "DDPG"
+training_protocol.agent_additional_actions = "policyAct"
+training_protocol.agent_reward_clip_cutoff = 0.75
+training_protocol.reward_shape = False
+
+training_protocol.load_model = False
+training_protocol.load_model_path = '../testdata/'
+training_protocol.exploitation = False
+training_protocol.exploitation_steps = 1
+
+
+training_protocol.validation_timesteps = 2
+training_protocol.validation_loop_steps = 2
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+training_protocol.result_dir = "results/"
+
+training_protocol.agent_max_vector_depth = 20
+training_protocol.agent_bid_len = 5
+training_protocol.agent_ask_len = 5
+training_protocol.agent_trade_len = 5
+
+DummyMarketSimulator.dummy_result_path = "../testdata/market_sim_output.json"
+
+MarketSimulator.market_sim_dir = "/Users/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"
+MarketSimulator.agent_strategy_name = "tfrl"
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.agent_arrival_rate = 0.012
+MarketSimulator.background_name = "background"
+MarketSimulator.background_strategy_name = ["markov:Rmin_380_Rmax_420_Thresh_0.5_arrivalRate_0.012"]
+MarketSimulator.background_probability = [1.0]
+MarketSimulator.background_number = 15
+MarketSimulator.market_maker_exists = True
+MarketSimulator.market_maker_name = "market_maker"
+MarketSimulator.market_maker_strategy_name = "fmm:NumRungs_100_RungSep_100_RungThickness_1_Spread_512_arrivalRate_0.05"
+MarketSimulator.market_config = {
+    "simLength": 2000,
+    "fundamentalMean": 100000.0,
+    "maxPosition": 10,
+    "privateValueVar": 20000000.0,
+    "fundamentalShockVar": 20000.0,
+    "PriceVarEst": "Infinity",
+    "fundamentalMeanReversion": 0.01,
+    "markets": "cda",
+    "fundamentalObservationVariance": 0.0,
+    "communicationLatency":0,
+    "benchmarkType": "VWAP"
+}
+
+DDPGAgent.clip_reward = 3000
+DDPGAgent.critic_network = @Critic()
+DDPGAgent.actor_network = @Actor()
+DDPGAgent.critic_optimizer = @snt.optimizers.Adam()
+DDPGAgent.actor_optimizer = @snt.optimizers.Adam()
+DDPGAgent.batch_size = 32
+DDPGAgent.replay_capacity = 10000
+DDPGAgent.min_replay_size = 128
+DDPGAgent.num_grad_steps_per_update = 2
+DDPGAgent.target_update_period = 30
+DDPGAgent.gamma = 0.99
+DDPGAgent.tau = 0.005
+DDPGAgent.action_coefficient = 1050
+DDPGAgent.num_actions = 1
+DDPGAgent.ou_sigma = 0.3
+DDPGAgent.ou_theta = 0.15
+DDPGAgent.ou_dt = 1e-2
+DDPGAgent.exploration_noise = 0.1
+DDPGAgent.noise_scaling = 1.0
+DDPGAgent.clipped = 1.0
+DDPGAgent.exploration_schedule = @ConstantSchedule()
+DDPGAgent.pop_stats_path = "MW_stats.json"
+
+num_nodes = 256
+Critic.num_nodes = %num_nodes
+Actor.num_nodes = %num_nodes
+Actor.num_actions = 1
+
+ConstantSchedule.x = 0.05
+
+snt.optimizers.Adam.learning_rate = 0.0003

@@ -1,0 +1,34 @@
+# python hparam_search_main.py --config_file=../market_manipulation/configs/ddpg_hparam_search.gin > ddpg_jobs.txt
+
+submit_jobs.submit_template = "../market_manipulation/scripts/gl_batch.sh"
+submit_jobs.experiment_template = "python train_main.py \
+  --result_dir=/scratch/wellman_root/wellman1/shearerj/results/simple_ddpg/ \
+  --config_dir=/home/shearerj/market_manipulation/market_manipulation/configs/ \
+  --config_files=bmm_ddpg_train_main_MW"
+submit_jobs.name = "simple_bmm_hparam_search"
+submit_jobs.num_jobs = 5
+submit_jobs.num_parallel = 5
+submit_jobs.options = {
+    "MarketSimulator.market_sim_dir": ["/home/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"],
+    "training_protocol.agent_reward_clip_cutoff": [1.0],
+    "training_protocol.validation_timesteps": [100],
+    "training_protocol.validation_loop_steps": [100],
+    "training_protocol.num_updates": [12, 16],
+    "training_protocol.num_episodes": [70000],
+    "MarketSimulator.agent_omega_depth": [5],
+    "training_protocol.agent_bid_len": [5],
+    "training_protocol.agent_ask_len": [5],
+    "training_protocol.agent_trade_len": [5],
+    "BenchAgent.clip_reward": [40000],
+    "BenchAgent.batch_size": [128, 256],
+    "BenchAgent.replay_capacity": [20000],
+    "BenchAgent.min_replay_size": [2500],
+    "BenchAgent.exploration_noise": [0.1, 0.3],
+    "BenchAgent.gamma": [0.99],
+    "BenchAgent.tau": [0.005],
+    "BenchAgent.action_coefficient": [1050],
+    "BenchAgent.benchmark_offset": [2000],
+    "BenchAgent.clipped": [1.0],
+    "num_nodes": [128, 256],
+    "snt.optimizers.Adam.learning_rate": [3e-4],
+}

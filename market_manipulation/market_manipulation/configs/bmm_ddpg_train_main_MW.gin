@@ -1,0 +1,92 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @BenchAgent()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @BenchmarkExperienceParser()
+__main__.train_policy.zi_payoff_parser = @ParseAveragePayoff()
+
+training_protocol.agent_name = "rl_agent"
+training_protocol.agent_additional_actions = "policyAct"
+training_protocol.agent_reward_clip_cutoff = 0.75
+
+
+training_protocol.validation_timesteps = 3
+training_protocol.validation_loop_steps = 3
+training_protocol.num_updates = 1
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+training_protocol.result_dir = "results/"
+
+DummyMarketSimulator.dummy_result_path = "../testdata/market_sim_output.json"
+
+MarketSimulator.market_sim_dir = "/Users/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"
+MarketSimulator.agent_strategy_name = "btfrl"
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.agent_arrival_rate = 0.012
+MarketSimulator.background_name = "background"
+MarketSimulator.background_strategy_name = ["markov:Rmin_380_Rmax_420_Thresh_0.5_arrivalRate_0.012"]
+MarketSimulator.background_probability = [1.0]
+MarketSimulator.background_number = 15
+MarketSimulator.market_maker_exists = True
+MarketSimulator.market_maker_name = "market_maker"
+MarketSimulator.market_maker_strategy_name = "fmm:NumRungs_100_RungSep_100_RungThickness_1_Spread_512_arrivalRate_0.05"
+MarketSimulator.market_config = {
+    "simLength": 2000,
+    "fundamentalMean": 100000.0,
+    "maxPosition": 10,
+    "privateValueVar": 20000000.0,
+    "fundamentalShockVar": 20000.0,
+    "PriceVarEst": "Infinity",
+    "fundamentalMeanReversion": 0.01,
+    "markets": "cda",
+    "fundamentalObservationVariance": 0.0,
+    "communicationLatency":0,
+    "benchmarkType": "VWAP",
+    "contractHoldings": 40,
+    "benchmarkDir": 1
+}
+
+training_protocol.agent_max_vector_depth = 20
+training_protocol.agent_bid_len = 5
+training_protocol.agent_ask_len = 5
+training_protocol.agent_trade_len = 5
+
+BenchAgent.clip_reward = 3000
+BenchAgent.critic_network = @Critic()
+BenchAgent.actor_network = @ActorBench()
+BenchAgent.critic_optimizer = @snt.optimizers.Adam()
+BenchAgent.actor_optimizer = @snt.optimizers.Adam()
+BenchAgent.batch_size = 32
+BenchAgent.replay_capacity = 10000
+BenchAgent.min_replay_size = 128
+BenchAgent.target_update_period = 1
+BenchAgent.gamma = 0.99
+BenchAgent.tau = 0.005
+BenchAgent.action_coefficient = 1050
+BenchAgent.benchmark_offset = 2000
+BenchAgent.num_actions = 1
+BenchAgent.ou_sigma = 0.3
+BenchAgent.ou_theta = 0.15
+BenchAgent.ou_dt = 1e-2
+BenchAgent.exploration_noise = 0.1
+BenchAgent.noise_scaling = 1.0
+BenchAgent.clipped = 1.0
+BenchAgent.exploration_schedule = @ConstantSchedule()
+BenchAgent.pop_stats_path = "MW_stats.json"
+
+num_nodes = 256
+Critic.num_nodes = %num_nodes
+ActorBench.num_nodes = %num_nodes
+ActorBench.num_actions = 1
+
+ConstantSchedule.x = 0.05
+
+snt.optimizers.Adam.learning_rate = 0.0003

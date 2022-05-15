@@ -1,0 +1,26 @@
+2022-03-10 18:04:24.305027: I external/org_tensorflow/tensorflow/cc/saved_model/reader.cc:31] Reading SavedModel from: /var/folders/f6/g6sqy7r128n4jjg5w3vbnzv00000gp/T/tmpq0egykv9/saved_agent.pb
+2022-03-10 18:04:24.305948: I external/org_tensorflow/tensorflow/cc/saved_model/reader.cc:54] Reading meta graph with tags { serve }
+2022-03-10 18:04:24.305966: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:250] Reading SavedModel debug info (if present) from: /var/folders/f6/g6sqy7r128n4jjg5w3vbnzv00000gp/T/tmpq0egykv9/saved_agent.pb
+2022-03-10 18:04:24.306708: I external/org_tensorflow/tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-03-10 18:04:24.319811: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:215] Restoring SavedModel bundle.
+2022-03-10 18:04:24.346410: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:199] Running initialization op on SavedModel bundle at path: /var/folders/f6/g6sqy7r128n4jjg5w3vbnzv00000gp/T/tmpq0egykv9/saved_agent.pb
+2022-03-10 18:04:24.349823: I external/org_tensorflow/tensorflow/cc/saved_model/loader.cc:319] SavedModel load for tags { serve }; Status: success: OK. Took 45187 microseconds.
+org.tensorflow.exceptions.TFOutOfRangeException: Node 'StatefulPartitionedCall' (type: 'IdentityN', num of outputs: 4) does not have output 4
+	at org.tensorflow.internal.c_api.AbstractTF_Status.throwExceptionIfNotOK(AbstractTF_Status.java:97)
+	at org.tensorflow.Session.run(Session.java:666)
+	at org.tensorflow.Session.access$100(Session.java:72)
+	at org.tensorflow.Session$Runner.runHelper(Session.java:381)
+	at org.tensorflow.Session$Runner.run(Session.java:329)
+	at edu.umich.srg.learning.TensorFlowAction.getActionDict(TensorFlowAction.java:116)
+	at edu.umich.srg.marketsim.agent.TensorFlowRLAgent.getAction(TensorFlowRLAgent.java:242)
+	at edu.umich.srg.marketsim.agent.TensorFlowRLAgent.strategy(TensorFlowRLAgent.java:186)
+	at edu.umich.srg.marketsim.event.EventQueue.executeUntil(EventQueue.java:57)
+	at edu.umich.srg.marketsim.MarketSimulator.executeUntil(MarketSimulator.java:66)
+	at edu.umich.srg.marketsim.CommandLineInterface.simulate(CommandLineInterface.java:103)
+	at edu.umich.srg.egtaonline.CommandLineOptions.lambda$2(CommandLineOptions.java:173)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)

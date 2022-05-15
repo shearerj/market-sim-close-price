@@ -1,0 +1,38 @@
+# python hparam_search_main.py --config_file=../market_manipulation/configs/ddpg_hparam_search.gin > ddpg_jobs.txt
+
+submit_jobs.submit_template = "../market_manipulation/scripts/gl_batch.sh"
+submit_jobs.experiment_template = "python train_main.py \
+  --result_dir=/scratch/wellman_root/wellman1/shearerj/results/simple_ddpg/ \
+  --config_dir=/home/shearerj/market_manipulation/market_manipulation/configs/ \
+  --config_files=simple_ddpg_train_main_MW"
+submit_jobs.name = "simple_ddpg_hparam_search"
+submit_jobs.num_jobs = 5
+submit_jobs.num_parallel = 5
+submit_jobs.options = {
+    "MarketSimulator.market_sim_dir": ["/home/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"],
+    "training_protocol.agent_reward_clip_cutoff": [1.0],
+    "training_protocol.validation_timesteps": [100],
+    "training_protocol.validation_loop_steps": [100],
+    "training_protocol.num_episodes": [10000],
+    "MarketSimulator.agent_omega_depth": [5],
+    "training_protocol.agent_bid_len": [5],
+    "training_protocol.agent_ask_len": [5],
+    "training_protocol.agent_trade_len": [5],
+    "DDPGAgent.clip_reward": [1000],
+    # "DDPGAgent.batch_size": [64, 128, 256],
+    "DDPGAgent.batch_size": [128, 256],
+    "DDPGAgent.replay_capacity": [20000],
+    "DDPGAgent.min_replay_size": [2500],
+    "DDPGAgent.num_grad_steps_per_update": [5, 10],
+    "DDPGAgent.target_update_period": [30,60],
+    "DDPGAgent.exploration_noise": [0.1, 0.3],
+    "DDPGAgent.gamma": [0.99],
+    # "DDPGAgent.tau": [0.01,0.001,0.005,0.0005],
+    "DDPGAgent.tau": [0.005],
+    "DDPGAgent.action_coefficient": [1050],
+    # "DDPGAgent.clipped": [0.1, 1.0, 10.0],
+    "DDPGAgent.clipped": [1.0],
+    "num_nodes": [128, 256],
+    # "snt.optimizers.Adam.learning_rate": [1e-3, 3e-3, 1e-4, 3e-4,1e-2, 3e-2, 1e-5, 3e-5],
+    "snt.optimizers.Adam.learning_rate": [3e-4],
+}

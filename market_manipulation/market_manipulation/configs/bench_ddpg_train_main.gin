@@ -1,0 +1,67 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @DDPGAgent()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @BenchmarkExperienceParser()
+
+training_protocol.agent_name = "rl_agent"
+training_protocol.agent_max_vector_depth = 20
+training_protocol.agent_additional_actions = "policyAct"
+
+training_protocol.num_episodes = 20
+training_protocol.hooks = []
+training_protocol.result_dir = "results/"
+
+DummyMarketSimulator.dummy_result_path = "../testdata/market_sim_output.json"
+
+MarketSimulator.market_sim_dir = "/Users/shearerj/market-sim/market-sim"
+MarketSimulator.agent_strategy_name = "btfrl"
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.background_name = "background"
+MarketSimulator.background_strategy_name = ["zi:Rmin_0_Rmax_1000_Thresh_0.8", "zi:Rmin_0_Rmax_2000_Thresh_0.5"]
+MarketSimulator.background_probability = [0.5,0.5]
+MarketSimulator.background_number = 10
+MarketSimulator.market_config = {
+    "simLength": 10000,
+    "fundamentalMean": 1000000.0,
+    "maxPosition": 10,
+    "privateValueVar": 50000000.0,
+    "fundamentalShockVar": 1000000.0,
+    "PriceVarEst": "Infinity",
+    "arrivalRate": 0.005,
+    "fundamentalMeanReversion": 0.05,
+    "markets": "cda",
+    "fundamentalObservationVariance": 10000000.0,
+    "communicationLatency":0,
+    "contractHoldings": 40,
+    "benchmarkDir": 1,
+    "benchmarkType": "VWAP"
+}
+
+BenchmarkExperienceParser.bid_len = 5
+BenchmarkExperienceParser.ask_len = 5
+BenchmarkExperienceParser.trade_len = 5
+
+DDPGAgent.critic_network = @Critic()
+DDPGAgent.actor_network = @Actor()
+DDPGAgent.critic_optimizer = @snt.optimizers.SGD()
+DDPGAgent.actor_optimizer = @snt.optimizers.SGD()
+DDPGAgent.batch_size = 32
+DDPGAgent.replay_capacity = 10000
+DDPGAgent.min_replay_size = 128
+DDPGAgent.target_update_period = 1
+DDPGAgent.gamma = 0.99
+DDPGAgent.tau = 0.005
+DDPGAgent.exploration_schedule = @ConstantSchedule()
+
+ConstantSchedule.x = 0.05
+
+snt.optimizers.SGD.learning_rate = 0.0003

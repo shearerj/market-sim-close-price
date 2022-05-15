@@ -1,0 +1,57 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+__main__.train_policy.agent = @TabularQ()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @SimpleExperienceParserTabQ()
+__main__.train_policy.zi_payoff_parser = @ParseAveragePayoff()
+
+training_protocol.agent_name = "rl_agent"
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+
+# If running in windows, remove the .sh
+MarketSimulator.market_sim_dir = '/mnt/c/users/esoba/PycharmProjects/SRG_Summer_Project/market-sim/market-sim/market-sim'
+MarketSimulator.agent_strategy_name = 'tfrl'
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.background_name = 'zi'
+MarketSimulator.background_strategy_name = ["zi:Rmin_0_Rmax_1000_Thresh_0.8"]
+MarketSimulator.background_probability = [1]
+MarketSimulator.background_number = 10
+MarketSimulator.market_config = {
+        "randomSeed": 20,
+        "simLength": 1000,
+        "fundamentalMean": 1000000.0,
+        "maxPosition": 10,
+        "privateValueVar": 50000000,
+        "fundamentalShockVar": 1000000,
+        "PriceVarEst": "Infinity",
+        "arrivalRate": 0.005,
+        "fundamentalMeanReversion": 0.05,
+        "markets": "cda",
+        "fundamentalObservationVariance": 10000000.0,
+        "policyAction": True,
+        "actionCoefficient": 100,
+        "nbStates": 20,
+        "nbActions": 1,
+        "hiddenLayer1": 1,
+        "hiddenLayer2": 1,
+        "TensorFlowModelPath": "TabQ_test/",
+        "communicationLatency": 0,
+        "additionalActions": "rmin/rmax/thresh"
+}
+
+TabularQ.batch_size = 50
+TabularQ.discount = .99
+TabularQ.replay_capacity = 200
+TabularQ.min_replay_size = 2
+TabularQ.learning_rate = .01
+TabularQ.exploration_schedule = @ConstantSchedule()
+
+ConstantSchedule.x = .1

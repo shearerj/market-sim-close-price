@@ -1,0 +1,53 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @DQNAgent()
+__main__.train_policy.market_sim = @DummyMarketSimulator()
+__main__.train_policy.experience_parser = @SimpleExperienceParser()
+
+training_protocol.agent_name = "rl_agent"
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+
+DummyMarketSimulator.dummy_result_path = "../testdata/market_sim_output.json"
+
+MarketSimulator.market_sim_dir = None
+MarketSimulator.market_config = {
+    "roles": {},
+    "assignment": {
+        "zi": {
+            "zi:Rmin_0_Rmax_1000_Thresh_0.8": 10
+        }
+    },
+    "configuration": {
+        "arrivalRate": 0.005,
+        "fundamentalMean": 1000000.0,
+        "fundamentalMeanReversion": 0.05,
+        "fundamentalObservationVariance": 10000000.0,
+        "fundamentalShockVar": 1000000.0,
+        "markets": "cda",
+        "maxPosition": 10,
+        "privateValueVar": 50000000.0,
+        "randomseed": 49,
+        "simLength": 1000
+    }
+}
+
+DQNAgent.network = @QNetwork()
+DQNAgent.optimizer = @snt.optimizers.SGD()
+DQNAgent.batch_size = 2
+DQNAgent.replay_capacity = 10
+DQNAgent.min_replay_size = 5
+DQNAgent.target_update_period = 1
+DQNAgent.exploration_schedule = @ConstantSchedule()
+
+ConstantSchedule.x = 0.05
+
+snt.optimizers.SGD.learning_rate = 0.0003

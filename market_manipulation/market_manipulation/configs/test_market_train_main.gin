@@ -1,0 +1,57 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @DQNAgent()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @SimpleExperienceParser()
+
+training_protocol.agent_name = "rl_agent"
+training_protocol.agent_max_vector_depth = 20
+training_protocol.agent_additional_actions = "/"
+
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+
+DummyMarketSimulator.dummy_result_path = "../testdata/market_sim_output.json"
+
+MarketSimulator.market_sim_dir = "/Users/shearerj/market-sim/market-sim"
+MarketSimulator.agent_strategy_name = "tfrl"
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.background_name = "background"
+MarketSimulator.background_strategy_name = ["zi:Rmin_0_Rmax_1000_Thresh_0.8", "zi:Rmin_0_Rmax_2000_Thresh_0.5"]
+MarketSimulator.background_probability = [0.5,0.5]
+MarketSimulator.background_number = 10
+MarketSimulator.market_config = {
+    "simLength": 1000,
+    "fundamentalMean": 1000000.0,
+    "maxPosition": 10,
+    "privateValueVar": 50000000.0,
+    "fundamentalShockVar": 1000000.0,
+    "PriceVarEst": "Infinity",
+    "arrivalRate": 0.005,
+    "fundamentalMeanReversion": 0.05,
+    "markets": "cda",
+    "fundamentalObservationVariance": 10000000.0,
+    "policyAction": "true",
+    "actionCoefficient": 100,
+    "communicationLatency":0
+}
+
+DQNAgent.network = @QNetwork()
+DQNAgent.optimizer = @snt.optimizers.SGD()
+DQNAgent.batch_size = 2
+DQNAgent.replay_capacity = 10
+DQNAgent.min_replay_size = 5
+DQNAgent.target_update_period = 1
+DQNAgent.exploration_schedule = @ConstantSchedule()
+
+ConstantSchedule.x = 0.05
+
+snt.optimizers.SGD.learning_rate = 0.0003

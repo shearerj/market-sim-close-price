@@ -1,0 +1,145 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @DDPGAgent()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @DDPGExperienceParser()
+__main__.train_policy.zi_payoff_parser = @ParseAveragePayoff()
+
+training_protocol.agent_name = "rl_agent"
+training_protocol.agent_additional_actions = "policyAct"
+training_protocol.agent_reward_clip_cutoff = 0.75
+
+training_protocol.num_updates = 1
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+training_protocol.result_dir = "results/"
+
+DummyMarketSimulator.dummy_result_path = "../testdata/market_sim_output.json"
+
+MarketSimulator.market_sim_dir = "/Users/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"
+MarketSimulator.agent_strategy_name = "tfrl"
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.background_name = "background"
+MarketSimulator.background_strategy_name = ["markov:Rmin_0_Rmax_1000_Thresh_0.8"]
+MarketSimulator.background_probability = [1.0]
+MarketSimulator.background_number = 10
+MarketSimulator.market_config = {
+    "simLength": 5000,
+    "fundamentalMean": 1000000.0,
+    "maxPosition": 10,
+    "privateValueVar": 50000000.0,
+    "fundamentalShockVar": 10000000.0,
+    "PriceVarEst": "Infinity",
+    "arrivalRate": 0.005,
+    "fundamentalMeanReversion": 0.01,
+    "markets": "cda",
+    "fundamentalObservationVariance": 10000.0,
+    "communicationLatency":0,
+    "benchmarkType": "VWAP"
+}
+
+training_protocol.agent_max_vector_depth = 20
+DDPGExperienceParser.max_vector_len = 20
+DDPGAgent.max_vector_len = 20
+
+DDPGExperienceParser.bid_len = 5
+DDPGExperienceParser.ask_len = 5
+DDPGExperienceParser.trade_len = 5
+DDPGAgent.bid_len = 5
+DDPGAgent.ask_len = 5
+DDPGAgent.trade_len = 5
+
+DDPGAgent.min_reward = -2000
+DDPGAgent.max_reward = 2000
+DDPGAgent.critic_network = @Critic()
+DDPGAgent.actor_network = @Actor()
+DDPGAgent.critic_optimizer = @snt.optimizers.SGD()
+DDPGAgent.actor_optimizer = @snt.optimizers.SGD()
+DDPGAgent.batch_size = 32
+DDPGAgent.replay_capacity = 10000
+DDPGAgent.min_replay_size = 128
+DDPGAgent.target_update_period = 1
+DDPGAgent.gamma = 0.99
+DDPGAgent.tau = 0.005
+DDPGAgent.action_coefficient = 2000
+DDPGAgent.num_actions = 1
+DDPGAgent.ou_sigma = 0.3
+DDPGAgent.ou_theta = 0.15
+DDPGAgent.ou_dt = 1e-2
+DDPGAgent.actor_clipped = 0.5
+DDPGAgent.critic_clipped = 0.5
+DDPGAgent.exploration_schedule = @ConstantSchedule()
+
+Critic.num_nodes = [64, 64]
+
+Actor.num_actions = 1
+Actor.num_nodes = [64, 64]
+
+ConstantSchedule.x = 0.05
+
+snt.optimizers.SGD.learning_rate = 0.0003
+
+
+DDPGAgent.pop_mean = [999999.0607132937,
+                        -430.56615935061956,
+                        465.8749091023871,
+                        9434.304222493303,
+                        5912.905273911559,
+                        0.0042198147125001,
+                        4.28161457957994,
+                        4.278671919415151,
+                        1202.9169609326832,
+                        0.0,
+                        2502.54975698031,
+                        -2327.5730844776263,
+                        -2021.2433263763032,
+                        -1624.127918047174,
+                        -1160.4541449562998,
+                        -603.8543827712843,
+                        599.0625781613988,
+                        1157.888989237011,
+                        1618.980531991661,
+                        2018.2183589872654,
+                        2326.2689086841915,
+                        -1.3954278760591166,
+                        -4.948868186099395,
+                        -1.946878387321298,
+                        2.515147283885473,
+                        -3.4862820081945682
+                        ]
+
+DDPGAgent.pop_var = [4829370.576713068,
+                        4004451.2220528573,
+                        3946508.965415393,
+                        713831529.6642132,
+                        585611897.6885773,
+                        0.9999821931637926,
+                        3.380572959845089,
+                        3.38235381204252,
+                        1858427.0801391925,
+                        1.0,
+                        2081502.0173081278,
+                        4217699.158376913,
+                        4343801.753079068,
+                        4442048.673195065,
+                        4490796.305081593,
+                        4404532.401291602,
+                        4302185.073236392,
+                        4362503.802010508,
+                        4354398.361585484,
+                        4260110.140550168,
+                        4145586.956030537,
+                        4508977.003426414,
+                        5098194.958300853,
+                        5394647.312987321,
+                        5547875.579848596,
+                        5610670.0849073315
+                        ]

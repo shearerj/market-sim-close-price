@@ -1,0 +1,29 @@
+# python hparam_search_main.py --config_file=../market_manipulation/configs/bmm_dqn_hparam_search.gin > dqn_bench_jobs.txt
+
+submit_jobs.submit_template = "../market_manipulation/scripts/gl_dqn_batch.sh"
+submit_jobs.experiment_template = "python train_main.py \
+  --result_dir=/scratch/wellman_root/wellman1/shearerj/results/simple_ddpg/ \
+  --config_dir=/home/shearerj/market_manipulation/market_manipulation/configs/ \
+  --config_files=bench_dqn_train_main_MW"
+submit_jobs.name = "5_14_22_dqn_bench_hparam_search"
+submit_jobs.num_jobs = 200
+submit_jobs.num_parallel = 30
+submit_jobs.options = {
+    "MarketSimulator.market_sim_dir": ["/home/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"],
+    "training_protocol.agent_reward_clip_cutoff": [1.0],
+    "training_protocol.validation_timesteps": [100],
+    "training_protocol.validation_loop_steps": [30],
+    "training_protocol.load_model_path": ["/scratch/wellman_root/wellman1/shearerj/results/simple_ddpg/"],
+    "training_protocol.num_episodes": [2500],
+    "MarketSimulator.agent_omega_depth": [5],
+    "training_protocol.agent_bid_len": [5],
+    "training_protocol.agent_ask_len": [5],
+    "training_protocol.agent_trade_len": [5],
+    "DQNBenchAgent.reward_clip": [True, False],
+    "DQNBenchAgent.reward_clip_value": [1, 100, 1000],
+    "DQNBenchAgent.error_clip": [True, False],
+    "DQNBenchAgent.error_clip_value": [1, 100],
+    "DQNBenchAgent.polyak": [True, False],
+    "DQNBenchAgent.target_update_period": [30, 60],
+    "snt.optimizers.Adam.learning_rate": [0.00001, .000001]
+}

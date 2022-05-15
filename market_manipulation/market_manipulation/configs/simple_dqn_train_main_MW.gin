@@ -1,0 +1,141 @@
+import tensorflow
+
+import market_manipulation.agents
+import market_manipulation.train_main
+import market_manipulation.utils.schedules
+import market_manipulation.utils.external_configurables
+
+import gin.tf.external_configurables
+
+
+__main__.train_policy.agent = @DQNAgent()
+__main__.train_policy.market_sim = @MarketSimulator()
+__main__.train_policy.experience_parser = @SimpleExperienceParser()
+__main__.train_policy.zi_payoff_parser = @ParseAveragePayoff()
+
+training_protocol.debug_mode = True
+training_protocol.reward_shape = False
+training_protocol.agent_name = "rl_agent"
+training_protocol.agent_type = "DQN"
+training_protocol.agent_max_vector_depth = 20
+training_protocol.agent_additional_actions = "rmin/rmax/thresh/qval"
+training_protocol.load_model = False
+training_protocol.load_model_path = '../results/'
+training_protocol.exploitation = True
+training_protocol.exploitation_steps = 1
+
+training_protocol.validation_timesteps = 3
+training_protocol.validation_loop_steps = 1
+training_protocol.num_episodes = 10
+training_protocol.hooks = []
+
+training_protocol.agent_max_vector_depth = 20
+training_protocol.agent_bid_len = 5
+training_protocol.agent_ask_len = 5
+training_protocol.agent_trade_len = 5
+
+
+MarketSimulator.market_sim_dir = "/Users/shearerj/market-sim/market-sim/target/marketsim-4.0.0-jar-with-dependencies.jar"
+MarketSimulator.agent_strategy_name = "tfrl"
+MarketSimulator.agent_omega_depth = 5
+MarketSimulator.agent_arrival_rate = 0.012
+MarketSimulator.background_name = "background"
+MarketSimulator.background_strategy_name = ["markov:Rmin_380_Rmax_420_Thresh_0.5_arrivalRate_0.012"]
+MarketSimulator.background_probability = [1.0]
+MarketSimulator.background_number = 15
+MarketSimulator.market_maker_exists = True
+MarketSimulator.market_maker_name = "market_maker"
+MarketSimulator.market_maker_strategy_name = "fmm:NumRungs_100_RungSep_100_RungThickness_1_Spread_512_arrivalRate_0.05"
+MarketSimulator.market_config = {
+    "simLength": 2000,
+    "fundamentalMean": 100000.0,
+    "maxPosition": 10,
+    "privateValueVar": 20000000.0,
+    "fundamentalShockVar": 20000.0,
+    "PriceVarEst": "Infinity",
+    "fundamentalMeanReversion": 0.01,
+    "markets": "cda",
+    "fundamentalObservationVariance": 0.0,
+    "communicationLatency":0,
+    "benchmarkType": "VWAP"
+}
+
+DQNAgent.debug_mode = True
+DQNAgent.reward_shape = False
+DQNAgent.print_mode = False
+DQNAgent.reward_clip = True
+DQNAgent.reward_clip_value = 1000
+DQNAgent.error_clip = False
+DQNAgent.error_clip_value = 1
+DQNAgent.polyak = False
+DQNAgent.polyak_tau = .99
+DQNAgent.num_grad_steps_per_update = 2
+DQNAgent.network = @QNetwork()
+DQNAgent.network_target = @QNetwork()
+QNetwork.name = 'test'
+DQNAgent.optimizer = @snt.optimizers.Adam()
+DQNAgent.gradient_clip = 1
+DQNAgent.batch_size = 1024
+DQNAgent.replay_capacity = 10000
+DQNAgent.min_replay_size = 2048
+DQNAgent.target_update_period = 60
+DQNAgent.process_means = [100000.6196239488,
+                        -298.69589716305273,
+                        261.6044921634272,
+                        8611.30485648023,
+                        4805.994817448541,
+                        -0.0005566032249757005,
+                        105.60702566190092,
+                        105.62625339569504,
+                        433.4886976315287,
+                        0.00,
+                        998.5404285014081,
+                        344.78581160226963,
+                        -786.5164491105184,
+                        -719.5560883983984,
+                        -649.8307762436792,
+                        -574.9818358666844,
+                        -478.52594044163055,
+                        -515.2631465163782,
+                        -611.7620166949065,
+                        -686.8592976466151,
+                        -756.608834502887,
+                        -823.5430265559221,
+                        -279.31578079227006,
+                        -279.4431681631921,
+                        -279.8499495842749,
+                        -279.623079771277,
+                        -279.6991890316593
+                        ]
+
+DQNAgent.process_vars = [24731.06039280375,
+                        1539371.6221536277,
+                        1539263.7358279112,
+                        180024617.3216733,
+                        105509824.77358727,
+                        0.9999996901928497,
+                        111.10211125748909,
+                        111.05947774018199,
+                        28247.892034535394,
+                        1.00,
+                        332462.7617364749,
+                        138064.2779210258,
+                        1568354.8399286675,
+                        1567063.7183885945,
+                        1565374.2616240422,
+                        1563469.3332547804,
+                        1563522.6632843202,
+                        1561095.5013779793,
+                        1560966.8199183135,
+                        1563890.8505679185,
+                        1566271.7908959438,
+                        1567681.9916748106,
+                        1604749.3264783549,
+                        1608150.359208672,
+                        1617781.3743473652,
+                        1619801.7510410582,
+                        1620722.397668745
+                        ]
+DQNAgent.exploration_schedule = @ConstantSchedule()
+
+ConstantSchedule.x = .2
